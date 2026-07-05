@@ -1,0 +1,4 @@
+anthropic==0.112.0
+httpx==0.28.1
+playwright==1.60.0
+pydantic==2.13.4

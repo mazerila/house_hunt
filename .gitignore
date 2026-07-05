@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.cache/
+.browser-profile/
+.DS_Store
+rnb_*.json
+
+# Secrets — keep .env out of git; .env.example is committed.
+.env
+!.env.example
+.claude/
+
+# Private investigation data (your own listings, notes, verdicts) — never published.
+private/
+*.bundle
