@@ -46,6 +46,12 @@ The RNB is the French national building registry: it gives every building one **
 
 ## Parcel due diligence — required checks
 
+**Run each listing analysis in its own subagent.** When the user asks to analyse a case, dispatch a background `general-purpose` agent per listing (so several can run in parallel), instructing it to follow this checklist, use the repo scripts + open APIs below, respect the privacy rule, then **write the dossier to `private/listings/<slug>.md`** and update `private/list.md`. Tell the user to hit **Réimporter** in the dashboard afterward; correct any misread numeric field (surface/land/price) via the dashboard (it becomes a protected override).
+
+**Report template** (`private/listings/<slug>.md`): H1 with address + postal code · a `Status: **…**` seed line (maps to dashboard status: "visité"→visited, "visite prévue"→visit-planned, "offre"→offer, "rejet…"→rejected, else researching) · `## Identity` bullets (include `Prix demandé: **N €**` when known — the importer reads it) · `## DPE` · **`## Résumé — points positifs / négatifs`** (a short bullet list, positives first then negatives — the user wants this on every report) · `## Verdict` · `## Open items`. Prices: put the asking price in the md; the buyer's `Prix min` / `Offre acceptable` are set in the dashboard (fields `price_min` / `price_offer`) — seed reasoned suggestions there and explain the basis in the verdict.
+
+**Listing folder** `private/listings/<slug>/`: holds the source documents (PDFs) and a `photos/` subfolder for house photos (the dashboard shows these as a gallery). Extract exterior/plan images from the diagnostics PDFs with `pdfimages -png` / `pdftoppm` into `photos/`. The dashboard auto-assigns each listing a short sortable code (H01, H02, …) — no action needed. Any announce URL you put in the md note is auto-detected in the drawer's **Annonces** section, so include the source listing URL when you have one.
+
 Run all of these for every listing. Cite the source for each fact, and keep **data facts separate from on-the-ground reality** (the cadastre can lie about frontage).
 
 1. **Locate the exact parcel.**
@@ -80,6 +86,8 @@ Run all of these for every listing. Cite the source for each fact, and keep **da
 ## Analysis tools & endpoints
 
 Repo scripts (use `./.venv/bin/python`): `scripts/rnb_lookup.py "<address>" --print` (address → RNB buildings + parcels), `scripts/compare_dpe.py <a.xml> <b.xml>` (DPE 3CL XML diff).
+
+**Dashboard (local GUI):** `python3 scripts/dashboard.py` (stdlib-only, port 8420) serves `scripts/dashboard.html` (French UI, dark/light, monochrome icons) at `http://localhost:8420`. It imports `private/listings/*.md` into `private/dashboard_db.json` (gitignored) — one record per note, id = filename slug. Statuses: `researching | visit-planned | visited | offer | rejected`. Heuristic-derived fields (price, surface, land_surface…) are re-derived on each réimport **unless** the user edited them in the GUI (tracked in the record's `overrides`); rating/status/tags/verdict/comment are always user-owned. So: after researching a listing, write the note to `private/listings/<slug>.md` (H1 with address + postal code, `Status: **…**` line, `## Identity` bullets, `## DPE` section) and tell the user to hit Réimporter — don't edit `dashboard_db.json` directly.
 
 Open APIs — no key; `curl` or WebFetch. `geom` is a URL-encoded GeoJSON `{"type":"Point","coordinates":[LON,LAT]}` (**[lon, lat]**):
 
