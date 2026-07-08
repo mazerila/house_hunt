@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recherche maison — Île-de-France</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --panel-2: #fafbfc;
+    --border: #e2e5ea;
+    --text: #1c2129;
+    --text-dim: #6b7280;
+    --accent: #2563eb;
+    --row-hover: #f5f8ff;
+    --input-bg: #ffffff;
+    --code-bg: #f1f2f4;
+    --star-off: #cccccc;
+    --toast-bg: #1c2129;
+    --toast-fg: #ffffff;
+    --shadow: rgba(0, 0, 0, .15);
+  }
+  html[data-theme="dark"] {
+    --bg: #14161b;
+    --panel: #1d2026;
+    --panel-2: #191c22;
+    --border: #2e333c;
+    --text: #e6e8ec;
+    --text-dim: #9aa1ac;
+    --accent: #3b82f6;
+    --row-hover: #232a36;
+    --input-bg: #14161b;
+    --code-bg: #262a31;
+    --star-off: #4a505b;
+    --toast-bg: #e6e8ec;
+    --toast-fg: #14161b;
+    --shadow: rgba(0, 0, 0, .5);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+  }
+  header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  header .count { color: var(--text-dim); font-size: 13px; }
+  header .spacer { flex: 1; }
+  button {
+    font: inherit; cursor: pointer;
+    background: var(--accent); color: #fff; border: none;
+    padding: 7px 14px; border-radius: 6px; font-weight: 500;
+    transition: transform .06s ease, filter .15s ease, box-shadow .15s ease;
+  }
+  button:hover { filter: brightness(1.08); box-shadow: 0 1px 4px var(--shadow); }
+  button:active { transform: scale(.95); filter: brightness(.9); }
+  button:disabled { opacity: .55; cursor: wait; transform: none; }
+  button.secondary {
+    background: var(--panel); color: var(--text); border: 1px solid var(--border);
+  }
+  #theme-btn { font-size: 16px; padding: 6px 10px; line-height: 1; }
+  .filters {
+    display: flex; gap: 10px; padding: 12px 20px; flex-wrap: wrap;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+  }
+  .filters input[type=text], .filters select {
+    font: inherit; padding: 6px 10px; border: 1px solid var(--border);
+    border-radius: 6px; background: var(--input-bg); color: var(--text);
+  }
+  .filters input[type=text] { min-width: 240px; }
+  .filters .spacer { flex: 1; }
+  .col-picker { position: relative; }
+  .col-menu {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 6px 20px var(--shadow); padding: 8px; min-width: 200px; max-height: 60vh; overflow-y: auto;
+  }
+  .col-menu[hidden] { display: none; }
+  .col-menu .col-menu-title { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--text-dim); padding: 4px 8px 6px; font-weight: 600; }
+  .col-menu label {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; white-space: nowrap;
+  }
+  .col-menu label:hover { background: var(--row-hover); }
+  .col-menu input[type=checkbox] { cursor: pointer; }
+  .col-menu label.locked { color: var(--text-dim); cursor: default; }
+  main { padding: 16px 20px 60px; }
+  .empty {
+    text-align: center; color: var(--text-dim); padding: 60px 20px;
+    display: flex; flex-direction: column; gap: 12px; align-items: center;
+  }
+  .grid-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--panel);
+  }
+  table {
+    width: 100%; border-collapse: collapse; background: var(--panel);
+  }
+  thead th {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--panel-2); text-align: left; padding: 10px 12px;
+    font-size: 12px; text-transform: uppercase; letter-spacing: .03em;
+    color: var(--text-dim); border-bottom: 2px solid var(--border);
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  thead th:hover { color: var(--text); }
+  tbody td {
+    padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background .1s ease; }
+  tbody tr:hover { background: var(--row-hover); cursor: pointer; }
+  tbody tr:active { filter: brightness(.96); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  /* inline status editor in the grid, styled as a pill */
+  select.status-select {
+    font: inherit; font-size: 12px; font-weight: 600;
+    border: none; border-radius: 999px; padding: 4px 24px 4px 10px;
+    cursor: pointer; appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23555'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+    transition: transform .06s ease, box-shadow .15s ease;
+  }
+  select.status-select:hover { box-shadow: 0 1px 4px var(--shadow); }
+  select.status-select:active { transform: scale(.96); }
+  .dpe-badge {
+    display: inline-block; min-width: 22px; text-align: center;
+    padding: 2px 7px; border-radius: 4px; font-weight: 700; color: #fff; font-size: 12px;
+  }
+  .pill {
+    display: inline-block; padding: 3px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .stars { color: #f5a623; letter-spacing: 1px; white-space: nowrap; }
+  .stars.empty-rating { color: var(--star-off); }
+
+  /* drawer */
+  #overlay {
+    position: fixed; inset: 0; background: rgba(20, 22, 28, .35);
+    display: none; z-index: 100;
+  }
+  #overlay.open { display: block; }
+  #drawer {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: min(720px, 95vw); background: var(--panel);
+    box-shadow: -6px 0 24px var(--shadow);
+    transform: translateX(100%); transition: transform .18s ease-out;
+    z-index: 101; display: flex; flex-direction: column;
+  }
+  #drawer.open { transform: translateX(0); }
+  #drawer .drawer-head {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 18px 20px; border-bottom: 1px solid var(--border);
+  }
+  #drawer .drawer-head .head-text { flex: 1; }
+  #drawer .drawer-head h2 { margin: 0; font-size: 18px; }
+  #drawer .drawer-head .subtitle { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+  #drawer .close-btn {
+    background: none; color: var(--text-dim); font-size: 20px; padding: 0 6px; line-height: 1;
+  }
+  #drawer .drawer-body { padding: 16px 20px 60px; overflow-y: auto; flex: 1; }
+  .field-row { margin-bottom: 16px; }
+  .field-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+  .field-grid .field-row { flex: 1; min-width: 140px; }
+  .field-row label {
+    display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .03em;
+    color: var(--text-dim); margin-bottom: 6px; font-weight: 600;
+  }
+  .field-row input[type=text], .field-row input[type=number], .field-row select, .field-row textarea {
+    width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: 6px; background: var(--input-bg); color: var(--text);
+  }
+  .field-row textarea { min-height: 90px; resize: vertical; }
+  .field-row .hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .stars-edit { font-size: 22px; cursor: pointer; }
+  .stars-edit span { padding-right: 2px; }
+  .save-flash { color: #16a34a; font-size: 12px; margin-left: 8px; opacity: 0; transition: opacity .2s; }
+  .save-flash.show { opacity: 1; }
+  .facts-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  .facts-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: top; }
+  .facts-table td:first-child { color: var(--text-dim); width: 32%; font-weight: 600; }
+  .md-body { border-top: 1px solid var(--border); padding-top: 16px; }
+  .md-body h1, .md-body h2, .md-body h3 { margin-top: 1.4em; }
+  .md-body h1:first-child, .md-body h2:first-child { margin-top: 0; }
+  .md-body table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  .md-body table td, .md-body table th { border: 1px solid var(--border); padding: 4px 8px; font-size: 13px; }
+  .md-body code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .md-body hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .md-body ul { padding-left: 22px; }
+  .md-body li.task { list-style: none; margin-left: -18px; }
+  .md-body p { line-height: 1.5; }
+  .md-body a { color: var(--accent); }
+
+  #toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--toast-bg); color: var(--toast-fg); padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s;
+    z-index: 200;
+  }
+  #toast.show { opacity: 1; }
+  /* monochrome icon glyphs — inherit text color, never emoji-colored */
+  .ico { font-family: inherit; font-variant-emoji: text; opacity: .75; font-weight: 400; }
+  header h1 .ico { opacity: .85; }
+  td.offer-pos { color: #166534; }
+  td.col-clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* travaux (renovation line-items) editor */
+  .works-total { float: right; text-transform: none; letter-spacing: 0; font-weight: 700; color: var(--text); }
+  .works-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+  .works-row input.w-label { flex: 1; }
+  .works-row input.w-cost { width: 110px; text-align: right; }
+  .works-row .w-del {
+    background: transparent; color: var(--text-dim); border: 1px solid var(--border);
+    padding: 6px 10px; border-radius: 6px; line-height: 1;
+  }
+  .works-row .w-del:hover { color: #b91c1c; border-color: #e4a3a3; background: transparent; box-shadow: none; }
+  .works-empty { color: var(--text-dim); font-size: 13px; padding: 2px 0 8px; }
+  button.works-add { margin-top: 4px; padding: 6px 12px; font-size: 13px; }
+  /* drawer sections (photos, annonces) */
+  .drawer-section { margin-bottom: 20px; }
+  .drawer-section[hidden] { display: none; }
+  .section-label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; }
+  .links-block { border-top: 1px solid var(--border); padding-top: 16px; }
+  .link-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+  .link-item a { color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .link-item a:hover { text-decoration: underline; }
+  .link-item .l-src { font-size: 11px; color: var(--text-dim); }
+  .link-item .l-del { background: transparent; color: var(--text-dim); border: 1px solid var(--border); padding: 3px 8px; border-radius: 6px; font-size: 12px; line-height: 1; }
+  .link-item .l-del:hover { color: #b91c1c; border-color: #e4a3a3; background: transparent; box-shadow: none; }
+  .link-add { display: flex; gap: 8px; margin-top: 8px; }
+  .link-add input { flex: 1; font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text); }
+  .links-empty { color: var(--text-dim); font-size: 13px; }
+  /* photo gallery in the drawer */
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-bottom: 20px; }
+  .gallery[hidden] { display: none; }
+  .gallery img {
+    width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px;
+    border: 1px solid var(--border); cursor: zoom-in; transition: filter .12s ease, transform .06s ease;
+  }
+  .gallery img:hover { filter: brightness(1.05); }
+  .gallery img:active { transform: scale(.98); }
+  .gallery-cell {
+    position: relative; cursor: zoom-in; transition: filter .12s ease, transform .06s ease;
+  }
+  .gallery-cell:hover { filter: brightness(1.05); }
+  .gallery-cell:active { transform: scale(.98); }
+  .gallery-cell video.gallery-vid {
+    width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px;
+    border: 1px solid var(--border); display: block; background: #000; pointer-events: none;
+  }
+  .gallery-cell .play-badge {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 26px; text-shadow: 0 1px 6px rgba(0,0,0,.8); pointer-events: none;
+  }
+  /* lightbox */
+  #lightbox {
+    position: fixed; inset: 0; z-index: 300; background: rgba(8, 9, 12, .92);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #lightbox[hidden] { display: none; }
+  #lightbox img, #lightbox video { max-width: 92vw; max-height: 90vh; object-fit: contain; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,.6); }
+  #lightbox img { touch-action: pan-y; cursor: grab; }
+  #lightbox img:active { cursor: grabbing; }
+  #lightbox img.lb-sliding { transition: transform .12s ease, opacity .12s ease; }
+  #lightbox [hidden] { display: none; }
+  #lightbox .lb-close, #lightbox .lb-nav {
+    position: absolute; background: rgba(255,255,255,.12); color: #fff; border: none;
+    cursor: pointer; border-radius: 8px; line-height: 1; transition: background .12s ease;
+  }
+  #lightbox .lb-close:hover, #lightbox .lb-nav:hover { background: rgba(255,255,255,.28); filter: none; box-shadow: none; }
+  #lightbox .lb-close { top: 16px; right: 20px; font-size: 26px; padding: 4px 12px; }
+  #lightbox .lb-nav { top: 50%; transform: translateY(-50%); font-size: 40px; padding: 4px 16px; }
+  #lightbox .lb-prev { left: 16px; }
+  #lightbox .lb-next { right: 16px; }
+  #lightbox .lb-count { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 13px; opacity: .8; }
+  .danger-zone { border-top: 1px solid var(--border); margin-top: 24px; padding-top: 16px; }
+  button.danger {
+    background: transparent; color: #b91c1c; border: 1px solid #e4a3a3;
+  }
+  button.danger:hover { background: #fee2e2; filter: none; }
+  html[data-theme="dark"] button.danger { color: #f87171; border-color: #6b2b2b; }
+  html[data-theme="dark"] button.danger:hover { background: #3a1e1e; }
+  html[data-theme="dark"] td.offer-pos { color: #4ade80; }
+
+  /* ---- mobile layout (phones): desktop is unchanged above this line ---- */
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; gap: 8px 10px; padding: 10px 14px; }
+    header h1 { font-size: 15px; width: 100%; line-height: 1.3; }
+    /* row 2: count on the left, spacer pushes the buttons to the right */
+
+    .filters { padding: 10px 14px; gap: 8px; }
+    .filters input[type=text] { min-width: 0; flex: 1 1 100%; }
+    .filters select { flex: 1 1 42%; min-width: 0; }
+    .col-picker { flex: 1 1 100%; }
+    #cols-btn { width: 100%; }
+    .col-menu { left: 0; right: 0; }
+
+    main { padding: 12px 12px 64px; }
+
+    /* wide table -> stacked cards (one card per listing) */
+    .grid-wrap { overflow-x: visible; border: none; border-radius: 0; background: transparent; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    thead { display: none; }                    /* header labels move into each cell */
+    tbody tr {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+      margin-bottom: 10px; padding: 4px 12px; box-shadow: 0 1px 3px var(--shadow);
+    }
+    tbody tr:hover, tbody tr:active { background: var(--panel); filter: none; }
+    tbody td {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      border: none; border-bottom: 1px solid var(--border); padding: 9px 0; text-align: right;
+      min-height: 20px;
+    }
+    tbody tr td:last-child { border-bottom: none; }
+    tbody td::before {
+      content: attr(data-label); color: var(--text-dim); font-weight: 600;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .03em;
+      text-align: left; flex: 0 0 auto; white-space: nowrap;
+    }
+    td.col-clip { max-width: none; white-space: normal; overflow: visible; text-overflow: clip; }
+    select.status-select { max-width: 60%; }
+
+    /* drawer: full width, price/surface inputs stack instead of cramming 3 across */
+    #drawer { width: 100vw; }
+    #drawer .drawer-body { padding: 14px 14px 64px; }
+    .field-grid { flex-direction: column; gap: 0; }
+    .field-grid .field-row { min-width: 0; }
+    .gallery { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+
+    /* lightbox controls sized for thumbs */
+    #lightbox .lb-nav { font-size: 30px; padding: 10px 12px; }
+    #lightbox .lb-prev { left: 6px; }
+    #lightbox .lb-next { right: 6px; }
+    #lightbox .lb-close { top: 10px; right: 12px; font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="ico">&#8962;</span> Recherche maison — Île-de-France</h1>
+  <span class="count" id="listing-count"></span>
+  <div class="spacer"></div>
+  <button class="secondary" id="theme-btn" title="Basculer clair/sombre">&#9680;</button>
+  <button class="secondary" id="reimport-btn"><span class="ico">&#8635;</span> Réimporter</button>
+</header>
+
+<div class="filters">
+  <input type="text" id="f-search" placeholder="Rechercher titre, commune, tags, verdict…">
+  <select id="f-status">
+    <option value="">Tous statuts</option>
+    <option value="researching">&#9906; Recherche</option>
+    <option value="visit-planned">&#9873; Visite prévue</option>
+    <option value="visited">&#10003; Visité</option>
+    <option value="offer">&#8364; Offre</option>
+    <option value="rejected">&#10005; Rejeté</option>
+  </select>
+  <select id="f-commune"><option value="">Toutes communes</option></select>
+  <select id="f-rating">
+    <option value="0">Toutes notes</option>
+    <option value="1">1+ ★</option>
+    <option value="2">2+ ★</option>
+    <option value="3">3+ ★</option>
+    <option value="4">4+ ★</option>
+    <option value="5">5 ★</option>
+  </select>
+  <div class="spacer"></div>
+  <div class="col-picker">
+    <button class="secondary" id="cols-btn">&#9776; Colonnes</button>
+    <div class="col-menu" id="cols-menu" hidden></div>
+  </div>
+</div>
+
+<main>
+  <div id="empty-state" class="empty" style="display:none"></div>
+  <div class="grid-wrap">
+    <table id="grid" style="display:none">
+      <thead><tr id="grid-head"></tr></thead>
+      <tbody id="grid-body"></tbody>
+    </table>
+  </div>
+</main>
+
+<div id="overlay"></div>
+<div id="drawer">
+  <div class="drawer-head">
+    <div class="head-text">
+      <h2 id="d-title"></h2>
+      <div class="subtitle" id="d-subtitle"></div>
+    </div>
+    <button class="close-btn" id="d-close">&times;</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section" id="d-photos-section" hidden>
+      <label class="section-label">Photos</label>
+      <div class="gallery" id="d-gallery"></div>
+    </div>
+    <div class="field-row">
+      <label>Note</label>
+      <div class="stars-edit" id="d-stars"></div>
+    </div>
+    <div class="field-row">
+      <label>Statut</label>
+      <select id="d-status">
+        <option value="researching">&#9906; Recherche</option>
+        <option value="visit-planned">&#9873; Visite prévue</option>
+        <option value="visited">&#10003; Visité</option>
+        <option value="offer">&#8364; Offre</option>
+        <option value="rejected">&#10005; Rejeté</option>
+      </select>
+    </div>
+    <div class="field-grid">
+      <div class="field-row">
+        <label>Prix demandé (€)</label>
+        <input type="number" id="d-price" min="0" step="1000" placeholder="—">
+      </div>
+      <div class="field-row">
+        <label>Prix minimum (€)</label>
+        <input type="number" id="d-price-min" min="0" step="1000" placeholder="—">
+      </div>
+      <div class="field-row">
+        <label>Offre acceptable (€)</label>
+        <input type="number" id="d-price-offer" min="0" step="1000" placeholder="—">
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:-8px">
+      <div class="hint" id="d-nego-hint"></div>
+    </div>
+    <div class="field-grid">
+      <div class="field-row">
+        <label>Terrain (m²)</label>
+        <input type="number" id="d-land" min="0" step="1" placeholder="—">
+      </div>
+      <div class="field-row">
+        <label>Surface hab. (m²)</label>
+        <input type="number" id="d-surface" min="0" step="0.1" placeholder="—">
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:-8px">
+      <div class="hint">Valeur saisie = prioritaire (le réimport ne l'écrase plus). Vider le champ pour revenir à la valeur extraite de la fiche.</div>
+    </div>
+    <div class="field-row">
+      <label>Tags (séparés par des virgules)</label>
+      <input type="text" id="d-tags">
+    </div>
+    <div class="field-row">
+      <label>Verdict</label>
+      <input type="text" id="d-verdict">
+    </div>
+    <div class="field-row works-block">
+      <label>Travaux à prévoir <span class="works-total" id="d-works-total"></span></label>
+      <div id="d-works-list"></div>
+      <button class="secondary works-add" id="d-works-add">+ Ajouter une ligne</button>
+    </div>
+    <div class="field-row">
+      <label>Commentaire</label>
+      <textarea id="d-comment"></textarea>
+      <button id="d-comment-save">Enregistrer</button>
+      <span class="save-flash" id="d-comment-flash">enregistré &#10003;</span>
+    </div>
+    <table class="facts-table" id="d-facts"></table>
+    <div class="md-body" id="d-md"></div>
+    <div class="drawer-section links-block" id="d-links-section">
+      <label class="section-label">Annonces</label>
+      <div id="d-links-list"></div>
+      <div class="link-add">
+        <input type="url" id="d-link-input" placeholder="https://…  (coller le lien de l'annonce)">
+        <button class="secondary" id="d-link-add">Ajouter</button>
+      </div>
+    </div>
+    <div class="danger-zone">
+      <button class="danger" id="d-delete">&#10005; Retirer cette annonce</button>
+      <div class="hint">Retire l'annonce du tableau de bord. La fiche <code>.md</code> reste sur le disque ; réimporter ne la remet pas.</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="lightbox" hidden>
+  <button class="lb-close" id="lb-close" title="Fermer (Échap)">&times;</button>
+  <button class="lb-nav lb-prev" id="lb-prev" title="Précédent (←)">&#8249;</button>
+  <img id="lb-img" alt="">
+  <video id="lb-video" controls playsinline hidden></video>
+  <button class="lb-nav lb-next" id="lb-next" title="Suivant (→)">&#8250;</button>
+  <div class="lb-count" id="lb-count"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- theme ----
+  function applyTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    try { localStorage.setItem("hh-theme", t); } catch (e) {}
+  }
+  var savedTheme = null;
+  try { savedTheme = localStorage.getItem("hh-theme"); } catch (e) {}
+  applyTheme(savedTheme || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+  document.getElementById("theme-btn").addEventListener("click", function () {
+    applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  });
+
+  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [] };
+
+  var STATUS_LABELS = {
+    "researching": "⚲ Recherche",
+    "visit-planned": "⚑ Visite prévue",
+    "visited": "✓ Visité",
+    "offer": "€ Offre",
+    "rejected": "✕ Rejeté"
+  };
+  var STATUS_ORDER = ["researching", "visit-planned", "visited", "offer", "rejected"];
+  var STATUS_COLORS = {
+    "researching": { bg: "#e0e7ff", fg: "#3730a3" },
+    "visit-planned": { bg: "#fef3c7", fg: "#92400e" },
+    "visited": { bg: "#f3e8ff", fg: "#6b21a8" },
+    "offer": { bg: "#dcfce7", fg: "#166534" },
+    "rejected": { bg: "#fee2e2", fg: "#991b1b" }
+  };
+  var TYPE_LABELS = { apartment: "Appartement", house: "Maison", land: "Terrain" };
+  var DPE_COLORS = {
+    A: "#0a9a3e", B: "#4cb848", C: "#a8c63a", D: "#f4e02a",
+    E: "#f2a91b", F: "#e8631a", G: "#d81f26"
+  };
+  var NUMERIC_KEYS = { price: 1, price_min: 1, price_offer: 1, land_surface: 1, surface: 1, price_per_m2: 1, rating: 1 };
+
+  function $(sel) { return document.querySelector(sel); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function fetchJSON(url, opts) {
+    return fetch(url, opts).then(function (r) {
+      return r.json().then(function (data) { return { ok: r.ok, status: r.status, data: data }; });
+    });
+  }
+
+  function loadListings() {
+    return fetchJSON("/api/listings").then(function (res) {
+      state.listings = res.data.listings || [];
+      populateCommuneFilter();
+      applyFilters();
+    });
+  }
+
+  function populateCommuneFilter() {
+    var sel = $("#f-commune");
+    var current = sel.value;
+    var communes = Array.from(new Set(state.listings.map(function (l) { return l.commune; }).filter(Boolean))).sort();
+    sel.innerHTML = '<option value="">Toutes communes</option>' +
+      communes.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join("");
+    sel.value = current;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function debounce(fn, ms) {
+    var t;
+    return function () {
+      var args = arguments, ctx = this;
+      clearTimeout(t);
+      t = setTimeout(function () { fn.apply(ctx, args); }, ms);
+    };
+  }
+
+  function applyFilters() {
+    var q = $("#f-search").value.trim().toLowerCase();
+    var status = $("#f-status").value;
+    var commune = $("#f-commune").value;
+    var minRating = parseInt($("#f-rating").value, 10) || 0;
+
+    state.filtered = state.listings.filter(function (l) {
+      if (status && l.status !== status) return false;
+      if (commune && l.commune !== commune) return false;
+      if ((l.rating || 0) < minRating) return false;
+      if (q) {
+        var hay = [l.title, l.commune, l.verdict, (l.tags || []).join(" ")].join(" ").toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+    sortFiltered();
+    render();
+  }
+
+  function sortFiltered() {
+    var key = state.sortKey, dir = state.sortDir === "asc" ? 1 : -1;
+    var numeric = !!NUMERIC_KEYS[key];
+    state.filtered.sort(function (a, b) {
+      var av = a[key], bv = b[key];
+      var aEmpty = av === null || av === undefined || av === "";
+      var bEmpty = bv === null || bv === undefined || bv === "";
+      if (aEmpty && bEmpty) return 0;
+      if (aEmpty) return 1;  // empty values always last
+      if (bEmpty) return -1;
+      if (numeric) { av = Number(av); bv = Number(bv); }
+      else if (typeof av === "string") { av = av.toLowerCase(); bv = String(bv).toLowerCase(); }
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+  }
+
+  function fmtMoney(v) {
+    if (v === null || v === undefined) return "—";
+    return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
+  }
+  function fmtNum(v) {
+    if (v === null || v === undefined) return "—";
+    return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(v);
+  }
+  function fmtRelTime(iso) {
+    if (!iso) return "—";
+    var then = new Date(iso).getTime();
+    if (isNaN(then)) return "—";
+    var diffSec = (Date.now() - then) / 1000;
+    var units = [["an", "ans", 31536000], ["mois", "mois", 2592000], ["j", "j", 86400], ["h", "h", 3600], ["min", "min", 60]];
+    for (var i = 0; i < units.length; i++) {
+      var amt = Math.floor(diffSec / units[i][2]);
+      if (amt >= 1) return "il y a " + amt + " " + (amt > 1 ? units[i][1] : units[i][0]);
+    }
+    return "à l'instant";
+  }
+  function starsHtml(rating) {
+    rating = rating || 0;
+    var full = Math.round(rating);
+    var s = "";
+    for (var i = 1; i <= 5; i++) s += (i <= full ? "★" : "☆");
+    return '<span class="stars' + (full === 0 ? " empty-rating" : "") + '">' + s + "</span>";
+  }
+  function dpeBadge(dpe) {
+    if (!dpe) return "—";
+    var color = DPE_COLORS[dpe] || "#999";
+    var fg = (dpe === "C" || dpe === "D") ? "#333" : "#fff";
+    return '<span class="dpe-badge" style="background:' + color + ";color:" + fg + '">' + escapeHtml(dpe) + "</span>";
+  }
+  // inline status editor: a pill-styled <select> that PATCHes immediately
+  function statusSelect(l) {
+    var sel = document.createElement("select");
+    sel.className = "status-select";
+    STATUS_ORDER.forEach(function (s) {
+      var opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = STATUS_LABELS[s];
+      sel.appendChild(opt);
+    });
+    sel.value = l.status || "researching";
+    function paint() {
+      var c = STATUS_COLORS[sel.value] || { bg: "#eee", fg: "#333" };
+      sel.style.backgroundColor = c.bg;
+      sel.style.color = c.fg;
+    }
+    paint();
+    sel.addEventListener("click", function (e) { e.stopPropagation(); });
+    sel.addEventListener("change", function (e) {
+      e.stopPropagation();
+      patchListing(l.id, { status: sel.value }).then(function (rec) {
+        paint();
+        updateLocal(rec);
+      });
+    });
+    return sel;
+  }
+
+  // ---- column catalog (frontend owns labels + cell renderers; server persists which are visible) ----
+  var DEFAULT_COLS = ["code", "title", "commune", "price", "price_offer", "works_total", "land_surface", "surface", "dpe", "rating", "status", "updated"];
+  var COLUMN_CATALOG = [
+    { key: "code", label: "Code", cell: function (td, l) { td.textContent = l.code || "—"; } },
+    { key: "title", label: "Titre", cell: function (td, l) { td.textContent = l.title || l.id; } },
+    { key: "commune", label: "Commune", cell: function (td, l) { td.innerHTML = l.commune ? '<span class="ico">⌂</span> ' + escapeHtml(l.commune) : "—"; } },
+    { key: "type", label: "Type", cell: function (td, l) { td.textContent = TYPE_LABELS[l.type] || l.type || "—"; } },
+    { key: "price", label: "Prix demandé", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.price); } },
+    { key: "price_min", label: "Prix min", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.price_min); } },
+    { key: "price_offer", label: "Offre", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.price_offer); } },
+    { key: "price_per_m2", label: "€/m²", num: true, cell: function (td, l) { td.textContent = l.price_per_m2 ? fmtMoney(l.price_per_m2) : "—"; } },
+    { key: "works_total", label: "Travaux", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.works_total); } },
+    { key: "land_surface", label: "Terrain", num: true, cell: function (td, l) { td.textContent = l.land_surface ? fmtNum(l.land_surface) + " m²" : "—"; } },
+    { key: "surface", label: "Surface", num: true, cell: function (td, l) { td.textContent = l.surface ? fmtNum(l.surface) + " m²" : "—"; } },
+    { key: "dpe", label: "DPE", cell: function (td, l) { td.innerHTML = dpeBadge(l.dpe); } },
+    { key: "rating", label: "Note", cell: function (td, l) { td.innerHTML = starsHtml(l.rating); } },
+    { key: "status", label: "Statut", cell: function (td, l) { td.appendChild(statusSelect(l)); } },
+    { key: "verdict", label: "Verdict", cls: "col-clip", cell: function (td, l) { td.textContent = l.verdict || "—"; td.title = l.verdict || ""; } },
+    { key: "tags", label: "Tags", cls: "col-clip", cell: function (td, l) { var t = (l.tags && l.tags.length) ? l.tags.join(", ") : "—"; td.textContent = t; td.title = t; } },
+    { key: "created", label: "Créé", cell: function (td, l) { td.textContent = fmtRelTime(l.created); } },
+    { key: "updated", label: "Modifié", cell: function (td, l) { td.textContent = fmtRelTime(l.updated); } }
+  ];
+  var CATALOG_BY_KEY = {};
+  COLUMN_CATALOG.forEach(function (c) { CATALOG_BY_KEY[c.key] = c; });
+  var CATALOG_ORDER = COLUMN_CATALOG.map(function (c) { return c.key; });
+
+  function buildHead() {
+    var head = $("#grid-head");
+    head.innerHTML = "";
+    state.columns.forEach(function (key) {
+      var col = CATALOG_BY_KEY[key];
+      if (!col) return;
+      var th = document.createElement("th");
+      th.setAttribute("data-key", key);
+      if (col.num) th.className = "num";
+      th.textContent = col.label + (key === state.sortKey ? " " + (state.sortDir === "asc" ? "▲" : "▼") : "");
+      th.addEventListener("click", function () {
+        if (state.sortKey === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+        else { state.sortKey = key; state.sortDir = NUMERIC_KEYS[key] ? "desc" : "asc"; }
+        sortFiltered();
+        render();
+      });
+      head.appendChild(th);
+    });
+  }
+
+  function buildColMenu() {
+    var menu = $("#cols-menu");
+    menu.innerHTML = "";
+    var title = el("div", "col-menu-title", "Colonnes affichées");
+    menu.appendChild(title);
+    COLUMN_CATALOG.forEach(function (col) {
+      var lab = document.createElement("label");
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = state.columns.indexOf(col.key) !== -1;
+      if (col.key === "title") { cb.checked = true; cb.disabled = true; lab.className = "locked"; }
+      cb.addEventListener("change", function () { toggleColumn(col.key, cb.checked); });
+      lab.appendChild(cb);
+      lab.appendChild(document.createTextNode(" " + col.label));
+      menu.appendChild(lab);
+    });
+  }
+
+  function toggleColumn(key, on) {
+    var idx = state.columns.indexOf(key);
+    if (on && idx === -1) {
+      state.columns.push(key);
+      state.columns.sort(function (a, b) { return CATALOG_ORDER.indexOf(a) - CATALOG_ORDER.indexOf(b); });
+    } else if (!on && idx !== -1 && key !== "title") {
+      state.columns.splice(idx, 1);
+    }
+    saveColumns();
+    buildHead();
+    render();
+  }
+
+  function saveColumns() {
+    fetchJSON("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ columns: state.columns })
+    }).then(function (res) {
+      if (!res.ok) showToast("✕ Colonnes non enregistrées");
+    });
+  }
+
+  function loadSettings() {
+    return fetchJSON("/api/settings").then(function (res) {
+      var cols = (res.data && res.data.columns) || [];
+      state.columns = cols.length ? cols : DEFAULT_COLS.slice();
+      state.allColumns = (res.data && res.data.all_columns) || CATALOG_ORDER.slice();
+      buildColMenu();
+    }, function () {
+      state.columns = DEFAULT_COLS.slice();
+      buildColMenu();
+    });
+  }
+
+  function render() {
+    var n = state.listings.length;
+    $("#listing-count").textContent = n + " annonce" + (n === 1 ? "" : "s");
+    var grid = $("#grid"), body = $("#grid-body"), emptyState = $("#empty-state");
+
+    if (state.listings.length === 0) {
+      grid.style.display = "none";
+      emptyState.style.display = "flex";
+      emptyState.innerHTML = "<div>Aucune annonce pour l'instant.</div>";
+      var btn = el("button", "", "Réimporter");
+      btn.addEventListener("click", doReimport);
+      emptyState.appendChild(btn);
+      return;
+    }
+    if (state.filtered.length === 0) {
+      grid.style.display = "none";
+      emptyState.style.display = "flex";
+      emptyState.innerHTML = "<div>Aucun résultat avec ces filtres.</div>";
+      var cbtn = el("button", "secondary", "Effacer les filtres");
+      cbtn.addEventListener("click", clearFilters);
+      emptyState.appendChild(cbtn);
+      return;
+    }
+    emptyState.style.display = "none";
+    grid.style.display = "table";
+    buildHead();
+    body.innerHTML = "";
+    state.filtered.forEach(function (l) {
+      var tr = el("tr");
+      tr.dataset.id = l.id;
+      state.columns.forEach(function (key) {
+        var col = CATALOG_BY_KEY[key];
+        if (!col) return;
+        var td = document.createElement("td");
+        if (col.num) td.classList.add("num");
+        if (col.cls) td.classList.add(col.cls);
+        td.setAttribute("data-label", col.label);  // shown as the field label in mobile card view
+        col.cell(td, l);
+        tr.appendChild(td);
+      });
+      tr.addEventListener("click", function () { openDrawer(l.id); });
+      body.appendChild(tr);
+    });
+  }
+
+  function clearFilters() {
+    $("#f-search").value = "";
+    $("#f-status").value = "";
+    $("#f-commune").value = "";
+    $("#f-rating").value = "0";
+    applyFilters();
+  }
+
+  // column picker open/close
+  $("#cols-btn").addEventListener("click", function (e) {
+    e.stopPropagation();
+    var m = $("#cols-menu");
+    m.hidden = !m.hidden;
+  });
+  document.addEventListener("click", function (e) {
+    var m = $("#cols-menu");
+    if (!m.hidden && !document.querySelector(".col-picker").contains(e.target)) m.hidden = true;
+  });
+
+  $("#f-search").addEventListener("input", debounce(applyFilters, 300));
+  $("#f-status").addEventListener("change", applyFilters);
+  $("#f-commune").addEventListener("change", applyFilters);
+  $("#f-rating").addEventListener("change", applyFilters);
+
+  function showToast(msg) {
+    var t = $("#toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(function () { t.classList.remove("show"); }, 2200);
+  }
+
+  function doReimport() {
+    var btn = $("#reimport-btn");
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "◷ Import…";
+    fetchJSON("/api/reimport", { method: "POST" }).then(function (res) {
+      showToast("↻ Réimport : " + res.data.added + " ajoutée(s), " + res.data.updated + " mise(s) à jour, " + res.data.total + " au total");
+      return loadListings();
+    }).catch(function () {
+      showToast("✕ Échec du réimport — serveur arrêté ?");
+    }).then(function () {
+      btn.disabled = false;
+      btn.textContent = label;
+    });
+  }
+  $("#reimport-btn").addEventListener("click", doReimport);
+
+  // ---- markdown renderer (line-based, XSS-safe: escape first, then apply inline markup) ----
+  function renderInline(s) {
+    s = escapeHtml(s);
+    s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return s;
+  }
+
+  function renderMarkdown(md) {
+    var lines = (md || "").split("\n");
+    var html = [];
+    var inList = false, inTable = false, para = [];
+
+    function flushPara() {
+      if (para.length) {
+        html.push("<p>" + renderInline(para.join(" ")) + "</p>");
+        para = [];
+      }
+    }
+    function closeList() {
+      if (inList) { html.push("</ul>"); inList = false; }
+    }
+    function closeTable() {
+      if (inTable) { html.push("</table>"); inTable = false; }
+    }
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var trimmed = line.trim();
+
+      if (trimmed === "") { flushPara(); closeList(); closeTable(); continue; }
+
+      var h = trimmed.match(/^(#{1,6})\s+(.*)$/);
+      if (h) {
+        flushPara(); closeList(); closeTable();
+        var level = h[1].length;
+        html.push("<h" + level + ">" + renderInline(h[2]) + "</h" + level + ">");
+        continue;
+      }
+
+      if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+        flushPara(); closeList(); closeTable();
+        html.push("<hr>");
+        continue;
+      }
+
+      var task = trimmed.match(/^-\s+\[( |x|X)\]\s+(.*)$/);
+      if (task) {
+        flushPara(); closeTable();
+        if (!inList) { html.push("<ul>"); inList = true; }
+        var checked = task[1].toLowerCase() === "x";
+        html.push('<li class="task"><input type="checkbox" disabled' + (checked ? " checked" : "") + "> " + renderInline(task[2]) + "</li>");
+        continue;
+      }
+      var li = trimmed.match(/^[-*]\s+(.*)$/);
+      if (li) {
+        flushPara(); closeTable();
+        if (!inList) { html.push("<ul>"); inList = true; }
+        html.push("<li>" + renderInline(li[1]) + "</li>");
+        continue;
+      }
+      closeList();
+
+      if (trimmed.indexOf("|") !== -1 && /^\|?.*\|.*\|?$/.test(trimmed)) {
+        if (/^[\s|:-]+$/.test(trimmed)) continue; // separator row
+        flushPara();
+        var cells = trimmed.replace(/^\||\|$/g, "").split("|").map(function (c) { return c.trim(); });
+        if (!inTable) { html.push("<table>"); inTable = true; }
+        html.push("<tr>" + cells.map(function (c) { return "<td>" + renderInline(c) + "</td>"; }).join("") + "</tr>");
+        continue;
+      }
+      closeTable();
+
+      para.push(trimmed);
+    }
+    flushPara(); closeList(); closeTable();
+    return html.join("\n");
+  }
+
+  // ---- drawer ----
+  function findListing(id) {
+    return state.listings.filter(function (l) { return l.id === id; })[0];
+  }
+
+  function renderFacts(facts) {
+    var tbl = $("#d-facts");
+    tbl.innerHTML = "";
+    var keys = Object.keys(facts || {});
+    if (keys.length === 0) { tbl.style.display = "none"; return; }
+    tbl.style.display = "";
+    keys.forEach(function (k) {
+      var tr = el("tr");
+      tr.innerHTML = "<td>" + escapeHtml(k) + "</td><td>" + escapeHtml(facts[k]) + "</td>";
+      tbl.appendChild(tr);
+    });
+  }
+
+  function renderStarsEdit(rating) {
+    var wrap = $("#d-stars");
+    wrap.innerHTML = "";
+    for (var i = 1; i <= 5; i++) {
+      var s = el("span", "", i <= (rating || 0) ? "★" : "☆");
+      s.dataset.val = i;
+      s.style.color = i <= (rating || 0) ? "#f5a623" : "var(--star-off)";
+      s.addEventListener("click", (function (val) {
+        return function () {
+          patchListing(state.currentId, { rating: val }).then(function (rec) {
+            renderStarsEdit(rec.rating);
+            updateLocal(rec);
+          });
+        };
+      })(i));
+      wrap.appendChild(s);
+    }
+  }
+
+  function patchListing(id, body) {
+    return fetchJSON("/api/listings/" + encodeURIComponent(id), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      if (!res.ok) { showToast("✕ Erreur : " + (res.data.error || res.status)); throw new Error("patch failed"); }
+      showToast("✓ Enregistré");
+      return res.data;
+    });
+  }
+
+  function updateLocal(rec) {
+    var idx = state.listings.findIndex(function (l) { return l.id === rec.id; });
+    if (idx !== -1) state.listings[idx] = rec;
+    applyFilters();
+  }
+
+  // numeric editable fields: PATCH on change (blur / Enter); empty = null (release override)
+  function bindNumericField(inputSel, fieldName) {
+    var input = $(inputSel);
+    function save() {
+      if (!state.currentId) return;
+      var raw = input.value.trim();
+      var val = raw === "" ? null : parseFloat(raw);
+      if (raw !== "" && (isNaN(val) || val < 0)) { showToast("Valeur invalide"); return; }
+      patchListing(state.currentId, (function () { var b = {}; b[fieldName] = val; return b; })())
+        .then(function (rec) {
+          updateLocal(rec);
+          fillNumericFields(rec);
+        });
+    }
+    input.addEventListener("blur", save);
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); save(); } });
+  }
+
+  function numOrBlank(v) { return v !== null && v !== undefined ? v : ""; }
+  function fillNumericFields(l) {
+    $("#d-price").value = numOrBlank(l.price);
+    $("#d-price-min").value = numOrBlank(l.price_min);
+    $("#d-price-offer").value = numOrBlank(l.price_offer);
+    $("#d-land").value = numOrBlank(l.land_surface);
+    $("#d-surface").value = numOrBlank(l.surface);
+    renderNegoHint(l);
+  }
+
+  // Show offer as a discount vs the asking price, and flag if the offer sits below the minimum.
+  function renderNegoHint(l) {
+    var hint = $("#d-nego-hint");
+    if (!hint) return;
+    var parts = [];
+    if (l.price && l.price_offer) {
+      var pct = Math.round((1 - l.price_offer / l.price) * 1000) / 10;
+      parts.push("Offre = " + fmtMoney(l.price_offer) + " (" + (pct >= 0 ? "-" : "+") + Math.abs(pct) + " % vs demandé)");
+    }
+    if (l.price_min && l.price_offer && l.price_offer < l.price_min) {
+      parts.push("⚠ offre sous le prix minimum");
+    }
+    if (l.price && l.price_min) {
+      var mp = Math.round((1 - l.price_min / l.price) * 1000) / 10;
+      parts.push("Min = " + (mp >= 0 ? "-" : "+") + Math.abs(mp) + " % vs demandé");
+    }
+    hint.textContent = parts.join("  ·  ");
+  }
+
+  // ---- photo gallery + lightbox ----
+  var lb = { photos: [], index: 0 };
+
+  function loadGallery(id) {
+    var g = $("#d-gallery"), section = $("#d-photos-section");
+    g.innerHTML = "";
+    section.hidden = true;
+    fetchJSON("/api/listings/" + encodeURIComponent(id) + "/photos").then(function (res) {
+      var photos = (res.data && res.data.photos) || [];
+      if (id !== state.currentId) return;  // drawer changed while loading
+      lb.photos = photos;
+      if (!photos.length) { section.hidden = true; return; }
+      section.hidden = false;
+      photos.forEach(function (p, i) {
+        var cell;
+        if (p.kind === "video") {
+          cell = el("div", "gallery-cell");
+          var v = document.createElement("video");
+          v.src = p.url; v.muted = true; v.preload = "metadata"; v.className = "gallery-vid";
+          cell.appendChild(v);
+          cell.appendChild(el("span", "play-badge", "▶"));
+        } else {
+          cell = document.createElement("img");
+          cell.src = p.url; cell.alt = p.name; cell.loading = "lazy";
+        }
+        cell.addEventListener("click", function () { openLightbox(i); });
+        g.appendChild(cell);
+      });
+    });
+  }
+
+  function openLightbox(i) {
+    if (!lb.photos.length) return;
+    lb.index = (i + lb.photos.length) % lb.photos.length;
+    var item = lb.photos[lb.index];
+    var img = $("#lb-img"), vid = $("#lb-video");
+    if (item.kind === "video") {
+      img.hidden = true; img.src = "";
+      vid.hidden = false; vid.src = item.url;
+      vid.play().catch(function () {});
+    } else {
+      vid.pause(); vid.hidden = true; vid.removeAttribute("src"); vid.load();
+      img.hidden = false; img.src = item.url;
+    }
+    $("#lb-count").textContent = (lb.index + 1) + " / " + lb.photos.length;
+    var multi = lb.photos.length > 1;
+    $("#lb-prev").style.display = multi ? "" : "none";
+    $("#lb-next").style.display = multi ? "" : "none";
+    $("#lightbox").hidden = false;
+  }
+  function closeLightbox() {
+    $("#lightbox").hidden = true;
+    $("#lb-img").src = "";
+    var vid = $("#lb-video"); vid.pause(); vid.removeAttribute("src"); vid.load();
+  }
+  function lbStep(d) { openLightbox(lb.index + d); }
+
+  $("#lb-close").addEventListener("click", closeLightbox);
+  $("#lb-prev").addEventListener("click", function (e) { e.stopPropagation(); lbStep(-1); });
+  $("#lb-next").addEventListener("click", function (e) { e.stopPropagation(); lbStep(1); });
+  $("#lightbox").addEventListener("click", function (e) { if (e.target === $("#lightbox")) closeLightbox(); });
+  document.addEventListener("keydown", function (e) {
+    if ($("#lightbox").hidden) return;
+    if (e.key === "Escape") closeLightbox();
+    else if (e.key === "ArrowLeft") lbStep(-1);
+    else if (e.key === "ArrowRight") lbStep(1);
+  });
+
+  // swipe left/right to change photo (touch + mouse drag), disabled on video so its controls work
+  (function () {
+    var startX = 0, startY = 0, tracking = false;
+    function canSwipe() {
+      var it = lb.photos[lb.index];
+      return lb.photos.length > 1 && !(it && it.kind === "video");
+    }
+    function begin(x, y) { startX = x; startY = y; tracking = true; }
+    function end(x, y) {
+      if (!tracking) return;
+      tracking = false;
+      var dx = x - startX, dy = y - startY;
+      if (canSwipe() && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        lbStep(dx < 0 ? 1 : -1);
+      }
+    }
+    var box = $("#lightbox");
+    box.addEventListener("touchstart", function (e) {
+      if (e.touches.length === 1) begin(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    box.addEventListener("touchend", function (e) {
+      var t = e.changedTouches[0]; if (t) end(t.clientX, t.clientY);
+    }, { passive: true });
+    var mouseDown = false;
+    $("#lb-img").addEventListener("mousedown", function (e) { mouseDown = true; begin(e.clientX, e.clientY); e.preventDefault(); });
+    window.addEventListener("mouseup", function (e) { if (mouseDown) { mouseDown = false; end(e.clientX, e.clientY); } });
+  })();
+
+  // ---- travaux (renovation line-items) ----
+  function renderWorks() {
+    var list = $("#d-works-list");
+    list.innerHTML = "";
+    if (!state.works.length) {
+      list.appendChild(el("div", "works-empty", "Aucun poste. Ajoutez les travaux à prévoir."));
+    }
+    state.works.forEach(function (item, i) {
+      var row = el("div", "works-row");
+      var lab = document.createElement("input");
+      lab.type = "text"; lab.className = "w-label"; lab.placeholder = "Poste (ex. Isolation des murs)";
+      lab.value = item.label || "";
+      lab.addEventListener("input", function () { state.works[i].label = lab.value; });
+      lab.addEventListener("blur", saveWorks);
+      var cost = document.createElement("input");
+      cost.type = "number"; cost.className = "w-cost"; cost.placeholder = "€"; cost.min = "0"; cost.step = "100";
+      cost.value = (item.cost !== null && item.cost !== undefined) ? item.cost : "";
+      cost.addEventListener("input", function () { state.works[i].cost = cost.value === "" ? null : parseFloat(cost.value); updateWorksTotal(); });
+      cost.addEventListener("blur", saveWorks);
+      var del = el("button", "w-del", "✕");
+      del.title = "Supprimer la ligne";
+      del.addEventListener("click", function () { state.works.splice(i, 1); renderWorks(); saveWorks(); });
+      row.appendChild(lab); row.appendChild(cost); row.appendChild(del);
+      list.appendChild(row);
+    });
+    updateWorksTotal();
+  }
+  function updateWorksTotal() {
+    var t = 0, seen = false;
+    state.works.forEach(function (w) { if (typeof w.cost === "number" && !isNaN(w.cost)) { t += w.cost; seen = true; } });
+    $("#d-works-total").textContent = seen ? fmtMoney(t) : "";
+  }
+  function saveWorks() {
+    if (!state.currentId) return;
+    var clean = state.works
+      .map(function (w) { return { label: (w.label || "").trim(), cost: (typeof w.cost === "number" && !isNaN(w.cost)) ? w.cost : null }; })
+      .filter(function (w) { return w.label || w.cost !== null; });
+    patchListing(state.currentId, { works: clean }).then(updateLocal);
+  }
+  $("#d-works-add").addEventListener("click", function () {
+    state.works.push({ label: "", cost: null });
+    renderWorks();
+    var inputs = $("#d-works-list").querySelectorAll("input.w-label");
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+
+  // ---- annonces (announce links) ----
+  function extractUrls(text) {
+    var out = [], seen = {}, m;
+    var re = /https?:\/\/[^\s<>"')\]]+/g;
+    while ((m = re.exec(text || "")) !== null) {
+      var u = m[0].replace(/[.,;:]+$/, "");  // trim trailing punctuation
+      if (!seen[u]) { seen[u] = 1; out.push(u); }
+    }
+    return out;
+  }
+  function hostLabel(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ""); } catch (e) { return url; }
+  }
+  function linkRow(url, source, onDel) {
+    var row = el("div", "link-item");
+    var a = document.createElement("a");
+    a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.textContent = url;
+    row.appendChild(a);
+    row.appendChild(el("span", "l-src", source));
+    if (onDel) {
+      var del = el("button", "l-del", "✕");
+      del.title = "Retirer le lien";
+      del.addEventListener("click", onDel);
+      row.appendChild(del);
+    }
+    return row;
+  }
+  function renderLinks(l) {
+    var list = $("#d-links-list");
+    list.innerHTML = "";
+    var manual = state.links;
+    var detected = extractUrls(l && l.md_body).filter(function (u) { return manual.indexOf(u) === -1; });
+    detected.forEach(function (u) { list.appendChild(linkRow(u, "(fiche)", null)); });
+    manual.forEach(function (u, i) {
+      list.appendChild(linkRow(u, hostLabel(u), function () { state.links.splice(i, 1); renderLinks(l); saveLinks(); }));
+    });
+    if (!detected.length && !manual.length) {
+      list.appendChild(el("div", "links-empty", "Aucune annonce enregistrée."));
+    }
+  }
+  function saveLinks() {
+    if (!state.currentId) return;
+    patchListing(state.currentId, { links: state.links }).then(updateLocal);
+  }
+  function addLinkFromInput() {
+    var input = $("#d-link-input");
+    var u = input.value.trim();
+    if (!u) return;
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    if (state.links.indexOf(u) === -1) state.links.push(u);
+    input.value = "";
+    renderLinks(findListing(state.currentId));
+    saveLinks();
+  }
+  $("#d-link-add").addEventListener("click", addLinkFromInput);
+  $("#d-link-input").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addLinkFromInput(); } });
+
+  function openDrawer(id) {
+    var l = findListing(id);
+    if (!l) return;
+    state.currentId = id;
+    state.commentDirty = false;
+    $("#d-title").textContent = l.title || l.id;
+    $("#d-subtitle").textContent = [l.code, TYPE_LABELS[l.type] || l.type, l.commune].filter(Boolean).join(" · ");
+    loadGallery(id);
+    state.works = (l.works || []).map(function (w) { return { label: w.label, cost: w.cost }; });
+    renderWorks();
+    state.links = (l.links || []).slice();
+    renderLinks(l);
+    renderStarsEdit(l.rating);
+    $("#d-status").value = l.status || "researching";
+    fillNumericFields(l);
+    $("#d-tags").value = (l.tags || []).join(", ");
+    $("#d-verdict").value = l.verdict || "";
+    $("#d-comment").value = l.comment || "";
+    $("#d-comment-flash").classList.remove("show");
+    renderFacts(l.facts);
+    $("#d-md").innerHTML = renderMarkdown(l.md_body);
+    $("#overlay").classList.add("open");
+    $("#drawer").classList.add("open");
+  }
+
+  function closeDrawer(force) {
+    if (!force && state.commentDirty) {
+      if (!confirm("Abandonner le commentaire non enregistré ?")) return;
+    }
+    state.commentDirty = false;
+    $("#overlay").classList.remove("open");
+    $("#drawer").classList.remove("open");
+    state.currentId = null;
+  }
+
+  $("#d-close").addEventListener("click", function () { closeDrawer(false); });
+  $("#overlay").addEventListener("click", function () { closeDrawer(false); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && $("#lightbox").hidden && $("#drawer").classList.contains("open")) closeDrawer(false);
+  });
+
+  $("#d-delete").addEventListener("click", function () {
+    var id = state.currentId;
+    if (!id) return;
+    var l = findListing(id);
+    var name = (l && (l.title || l.commune)) || id;
+    if (!confirm("Retirer « " + name + " » du tableau de bord ?\n\nLa fiche .md reste sur le disque.")) return;
+    fetchJSON("/api/listings/" + encodeURIComponent(id), { method: "DELETE" }).then(function (res) {
+      if (!res.ok) { showToast("✕ Suppression impossible"); return; }
+      state.listings = state.listings.filter(function (x) { return x.id !== id; });
+      closeDrawer(true);
+      populateCommuneFilter();
+      applyFilters();
+      showToast("✕ Annonce retirée");
+    });
+  });
+
+  $("#d-status").addEventListener("change", function () {
+    patchListing(state.currentId, { status: $("#d-status").value }).then(updateLocal);
+  });
+
+  bindNumericField("#d-price", "price");
+  bindNumericField("#d-price-min", "price_min");
+  bindNumericField("#d-price-offer", "price_offer");
+  bindNumericField("#d-land", "land_surface");
+  bindNumericField("#d-surface", "surface");
+
+  function saveTags() {
+    var tags = $("#d-tags").value.split(",").map(function (t) { return t.trim(); }).filter(Boolean);
+    patchListing(state.currentId, { tags: tags }).then(updateLocal);
+  }
+  $("#d-tags").addEventListener("blur", saveTags);
+  $("#d-tags").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveTags(); } });
+
+  function saveVerdict() {
+    patchListing(state.currentId, { verdict: $("#d-verdict").value }).then(updateLocal);
+  }
+  $("#d-verdict").addEventListener("blur", saveVerdict);
+  $("#d-verdict").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveVerdict(); } });
+
+  $("#d-comment").addEventListener("input", function () { state.commentDirty = true; });
+  $("#d-comment-save").addEventListener("click", function () {
+    patchListing(state.currentId, { comment: $("#d-comment").value }).then(function (rec) {
+      updateLocal(rec);
+      state.commentDirty = false;
+      var flash = $("#d-comment-flash");
+      flash.classList.add("show");
+      setTimeout(function () { flash.classList.remove("show"); }, 1500);
+    });
+  });
+
+  loadSettings().then(loadListings);
+})();
+</script>
+</body>
+</html>
