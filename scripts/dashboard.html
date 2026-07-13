@@ -237,6 +237,15 @@
   .link-add { display: flex; gap: 8px; margin-top: 8px; }
   .link-add input { flex: 1; font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text); }
   .links-empty { color: var(--text-dim); font-size: 13px; }
+  /* map / location block in the drawer */
+  .map-block { border-top: 1px solid var(--border); padding-top: 16px; }
+  .map-block .map-frame {
+    width: 100%; height: 220px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--panel-2); display: block;
+  }
+  /* "Google Maps" link appended to the Adresse row of the facts table */
+  .fact-map-link { color: var(--accent); text-decoration: none; font-size: 12px; white-space: nowrap; }
+  .fact-map-link:hover { text-decoration: underline; }
   /* photo gallery in the drawer */
   .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-bottom: 20px; }
   .gallery[hidden] { display: none; }
@@ -464,6 +473,10 @@
       <textarea id="d-comment"></textarea>
       <button id="d-comment-save">Enregistrer</button>
       <span class="save-flash" id="d-comment-flash">enregistré &#10003;</span>
+    </div>
+    <div class="drawer-section map-block" id="d-map-section" hidden>
+      <label class="section-label">Localisation</label>
+      <iframe id="d-map-frame" class="map-frame" title="Carte" loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe>
     </div>
     <table class="facts-table" id="d-facts"></table>
     <div class="md-body" id="d-md"></div>
@@ -959,14 +972,28 @@
   function renderFacts(facts) {
     var tbl = $("#d-facts");
     tbl.innerHTML = "";
-    var keys = Object.keys(facts || {});
-    if (keys.length === 0) { tbl.style.display = "none"; return; }
+    facts = facts || {};
+    var keys = Object.keys(facts);
+    var hasAddr = keys.some(function (k) { return /^adresse/i.test(k); });
+    // Address is the primary datum for every listing — always show it, even when
+    // the note has no explicit "Adresse" fact (synthesise it from the title/géocode).
+    var synthAddr = (!hasAddr && state.map && state.map.addr) ? state.map.addr : null;
+    if (keys.length === 0 && !synthAddr) { tbl.style.display = "none"; return; }
     tbl.style.display = "";
-    keys.forEach(function (k) {
+
+    function addRow(k, val, isAddr) {
+      var valHtml = escapeHtml(val);
+      if (isAddr && state.map && state.map.link) {
+        valHtml += ' &nbsp;<a class="fact-map-link" href="' + escapeHtml(state.map.link) +
+          '" target="_blank" rel="noopener noreferrer">Google Maps &#8599;</a>';
+      }
       var tr = el("tr");
-      tr.innerHTML = "<td>" + escapeHtml(k) + "</td><td>" + escapeHtml(facts[k]) + "</td>";
+      tr.innerHTML = "<td>" + escapeHtml(k) + "</td><td>" + valHtml + "</td>";
       tbl.appendChild(tr);
-    });
+    }
+
+    if (synthAddr) addRow("Adresse", synthAddr, true);
+    keys.forEach(function (k) { addRow(k, facts[k], /^adresse/i.test(k)); });
   }
 
   function renderStarsEdit(rating) {
@@ -1253,6 +1280,51 @@
   $("#d-link-add").addEventListener("click", addLinkFromInput);
   $("#d-link-input").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addLinkFromInput(); } });
 
+  // The H1 is "<address + code postal> — <description>"; keep the address part
+  // (split only on a spaced dash so hyphenated commune names survive).
+  function cleanAddress(title) {
+    return title ? title.split(/\s+[—–-]\s+/)[0].trim() : "";
+  }
+
+  // Pull precise lat,lon out of a geocoding fact (Géocode / BAN / GPS / …).
+  function coordFromFacts(facts) {
+    for (var k in facts) {
+      if (!Object.prototype.hasOwnProperty.call(facts, k)) continue;
+      if (!/coord|gps|g[ée]ocod|latitude|\blat\b|\bban\b|\brnb\b/i.test(k)) continue;
+      var m = String(facts[k]).match(/(-?\d{1,2}\.\d{3,})\s*[,;\s]\s*(-?\d{1,3}\.\d{3,})/);
+      if (m) return m[1] + "," + m[2];
+    }
+    return "";
+  }
+
+  // Resolve a listing's location into an embed URL + a Google Maps link.
+  // Only the property's location travels out to Google — never user identity.
+  function mapInfo(l) {
+    var facts = l.facts || {};
+    var addr = (facts["Adresse"] || cleanAddress(l.title)).trim();
+    var query = coordFromFacts(facts);           // exact pin when we have it
+    if (!query) {
+      var parts = [];
+      if (addr) parts.push(addr);
+      if (l.commune && addr.indexOf(l.commune) === -1) parts.push(l.commune);
+      query = parts.join(", ").trim();
+    }
+    if (!query) return null;
+    var enc = encodeURIComponent(query);
+    return {
+      addr: addr,
+      embed: "https://maps.google.com/maps?q=" + enc + "&z=17&hl=fr&output=embed",
+      link: "https://www.google.com/maps/search/?api=1&query=" + enc
+    };
+  }
+
+  function setupMap() {
+    var section = $("#d-map-section"), frame = $("#d-map-frame");
+    if (!state.map) { section.hidden = true; frame.removeAttribute("src"); return; }
+    frame.src = state.map.embed;
+    section.hidden = false;
+  }
+
   function openDrawer(id) {
     var l = findListing(id);
     if (!l) return;
@@ -1272,7 +1344,9 @@
     $("#d-verdict").value = l.verdict || "";
     $("#d-comment").value = l.comment || "";
     $("#d-comment-flash").classList.remove("show");
+    state.map = mapInfo(l);
     renderFacts(l.facts);
+    setupMap();
     $("#d-md").innerHTML = renderMarkdown(l.md_body);
     $("#overlay").classList.add("open");
     $("#drawer").classList.add("open");
