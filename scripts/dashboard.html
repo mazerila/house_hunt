@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recherche maison — Île-de-France</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏡%3C/text%3E%3C/svg%3E">
 <style>
   :root {
     --bg: #f6f7f9;
@@ -199,6 +200,17 @@
   .md-body p { line-height: 1.5; }
   .md-body a { color: var(--accent); }
 
+  #scroll-top {
+    position: fixed; bottom: 20px; right: 20px; z-index: 90;
+    width: 42px; height: 42px; border-radius: 50%; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--panel); color: var(--text-dim); border: 1px solid var(--border);
+    box-shadow: 0 2px 10px var(--shadow);
+    opacity: 0; pointer-events: none; transform: translateY(8px);
+    transition: opacity .18s ease, transform .18s ease, color .12s ease, box-shadow .12s ease;
+  }
+  #scroll-top.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  #scroll-top:hover { color: var(--text); filter: none; box-shadow: 0 4px 14px var(--shadow); }
   #toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: var(--toast-bg); color: var(--toast-fg); padding: 10px 18px; border-radius: 8px;
@@ -268,16 +280,70 @@
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     color: #fff; font-size: 26px; text-shadow: 0 1px 6px rgba(0,0,0,.8); pointer-events: none;
   }
+  /* find-in-drawer (search all text of the open listing) */
+  .drawer-find {
+    position: sticky; top: 0; z-index: 6;
+    display: flex; justify-content: flex-end;
+    margin: -4px 0 6px; pointer-events: none;  /* only the pill is interactive */
+  }
+  .drawer-find > * { pointer-events: auto; }
+  .find-toggle {
+    width: 38px; height: 38px; border-radius: 50%; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--panel); color: var(--text-dim); border: 1px solid var(--border);
+    box-shadow: 0 1px 4px var(--shadow); cursor: pointer;
+    transition: color .12s ease, box-shadow .12s ease;
+  }
+  .find-toggle:hover { color: var(--text); filter: none; box-shadow: 0 2px 8px var(--shadow); }
+  .find-panel {
+    display: none; align-items: center; gap: 2px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 22px;
+    box-shadow: 0 3px 14px var(--shadow); padding: 3px 5px 3px 12px;
+    width: 100%; max-width: 360px;
+  }
+  .find-panel-icon { color: var(--text-dim); flex: 0 0 auto; margin-right: 6px; }
+  .find-panel input {
+    flex: 1 1 auto; min-width: 0; border: none; background: transparent; color: var(--text);
+    outline: none; font: inherit; font-size: 14px; padding: 7px 0;
+  }
+  .find-count { font-size: 12px; color: var(--text-dim); white-space: nowrap; padding: 0 4px; min-width: 30px; text-align: right; }
+  .find-count.none { color: #c0392b; }
+  html[data-theme="dark"] .find-count.none { color: #f87171; }
+  .find-nav {
+    flex: 0 0 auto; border: none; background: transparent; color: var(--text-dim);
+    cursor: pointer; font-size: 20px; line-height: 1; width: 30px; height: 30px;
+    border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    transition: background .12s ease, color .12s ease;
+  }
+  .find-nav:hover { background: var(--panel-2); color: var(--text); filter: none; box-shadow: none; }
+  .find-nav:disabled { opacity: .35; cursor: default; background: transparent; color: var(--text-dim); }
+  .find-x { font-size: 22px; }
+  .drawer-find[data-open="1"] .find-toggle { display: none; }
+  .drawer-find[data-open="1"] .find-panel { display: flex; }
+  mark.find-hl {
+    background: #ffe58a; color: #1a1a1a; border-radius: 2px; padding: 0 1px;
+    scroll-margin: 60px;
+  }
+  mark.find-hl.current { background: #ff9f43; box-shadow: 0 0 0 2px rgba(255,159,67,.45); }
+  html[data-theme="dark"] mark.find-hl { background: #7a6620; color: #fdf6e3; }
+  html[data-theme="dark"] mark.find-hl.current { background: #d98a1f; color: #1a1a1a; }
+
   /* lightbox */
   #lightbox {
     position: fixed; inset: 0; z-index: 300; background: rgba(8, 9, 12, .92);
     display: flex; align-items: center; justify-content: center;
+    /* own all touch gestures inside the overlay so the browser never page-zooms/pans over it */
+    touch-action: none; overscroll-behavior: contain;
   }
   #lightbox[hidden] { display: none; }
   #lightbox img, #lightbox video { max-width: 92vw; max-height: 90vh; object-fit: contain; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,.6); }
-  #lightbox img { touch-action: pan-y; cursor: grab; }
+  #lightbox img {
+    touch-action: none; cursor: grab; transform-origin: center center; will-change: transform;
+    -webkit-user-select: none; user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none;
+  }
+  #lightbox img.lb-zoomed { cursor: grab; }
   #lightbox img:active { cursor: grabbing; }
-  #lightbox img.lb-sliding { transition: transform .12s ease, opacity .12s ease; }
+  #lightbox img.lb-anim { transition: transform .2s ease; }
   #lightbox [hidden] { display: none; }
   #lightbox .lb-close, #lightbox .lb-nav {
     position: absolute; background: rgba(255,255,255,.12); color: #fff; border: none;
@@ -298,8 +364,103 @@
   html[data-theme="dark"] button.danger:hover { background: #3a1e1e; }
   html[data-theme="dark"] td.offer-pos { color: #4ade80; }
 
+  /* ---- tabs (Annonces / Villes ciblées) ---- */
+  .tabs {
+    display: flex; gap: 2px; padding: 0 12px;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+  }
+  .tabs .tab {
+    background: transparent; color: var(--text-dim); border: none; border-radius: 0;
+    border-bottom: 2px solid transparent; padding: 11px 14px; font-weight: 600;
+  }
+  .tabs .tab:hover { color: var(--text); filter: none; box-shadow: none; background: transparent; }
+  .tabs .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tabs .tab .tab-ico { vertical-align: -2px; margin-right: 3px; }
+  header h1 .brand-ico { vertical-align: -3px; opacity: .9; margin-right: 2px; }
+  .view[hidden] { display: none; }
+  /* transposed mobile-only layout in each town card (hidden on desktop) */
+  .tn-reperes, .town-card .tn-card-map { display: none; }
+
+  /* ---- target-towns study ---- */
+  .towns-main { padding: 16px 20px 60px; }
+  .towns-intro { color: var(--text-dim); margin: 0 0 18px; max-width: 900px; line-height: 1.55; }
+  .towns-compare-wrap {
+    overflow-x: auto; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--panel); margin-bottom: 26px;
+  }
+  table.towns-compare { border-collapse: collapse; width: 100%; min-width: 640px; }
+  table.towns-compare th, table.towns-compare td {
+    border-bottom: 1px solid var(--border); padding: 10px 12px;
+    text-align: left; vertical-align: top; font-size: 13px; line-height: 1.4;
+  }
+  table.towns-compare thead th {
+    background: var(--panel-2); color: var(--text-dim);
+    position: sticky; top: var(--header-h, 51px); z-index: 3;   /* city-name row stays visible on scroll */
+  }
+  table.towns-compare thead th:first-child { left: 0; z-index: 4; }
+  table.towns-compare thead th.town-name {
+    color: var(--text); font-size: 14px; font-weight: 700; white-space: nowrap; min-width: 150px;
+  }
+  table.towns-compare thead th.town-name .tn-name { cursor: pointer; }
+  table.towns-compare thead th.town-name .tn-name:hover { color: var(--accent); }
+  table.towns-compare tr.map-row td { padding: 8px; }
+  iframe.town-map {
+    width: 100%; height: 100px; display: block;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2);
+  }
+  /* show/hide city chips */
+  .towns-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .towns-toggle .toggle-label {
+    color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; font-weight: 600;
+  }
+  .town-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--panel);
+    color: var(--text); cursor: pointer; font-size: 13px; font-weight: 500; user-select: none;
+    transition: background .1s ease;
+  }
+  .town-chip:hover { background: var(--row-hover); }
+  .town-chip .chip-box {
+    width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--accent);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; color: var(--accent);
+  }
+  .town-chip.off { color: var(--text-dim); background: var(--panel-2); }
+  .town-chip.off .chip-box { border-color: var(--text-dim); }
+  table.towns-compare tbody th {
+    color: var(--text-dim); font-weight: 600; white-space: nowrap;
+    background: var(--panel-2); position: sticky; left: 0; z-index: 1;
+  }
+  table.towns-compare tbody tr:last-child th,
+  table.towns-compare tbody tr:last-child td { border-bottom: none; }
+  table.towns-compare td strong { color: var(--text); }
+  table.towns-compare a { color: var(--accent); }
+
+  .town-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .town-card {
+    border: 1px solid var(--border); border-radius: 10px; background: var(--panel); padding: 14px 18px 18px;
+  }
+  .town-card h3 { margin: 0 0 4px; font-size: 16px; }
+  .town-card .md-body { border-top: none; padding-top: 0; }
+  .town-card .md-body h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .03em; color: var(--text-dim); margin-top: 16px; }
+
   /* ---- mobile layout (phones): desktop is unchanged above this line ---- */
   @media (max-width: 640px) {
+    .tabs { padding: 0 6px; }
+    .tabs .tab { padding: 11px 12px; font-size: 13px; }
+    .towns-main { padding: 12px 12px 64px; }
+    .town-cards { grid-template-columns: 1fr; }
+    /* the wide 9-column table is unreadable on a phone → transpose to one card per commune */
+    .towns-compare-wrap { display: none; }
+    .town-card .tn-card-map {
+      display: block; width: 100%; height: 150px; margin: 2px 0 12px;
+      border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2);
+    }
+    .tn-reperes {
+      display: grid; grid-template-columns: auto 1fr; gap: 5px 12px;
+      margin: 0 0 14px; font-size: 13px; align-items: start;
+    }
+    .tn-reperes dt { color: var(--text-dim); font-weight: 600; }
+    .tn-reperes dd { margin: 0; }
     header { flex-wrap: wrap; gap: 8px 10px; padding: 10px 14px; }
     header h1 { font-size: 15px; width: 100%; line-height: 1.3; }
     /* row 2: count on the left, spacer pushes the buttons to the right */
@@ -354,13 +515,19 @@
 <body>
 
 <header>
-  <h1><span class="ico">&#8962;</span> Recherche maison — Île-de-France</h1>
+  <h1><svg class="brand-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13V10.5"/><path d="M10 20v-6h4v6"/></svg> Recherche maison — Île-de-France</h1>
   <span class="count" id="listing-count"></span>
   <div class="spacer"></div>
   <button class="secondary" id="theme-btn" title="Basculer clair/sombre">&#9680;</button>
   <button class="secondary" id="reimport-btn"><span class="ico">&#8635;</span> Réimporter</button>
 </header>
 
+<nav class="tabs">
+  <button class="tab active" data-view="listings"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg> Annonces</button>
+  <button class="tab" data-view="towns"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 0 1 12 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg> Villes ciblées</button>
+</nav>
+
+<div id="view-listings" class="view">
 <div class="filters">
   <input type="text" id="f-search" placeholder="Rechercher titre, commune, tags, verdict…">
   <select id="f-status">
@@ -396,6 +563,16 @@
     </table>
   </div>
 </main>
+</div>
+
+<div id="view-towns" class="view" hidden>
+  <main class="towns-main">
+    <p class="towns-intro">Étude comparative des communes ciblées. Données de référence issues des fiches <code>towns/*.md</code> (prix, densité, transport, vélo, couloir aérien, standing, logement social…). Cliquez le nom d'une commune pour aller à sa fiche. La taille de terrain est <em>indicative</em> (estimée d'après la densité et le type de bâti — DVF exact sur demande). Sur mobile, le tableau se transforme en une carte par commune.</p>
+    <div class="towns-toggle" id="towns-toggle"></div>
+    <div class="towns-compare-wrap" id="towns-compare"></div>
+    <div class="town-cards" id="town-cards"></div>
+  </main>
+</div>
 
 <div id="overlay"></div>
 <div id="drawer">
@@ -407,6 +584,19 @@
     <button class="close-btn" id="d-close">&times;</button>
   </div>
   <div class="drawer-body">
+    <div class="drawer-find" id="d-find" data-open="0">
+      <button class="find-toggle" id="find-toggle" title="Rechercher dans la fiche" aria-label="Rechercher dans la fiche">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      </button>
+      <div class="find-panel">
+        <svg class="find-panel-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+        <input type="text" id="find-input" placeholder="Rechercher dans la fiche…" autocomplete="off" spellcheck="false">
+        <span class="find-count" id="find-count"></span>
+        <button class="find-nav" id="find-prev" title="Précédent (Maj+Entrée)" aria-label="Précédent">&#8249;</button>
+        <button class="find-nav" id="find-next" title="Suivant (Entrée)" aria-label="Suivant">&#8250;</button>
+        <button class="find-nav find-x" id="find-close" title="Fermer (Échap)" aria-label="Fermer">&times;</button>
+      </div>
+    </div>
     <div class="drawer-section" id="d-photos-section" hidden>
       <label class="section-label">Photos</label>
       <div class="gallery" id="d-gallery"></div>
@@ -415,15 +605,26 @@
       <label>Note</label>
       <div class="stars-edit" id="d-stars"></div>
     </div>
-    <div class="field-row">
-      <label>Statut</label>
-      <select id="d-status">
-        <option value="researching">&#9906; Recherche</option>
-        <option value="visit-planned">&#9873; Visite prévue</option>
-        <option value="visited">&#10003; Visité</option>
-        <option value="offer">&#8364; Offre</option>
-        <option value="rejected">&#10005; Rejeté</option>
-      </select>
+    <div class="field-grid">
+      <div class="field-row">
+        <label>Statut</label>
+        <select id="d-status">
+          <option value="researching">&#9906; Recherche</option>
+          <option value="visit-planned">&#9873; Visite prévue</option>
+          <option value="visited">&#10003; Visité</option>
+          <option value="offer">&#8364; Offre</option>
+          <option value="rejected">&#10005; Rejeté</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <label>Mitoyenneté</label>
+        <select id="d-mitoyennete">
+          <option value="">—</option>
+          <option value="individuelle">Individuelle</option>
+          <option value="mitoyenne">Mitoyenne</option>
+          <option value="n/a">Sans objet (appartement)</option>
+        </select>
+      </div>
     </div>
     <div class="field-grid">
       <div class="field-row">
@@ -495,6 +696,10 @@
   </div>
 </div>
 
+<button id="scroll-top" title="Haut de page" aria-label="Haut de page">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"/><path d="M6 12l6-6 6 6"/></svg>
+</button>
+
 <div id="toast"></div>
 
 <div id="lightbox" hidden>
@@ -522,7 +727,7 @@
     applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
   });
 
-  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [] };
+  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], townsAll: [], townHidden: null };
 
   var STATUS_LABELS = {
     "researching": "⚲ Recherche",
@@ -692,12 +897,19 @@
   }
 
   // ---- column catalog (frontend owns labels + cell renderers; server persists which are visible) ----
-  var DEFAULT_COLS = ["code", "title", "commune", "price", "price_offer", "works_total", "land_surface", "surface", "dpe", "rating", "status", "updated"];
+  var DEFAULT_COLS = ["code", "title", "commune", "mitoyennete", "price", "price_offer", "works_total", "land_surface", "surface", "dpe", "rating", "status", "updated"];
   var COLUMN_CATALOG = [
     { key: "code", label: "Code", cell: function (td, l) { td.textContent = l.code || "—"; } },
     { key: "title", label: "Titre", cell: function (td, l) { td.textContent = l.title || l.id; } },
     { key: "commune", label: "Commune", cell: function (td, l) { td.innerHTML = l.commune ? '<span class="ico">⌂</span> ' + escapeHtml(l.commune) : "—"; } },
     { key: "type", label: "Type", cell: function (td, l) { td.textContent = TYPE_LABELS[l.type] || l.type || "—"; } },
+    { key: "mitoyennete", label: "Mitoyen.", cell: function (td, l) {
+      var m = l.mitoyennete;
+      if (!m || m === "n/a") { td.textContent = "—"; return; }
+      var lab = m === "mitoyenne" ? "Mitoyenne" : (m === "individuelle" ? "Individuelle" : m);
+      var bg = m === "mitoyenne" ? "#fde68a" : "#bbf7d0";
+      td.innerHTML = '<span class="pill" style="background:' + bg + ';color:#333">' + escapeHtml(lab) + '</span>';
+    } },
     { key: "price", label: "Prix demandé", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.price); } },
     { key: "price_min", label: "Prix min", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.price_min); } },
     { key: "price_offer", label: "Offre", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.price_offer); } },
@@ -1082,6 +1294,7 @@
 
   // ---- photo gallery + lightbox ----
   var lb = { photos: [], index: 0 };
+  var resetLbZoom = function () {};  // assigned by the zoom controller below
 
   function loadGallery(id) {
     var g = $("#d-gallery"), section = $("#d-photos-section");
@@ -1123,6 +1336,7 @@
     } else {
       vid.pause(); vid.hidden = true; vid.removeAttribute("src"); vid.load();
       img.hidden = false; img.src = item.url;
+      resetLbZoom(false);
     }
     $("#lb-count").textContent = (lb.index + 1) + " / " + lb.photos.length;
     var multi = lb.photos.length > 1;
@@ -1132,6 +1346,7 @@
   }
   function closeLightbox() {
     $("#lightbox").hidden = true;
+    resetLbZoom(false);
     $("#lb-img").src = "";
     var vid = $("#lb-video"); vid.pause(); vid.removeAttribute("src"); vid.load();
   }
@@ -1148,32 +1363,117 @@
     else if (e.key === "ArrowRight") lbStep(1);
   });
 
-  // swipe left/right to change photo (touch + mouse drag), disabled on video so its controls work
+  // Touch controller: pinch-to-zoom + pan + double-tap on the image, swipe to change
+  // photo only when not zoomed. The lightbox owns all touch gestures (touch-action:none),
+  // so the browser's own page-zoom can never fight the image zoom on mobile.
   (function () {
-    var startX = 0, startY = 0, tracking = false;
-    function canSwipe() {
-      var it = lb.photos[lb.index];
-      return lb.photos.length > 1 && !(it && it.kind === "video");
+    var MAX = 5, MIN = 1, DBL = 2.5;
+    var box = $("#lightbox"), imgEl = $("#lb-img");
+    var z = { scale: 1, tx: 0, ty: 0 };
+    // gesture bookkeeping
+    var mode = null;                 // "one" | "pinch"
+    var sx = 0, sy = 0, lx = 0, ly = 0, moved = false, dist0 = 0;
+    var lastTap = 0, lastTapX = 0, lastTapY = 0;
+
+    function isImage() { var it = lb.photos[lb.index]; return it && it.kind !== "video"; }
+    function dist(a, b) { return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); }
+    function mid(a, b) { return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 }; }
+
+    function clampT() {
+      var ox = Math.max(0, (imgEl.offsetWidth * z.scale - window.innerWidth) / 2);
+      var oy = Math.max(0, (imgEl.offsetHeight * z.scale - window.innerHeight) / 2);
+      z.tx = Math.max(-ox, Math.min(ox, z.tx));
+      z.ty = Math.max(-oy, Math.min(oy, z.ty));
     }
-    function begin(x, y) { startX = x; startY = y; tracking = true; }
-    function end(x, y) {
-      if (!tracking) return;
-      tracking = false;
-      var dx = x - startX, dy = y - startY;
-      if (canSwipe() && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-        lbStep(dx < 0 ? 1 : -1);
-      }
+    function apply(anim) {
+      imgEl.classList.toggle("lb-anim", !!anim);
+      imgEl.classList.toggle("lb-zoomed", z.scale > 1.001);
+      imgEl.style.transform = "translate(" + z.tx + "px," + z.ty + "px) scale(" + z.scale + ")";
     }
-    var box = $("#lightbox");
+    function reset(anim) { z.scale = 1; z.tx = 0; z.ty = 0; apply(anim); }
+    resetLbZoom = reset;  // expose to openLightbox/closeLightbox
+
+    // change scale while keeping the focal point (fx,fy screen coords) fixed under the fingers
+    function scaleAround(ns, fx, fy) {
+      ns = Math.max(MIN, Math.min(MAX, ns));
+      var fxc = fx - window.innerWidth / 2, fyc = fy - window.innerHeight / 2;
+      var r = ns / z.scale;
+      z.tx = fxc - r * (fxc - z.tx);
+      z.ty = fyc - r * (fyc - z.ty);
+      z.scale = ns;
+      clampT();
+    }
+
     box.addEventListener("touchstart", function (e) {
-      if (e.touches.length === 1) begin(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: true });
+      if (!isImage()) return;
+      if (e.touches.length === 1) {
+        var t = e.touches[0];
+        mode = "one"; sx = lx = t.clientX; sy = ly = t.clientY; moved = false;
+      } else if (e.touches.length === 2) {
+        mode = "pinch";
+        dist0 = dist(e.touches[0], e.touches[1]);
+        var m = mid(e.touches[0], e.touches[1]); lx = m.x; ly = m.y;
+        imgEl.classList.remove("lb-anim");
+        e.preventDefault();  // stop the browser starting its own pinch-zoom
+      }
+    }, { passive: false });
+
+    box.addEventListener("touchmove", function (e) {
+      if (!isImage()) return;
+      if (mode === "pinch" && e.touches.length >= 2) {
+        var d = dist(e.touches[0], e.touches[1]), m = mid(e.touches[0], e.touches[1]);
+        if (dist0 > 0) scaleAround(z.scale * (d / dist0), m.x, m.y);
+        z.tx += m.x - lx; z.ty += m.y - ly; clampT();      // let a two-finger drag pan too
+        dist0 = d; lx = m.x; ly = m.y;
+        apply(false); e.preventDefault();
+      } else if (mode === "one" && e.touches.length === 1) {
+        var t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+        if (Math.abs(dx) > 8 || Math.abs(dy) > 8) moved = true;
+        if (z.scale > 1) {                                  // panning a zoomed image
+          z.tx += t.clientX - lx; z.ty += t.clientY - ly; clampT();
+          lx = t.clientX; ly = t.clientY;
+          apply(false); e.preventDefault();
+        }
+        // at scale 1 a one-finger drag is a swipe — leave it for touchend, don't preventDefault
+      }
+    }, { passive: false });
+
     box.addEventListener("touchend", function (e) {
-      var t = e.changedTouches[0]; if (t) end(t.clientX, t.clientY);
-    }, { passive: true });
-    var mouseDown = false;
-    $("#lb-img").addEventListener("mousedown", function (e) { mouseDown = true; begin(e.clientX, e.clientY); e.preventDefault(); });
-    window.addEventListener("mouseup", function (e) { if (mouseDown) { mouseDown = false; end(e.clientX, e.clientY); } });
+      if (!isImage()) { mode = null; return; }
+      var was = mode;
+      if (e.touches.length === 0) {
+        var t = e.changedTouches[0];
+        if (was === "one" && !moved && t) {
+          var now = Date.now();
+          if (now - lastTap < 300 && Math.abs(t.clientX - lastTapX) < 40 && Math.abs(t.clientY - lastTapY) < 40) {
+            if (z.scale > 1) reset(true); else { scaleAround(DBL, t.clientX, t.clientY); apply(true); }
+            lastTap = 0;                                    // consume the double-tap
+          } else { lastTap = now; lastTapX = t.clientX; lastTapY = t.clientY; }
+        } else if (was === "one" && moved && z.scale <= 1 && t && lb.photos.length > 1) {
+          var dx = t.clientX - sx, dy = t.clientY - sy;     // swipe to change photo (only unzoomed)
+          if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) lbStep(dx < 0 ? 1 : -1);
+        }
+        if (z.scale <= 1) reset(true);                      // snap back if it drifted below 1
+        mode = null;
+      } else if (e.touches.length === 1 && was === "pinch") {
+        var r = e.touches[0];                               // lifted one finger: continue as a pan
+        mode = "one"; sx = lx = r.clientX; sy = ly = r.clientY; moved = true;
+      }
+    }, { passive: false });
+
+    // desktop: drag to swipe when unzoomed, double-click to toggle zoom
+    var mouseDown = false, mx = 0, my = 0;
+    imgEl.addEventListener("mousedown", function (e) { mouseDown = true; mx = e.clientX; my = e.clientY; e.preventDefault(); });
+    window.addEventListener("mouseup", function (e) {
+      if (!mouseDown) return; mouseDown = false;
+      if (z.scale > 1 || lb.photos.length < 2 || !isImage()) return;
+      var dx = e.clientX - mx, dy = e.clientY - my;
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4) lbStep(dx < 0 ? 1 : -1);
+    });
+    imgEl.addEventListener("dblclick", function (e) {
+      if (!isImage()) return;
+      if (z.scale > 1) reset(true); else { scaleAround(DBL, e.clientX, e.clientY); apply(true); }
+    });
   })();
 
   // ---- travaux (renovation line-items) ----
@@ -1325,9 +1625,12 @@
     section.hidden = false;
   }
 
+  var findReset = function () {};  // assigned by the find-in-drawer controller below
+
   function openDrawer(id) {
     var l = findListing(id);
     if (!l) return;
+    findReset();
     state.currentId = id;
     state.commentDirty = false;
     $("#d-title").textContent = l.title || l.id;
@@ -1339,6 +1642,7 @@
     renderLinks(l);
     renderStarsEdit(l.rating);
     $("#d-status").value = l.status || "researching";
+    $("#d-mitoyennete").value = l.mitoyennete || "";
     fillNumericFields(l);
     $("#d-tags").value = (l.tags || []).join(", ");
     $("#d-verdict").value = l.verdict || "";
@@ -1357,6 +1661,7 @@
       if (!confirm("Abandonner le commentaire non enregistré ?")) return;
     }
     state.commentDirty = false;
+    findReset();
     $("#overlay").classList.remove("open");
     $("#drawer").classList.remove("open");
     state.currentId = null;
@@ -1367,6 +1672,107 @@
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && $("#lightbox").hidden && $("#drawer").classList.contains("open")) closeDrawer(false);
   });
+
+  // ---- find-in-drawer: highlight every occurrence of a term across the open listing's text ----
+  (function () {
+    var wrap = $("#d-find"), input = $("#find-input"), countEl = $("#find-count");
+    var body = $("#drawer .drawer-body");
+    var matches = [], idx = -1, term = "";
+    var SKIP = { TEXTAREA: 1, INPUT: 1, SELECT: 1, OPTION: 1, SCRIPT: 1, STYLE: 1, BUTTON: 1, IFRAME: 1 };
+
+    function clearMarks() {
+      var marks = body.querySelectorAll("mark.find-hl");
+      for (var i = 0; i < marks.length; i++) {
+        var m = marks[i], p = m.parentNode;
+        if (!p) continue;
+        p.replaceChild(document.createTextNode(m.textContent), m);
+        p.normalize();
+      }
+    }
+
+    function updateCount() {
+      if (!term) { countEl.textContent = ""; countEl.classList.remove("none"); }
+      else if (!matches.length) { countEl.textContent = "0/0"; countEl.classList.add("none"); }
+      else { countEl.textContent = (idx + 1) + "/" + matches.length; countEl.classList.remove("none"); }
+      var off = !matches.length;
+      $("#find-prev").disabled = off; $("#find-next").disabled = off;
+    }
+
+    function build(t) {
+      clearMarks();
+      matches = []; idx = -1; term = t;
+      if (!t) { updateCount(); return; }
+      var low = t.toLowerCase();
+      var walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (node) {
+          if (!node.nodeValue || node.nodeValue.toLowerCase().indexOf(low) === -1) return NodeFilter.FILTER_REJECT;
+          var p = node.parentNode;
+          while (p && p !== body) {
+            if (SKIP[p.nodeName]) return NodeFilter.FILTER_REJECT;
+            if (p.classList && p.classList.contains("drawer-find")) return NodeFilter.FILTER_REJECT;
+            p = p.parentNode;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      var nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(function (node) {
+        var text = node.nodeValue, ltext = text.toLowerCase(), frag = document.createDocumentFragment();
+        var i = 0, pos;
+        while ((pos = ltext.indexOf(low, i)) !== -1) {
+          if (pos > i) frag.appendChild(document.createTextNode(text.slice(i, pos)));
+          var mk = document.createElement("mark");
+          mk.className = "find-hl"; mk.textContent = text.slice(pos, pos + t.length);
+          frag.appendChild(mk); matches.push(mk);
+          i = pos + t.length;
+        }
+        if (i < text.length) frag.appendChild(document.createTextNode(text.slice(i)));
+        if (node.parentNode) node.parentNode.replaceChild(frag, node);
+      });
+      if (matches.length) goto(0, false); else updateCount();
+    }
+
+    function goto(i, smooth) {
+      if (!matches.length) { idx = -1; updateCount(); return; }
+      idx = (i + matches.length) % matches.length;
+      for (var k = 0; k < matches.length; k++) matches[k].classList.remove("current");
+      var cur = matches[idx];
+      cur.classList.add("current");
+      cur.scrollIntoView({ block: "center", behavior: smooth === false ? "auto" : "smooth" });
+      updateCount();
+    }
+
+    function openPanel() { wrap.setAttribute("data-open", "1"); input.focus(); input.select(); }
+    function closePanel() {
+      wrap.setAttribute("data-open", "0");
+      input.value = ""; build("");
+    }
+
+    findReset = function () {   // called on drawer open/close
+      wrap.setAttribute("data-open", "0");
+      input.value = ""; clearMarks();
+      matches = []; idx = -1; term = ""; updateCount();
+    };
+
+    $("#find-toggle").addEventListener("click", openPanel);
+    $("#find-close").addEventListener("click", closePanel);
+    $("#find-prev").addEventListener("click", function () { goto(idx - 1, true); });
+    $("#find-next").addEventListener("click", function () { goto(idx + 1, true); });
+    input.addEventListener("input", function () { build(input.value.trim()); });
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); goto(idx + (e.shiftKey ? -1 : 1), true); }
+      else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closePanel(); }
+    });
+    // Cmd/Ctrl+F opens the drawer search when a listing is open (instead of the browser's find)
+    document.addEventListener("keydown", function (e) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === "f" || e.key === "F") &&
+          $("#lightbox").hidden && $("#drawer").classList.contains("open")) {
+        e.preventDefault(); openPanel();
+      }
+    });
+    updateCount();
+  })();
 
   $("#d-delete").addEventListener("click", function () {
     var id = state.currentId;
@@ -1386,6 +1792,10 @@
 
   $("#d-status").addEventListener("change", function () {
     patchListing(state.currentId, { status: $("#d-status").value }).then(updateLocal);
+  });
+
+  $("#d-mitoyennete").addEventListener("change", function () {
+    patchListing(state.currentId, { mitoyennete: $("#d-mitoyennete").value || null }).then(updateLocal);
   });
 
   bindNumericField("#d-price", "price");
@@ -1416,6 +1826,182 @@
       flash.classList.add("show");
       setTimeout(function () { flash.classList.remove("show"); }, 1500);
     });
+  });
+
+  // ---- tabs (Annonces / Villes ciblées) ----
+  var townsLoaded = false;
+  function switchView(name) {
+    document.querySelectorAll(".tabs .tab").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-view") === name);
+    });
+    $("#view-listings").hidden = name !== "listings";
+    $("#view-towns").hidden = name !== "towns";
+    if (name === "towns" && !townsLoaded) { townsLoaded = true; loadTowns(); }
+  }
+  document.querySelectorAll(".tabs .tab").forEach(function (b) {
+    b.addEventListener("click", function () { switchView(b.getAttribute("data-view")); });
+  });
+
+  // ---- target-towns study ----
+  // Drop the H1 (shown as the card title) and the Repères section (shown in the
+  // comparison table) so the card only carries the prose sections.
+  function townCardMd(md) {
+    var lines = (md || "").split("\n"), out = [], skip = false;
+    for (var i = 0; i < lines.length; i++) {
+      var t = lines[i].trim();
+      if (/^#\s+/.test(t)) continue;
+      if (/^##\s+rep[eè]res\b/i.test(t)) { skip = true; continue; }
+      if (skip && /^##\s+/.test(t)) skip = false;
+      if (skip) continue;
+      out.push(lines[i]);
+    }
+    return out.join("\n").trim();
+  }
+
+  // Small situational map per town — only the commune name/postcode travels out (no user PII).
+  function townMapUrl(title) {
+    var q = String(title || "").replace(/[()]/g, " ").replace(/\s+/g, " ").trim();
+    var enc = encodeURIComponent(q);
+    return "https://maps.google.com/maps?q=" + enc + "&z=12&hl=fr&output=embed";
+  }
+
+  // Which towns the user has hidden from the comparison (persisted).
+  function loadTownHidden() {
+    if (state.townHidden) return;
+    var arr = [];
+    try { arr = JSON.parse(localStorage.getItem("hh-towns-hidden") || "[]"); } catch (e) {}
+    state.townHidden = new Set(Array.isArray(arr) ? arr : []);
+  }
+  function saveTownHidden() {
+    try { localStorage.setItem("hh-towns-hidden", JSON.stringify(Array.from(state.townHidden))); } catch (e) {}
+  }
+
+  // Keep the sticky table header just below the page header (whatever its height).
+  function setHeaderHeightVar() {
+    var h = document.querySelector("header");
+    if (h) document.documentElement.style.setProperty("--header-h", h.offsetHeight + "px");
+  }
+
+  function buildTownToggle() {
+    var box = $("#towns-toggle");
+    box.innerHTML = "";
+    if (!state.townsAll.length) return;
+    box.appendChild(el("span", "toggle-label", "Afficher :"));
+    state.townsAll.forEach(function (t) {
+      var on = !state.townHidden.has(t.id);
+      var chip = el("span", "town-chip" + (on ? "" : " off"));
+      chip.innerHTML = '<span class="chip-box">' + (on ? "&#10003;" : "") + "</span>" + escapeHtml(t.title);
+      chip.addEventListener("click", function () {
+        if (state.townHidden.has(t.id)) state.townHidden.delete(t.id);
+        else state.townHidden.add(t.id);
+        saveTownHidden();
+        buildTownToggle();
+        renderTownViews();
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  function renderTowns(towns) {
+    loadTownHidden();
+    state.townsAll = towns || [];
+    setHeaderHeightVar();
+    buildTownToggle();
+    renderTownViews();
+  }
+
+  function renderTownViews() {
+    var wrap = $("#towns-compare"), cards = $("#town-cards");
+    cards.innerHTML = "";
+    if (!state.townsAll.length) {
+      wrap.innerHTML = '<div class="empty" style="display:flex">Aucune fiche-ville. Ajoutez des notes dans <code>private/towns/</code>.</div>';
+      return;
+    }
+    var towns = state.townsAll.filter(function (t) { return !state.townHidden.has(t.id); });
+    if (!towns.length) {
+      wrap.innerHTML = '<div class="empty" style="display:flex">Toutes les communes sont masquées — réactivez-en une ci-dessus.</div>';
+      return;
+    }
+    // union of Repères keys, in first-seen order across the visible towns
+    var keys = [], seen = {};
+    towns.forEach(function (t) {
+      (t.reperes || []).forEach(function (r) {
+        if (!seen[r.k]) { seen[r.k] = {}; keys.push(r.k); }
+        seen[r.k][t.id] = r.v;
+      });
+    });
+    // header = city names only (sticky); the maps are the first body row (scroll away)
+    var html = '<table class="towns-compare"><thead><tr><th></th>';
+    towns.forEach(function (t) {
+      html += '<th class="town-name" data-town="' + escapeHtml(t.id) + '">' +
+        '<span class="tn-name">' + escapeHtml(t.title) + "</span></th>";
+    });
+    html += "</tr></thead><tbody>";
+    html += '<tr class="map-row"><th>Situation</th>';
+    towns.forEach(function (t) {
+      html += '<td><iframe class="town-map" loading="lazy" referrerpolicy="no-referrer" title="Carte ' +
+        escapeHtml(t.title) + '" src="' + escapeHtml(townMapUrl(t.title)) + '"></iframe></td>';
+    });
+    html += "</tr>";
+    keys.forEach(function (k) {
+      html += "<tr><th>" + escapeHtml(k) + "</th>";
+      towns.forEach(function (t) {
+        var v = seen[k][t.id];
+        html += "<td>" + (v ? renderInline(v) : "—") + "</td>";
+      });
+      html += "</tr>";
+    });
+    html += "</tbody></table>";
+    wrap.innerHTML = html;
+    wrap.querySelectorAll("th.town-name .tn-name").forEach(function (nm) {
+      nm.addEventListener("click", function () {
+        var th = nm.closest("th.town-name");
+        var card = th && document.getElementById("town-card-" + th.getAttribute("data-town"));
+        if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+    // detail cards (visible towns only) — carry the mobile map + criteria list too
+    towns.forEach(function (t) {
+      var card = el("div", "town-card");
+      card.id = "town-card-" + t.id;
+      card.appendChild(el("h3", "", t.title));
+      var mp = document.createElement("iframe");
+      mp.className = "town-map tn-card-map";
+      mp.loading = "lazy"; mp.setAttribute("referrerpolicy", "no-referrer");
+      mp.title = "Carte " + t.title; mp.src = townMapUrl(t.title);
+      card.appendChild(mp);
+      var dl = el("dl", "tn-reperes");   // mobile-only criteria list (hidden on desktop)
+      (t.reperes || []).forEach(function (r) {
+        dl.appendChild(el("dt", "", r.k));
+        var dd = el("dd"); dd.innerHTML = renderInline(r.v);
+        dl.appendChild(dd);
+      });
+      card.appendChild(dl);
+      var mdBody = el("div", "md-body");
+      mdBody.innerHTML = renderMarkdown(townCardMd(t.md_body));
+      card.appendChild(mdBody);
+      cards.appendChild(card);
+    });
+  }
+
+  function loadTowns() {
+    fetchJSON("/api/towns").then(function (res) {
+      renderTowns((res.data && res.data.towns) || []);
+    }, function () {
+      $("#towns-compare").innerHTML = '<div class="empty" style="display:flex">Chargement des villes impossible.</div>';
+    });
+  }
+
+  window.addEventListener("resize", setHeaderHeightVar);
+  setHeaderHeightVar();
+
+  // ---- scroll-to-top button ----
+  var scrollTopBtn = $("#scroll-top");
+  window.addEventListener("scroll", function () {
+    scrollTopBtn.classList.toggle("show", window.scrollY > 300);
+  });
+  scrollTopBtn.addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   loadSettings().then(loadListings);
