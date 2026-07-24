@@ -385,7 +385,10 @@
   .towns-main { padding: 16px 20px 60px; }
   .towns-intro { color: var(--text-dim); margin: 0 0 18px; max-width: 900px; line-height: 1.55; }
   .towns-compare-wrap {
-    overflow-x: auto; border: 1px solid var(--border); border-radius: 8px;
+    /* scroll INSIDE this box (both axes) so the sticky header works relative to
+       the box — a plain overflow-x:auto would break vertical sticky. */
+    overflow: auto; max-height: calc(100vh - 200px);
+    border: 1px solid var(--border); border-radius: 8px;
     background: var(--panel); margin-bottom: 26px;
   }
   table.towns-compare { border-collapse: collapse; width: 100%; min-width: 640px; }
@@ -395,7 +398,7 @@
   }
   table.towns-compare thead th {
     background: var(--panel-2); color: var(--text-dim);
-    position: sticky; top: var(--header-h, 51px); z-index: 3;   /* city-name row stays visible on scroll */
+    position: sticky; top: 0; z-index: 3;   /* sticks to the top of the scroll box */
   }
   table.towns-compare thead th:first-child { left: 0; z-index: 4; }
   table.towns-compare thead th.town-name {
@@ -1876,12 +1879,6 @@
     try { localStorage.setItem("hh-towns-hidden", JSON.stringify(Array.from(state.townHidden))); } catch (e) {}
   }
 
-  // Keep the sticky table header just below the page header (whatever its height).
-  function setHeaderHeightVar() {
-    var h = document.querySelector("header");
-    if (h) document.documentElement.style.setProperty("--header-h", h.offsetHeight + "px");
-  }
-
   function buildTownToggle() {
     var box = $("#towns-toggle");
     box.innerHTML = "";
@@ -1905,7 +1902,6 @@
   function renderTowns(towns) {
     loadTownHidden();
     state.townsAll = towns || [];
-    setHeaderHeightVar();
     buildTownToggle();
     renderTownViews();
   }
@@ -1991,9 +1987,6 @@
       $("#towns-compare").innerHTML = '<div class="empty" style="display:flex">Chargement des villes impossible.</div>';
     });
   }
-
-  window.addEventListener("resize", setHeaderHeightVar);
-  setHeaderHeightVar();
 
   // ---- scroll-to-top button ----
   var scrollTopBtn = $("#scroll-top");
