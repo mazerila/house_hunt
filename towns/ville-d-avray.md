@@ -23,6 +23,7 @@ Commune prestigieuse et boisée des Hauts-de-Seine (célèbres étangs de Corot,
 - **Topographie**: coteaux boisés — **vallonné**
 - **Logement social**: faible à modéré
 - **Contraintes patrimoniales**: ponctuelles (étangs de Corot classés, forêt) — à vérifier par parcelle
+- **Quartiers (cibler / éviter)**: cibler les **abords des étangs de Corot** et de la **forêt de Fausses-Reposes** (maisons rares, sur coteaux). Commune homogène et huppée.
 - **Caractère**: village-résidentiel prestigieux et boisé (étangs de Corot)
 
 ## Structure de la population

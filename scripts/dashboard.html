@@ -99,7 +99,9 @@
     display: flex; flex-direction: column; gap: 12px; align-items: center;
   }
   .grid-wrap {
-    overflow-x: auto;
+    /* bounded scroll box: the grid header sticks to its top (just under the sticky
+       tab bar), then the rows scroll inside it. */
+    overflow: auto; max-height: calc(100vh - var(--topbar-h, 96px) - 16px);
     border: 1px solid var(--border); border-radius: 8px; background: var(--panel);
   }
   table {
@@ -368,6 +370,7 @@
   .tabs {
     display: flex; gap: 2px; padding: 0 12px;
     background: var(--panel); border-bottom: 1px solid var(--border);
+    position: sticky; top: var(--header-h, 51px); z-index: 9;   /* stays under the page header */
   }
   .tabs .tab {
     background: transparent; color: var(--text-dim); border: none; border-radius: 0;
@@ -385,9 +388,9 @@
   .towns-main { padding: 16px 20px 60px; }
   .towns-intro { color: var(--text-dim); margin: 0 0 18px; max-width: 900px; line-height: 1.55; }
   .towns-compare-wrap {
-    /* scroll INSIDE this box (both axes) so the sticky header works relative to
-       the box — a plain overflow-x:auto would break vertical sticky. */
-    overflow: auto; max-height: calc(100vh - 200px);
+    /* bounded scroll box: city-name header sticks to its top (just under the
+       sticky tab bar); a plain overflow-x:auto would break vertical sticky. */
+    overflow: auto; max-height: calc(100vh - var(--topbar-h, 96px) - 16px);
     border: 1px solid var(--border); border-radius: 8px;
     background: var(--panel); margin-bottom: 26px;
   }
@@ -429,6 +432,11 @@
   }
   .town-chip.off { color: var(--text-dim); background: var(--panel-2); }
   .town-chip.off .chip-box { border-color: var(--text-dim); }
+  .town-chip[draggable="true"] { cursor: grab; }
+  .town-chip .chip-grip { color: var(--text-dim); cursor: grab; margin-right: 1px; font-size: 12px; line-height: 1; letter-spacing: -1px; }
+  .town-chip.dragging { opacity: .45; }
+  .town-chip.drop-before { box-shadow: -3px 0 0 var(--accent); }
+  .town-chip.drop-after { box-shadow: 3px 0 0 var(--accent); }
   table.towns-compare tbody th {
     color: var(--text-dim); font-weight: 600; white-space: nowrap;
     background: var(--panel-2); position: sticky; left: 0; z-index: 1;
@@ -478,7 +486,7 @@
     main { padding: 12px 12px 64px; }
 
     /* wide table -> stacked cards (one card per listing) */
-    .grid-wrap { overflow-x: visible; border: none; border-radius: 0; background: transparent; }
+    .grid-wrap { overflow: visible; max-height: none; border: none; border-radius: 0; background: transparent; }
     table, tbody, tr, td { display: block; width: 100%; }
     thead { display: none; }                    /* header labels move into each cell */
     tbody tr {
@@ -1879,21 +1887,84 @@
     try { localStorage.setItem("hh-towns-hidden", JSON.stringify(Array.from(state.townHidden))); } catch (e) {}
   }
 
+  // Persist the shared drag order to the server (town ids in display order).
+  function saveTownOrder() {
+    var ids = state.townsAll.map(function (t) { return t.id; });
+    fetchJSON("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ town_order: ids })
+    }).then(function (res) {
+      if (!res.ok) showToast("✕ Ordre non enregistré");
+    }, function () { showToast("✕ Ordre non enregistré"); });
+  }
+
+  function moveTown(fromId, toId, after) {
+    if (fromId === toId) return;
+    var arr = state.townsAll;
+    var fi = arr.findIndex(function (t) { return t.id === fromId; });
+    if (fi === -1) return;
+    var moved = arr.splice(fi, 1)[0];
+    var ti = arr.findIndex(function (t) { return t.id === toId; });
+    if (ti === -1) { arr.push(moved); }
+    else { arr.splice(after ? ti + 1 : ti, 0, moved); }
+    saveTownOrder();
+    buildTownToggle();
+    renderTownViews();
+  }
+
   function buildTownToggle() {
     var box = $("#towns-toggle");
     box.innerHTML = "";
     if (!state.townsAll.length) return;
-    box.appendChild(el("span", "toggle-label", "Afficher :"));
+    box.appendChild(el("span", "toggle-label", "Afficher · glisser pour réordonner :"));
     state.townsAll.forEach(function (t) {
       var on = !state.townHidden.has(t.id);
       var chip = el("span", "town-chip" + (on ? "" : " off"));
-      chip.innerHTML = '<span class="chip-box">' + (on ? "&#10003;" : "") + "</span>" + escapeHtml(t.title);
+      chip.setAttribute("draggable", "true");
+      chip.dataset.town = t.id;
+      chip.innerHTML = '<span class="chip-grip" title="Glisser pour réordonner">⠇</span>' +
+        '<span class="chip-box">' + (on ? "&#10003;" : "") + "</span>" + escapeHtml(t.title);
+      // click toggles show/hide (but not when finishing a drag)
       chip.addEventListener("click", function () {
+        if (chip._dragged) { chip._dragged = false; return; }
         if (state.townHidden.has(t.id)) state.townHidden.delete(t.id);
         else state.townHidden.add(t.id);
         saveTownHidden();
         buildTownToggle();
         renderTownViews();
+      });
+      chip.addEventListener("dragstart", function (e) {
+        chip.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        try { e.dataTransfer.setData("text/plain", t.id); } catch (err) {}
+      });
+      chip.addEventListener("dragend", function () {
+        chip.classList.remove("dragging");
+        chip._dragged = true;  // swallow the click that follows a drag
+        box.querySelectorAll(".town-chip").forEach(function (c) {
+          c.classList.remove("drop-before", "drop-after");
+        });
+      });
+      chip.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        var rect = chip.getBoundingClientRect();
+        var after = (e.clientX - rect.left) > rect.width / 2;
+        chip.classList.toggle("drop-after", after);
+        chip.classList.toggle("drop-before", !after);
+      });
+      chip.addEventListener("dragleave", function () {
+        chip.classList.remove("drop-before", "drop-after");
+      });
+      chip.addEventListener("drop", function (e) {
+        e.preventDefault();
+        var fromId = "";
+        try { fromId = e.dataTransfer.getData("text/plain"); } catch (err) {}
+        var rect = chip.getBoundingClientRect();
+        var after = (e.clientX - rect.left) > rect.width / 2;
+        chip.classList.remove("drop-before", "drop-after");
+        if (fromId) moveTown(fromId, t.id, after);
       });
       box.appendChild(chip);
     });
@@ -1987,6 +2058,19 @@
       $("#towns-compare").innerHTML = '<div class="empty" style="display:flex">Chargement des villes impossible.</div>';
     });
   }
+
+  // Measure the sticky topbar (header + tab bar) so the grid/table scroll boxes
+  // can size themselves and pin their headers just under it.
+  function setTopbarVars() {
+    var header = document.querySelector("header");
+    var tabs = document.querySelector(".tabs");
+    var hh = header ? header.offsetHeight : 51;
+    var th = tabs ? tabs.offsetHeight : 44;
+    document.documentElement.style.setProperty("--header-h", hh + "px");
+    document.documentElement.style.setProperty("--topbar-h", (hh + th) + "px");
+  }
+  setTopbarVars();
+  window.addEventListener("resize", setTopbarVars);
 
   // ---- scroll-to-top button ----
   var scrollTopBtn = $("#scroll-top");

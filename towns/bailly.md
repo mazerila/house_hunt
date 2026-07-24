@@ -23,6 +23,7 @@ Petit village recherché en bordure de la plaine de Versailles, voisin et jumel�
 - **Topographie**: plaine de Versailles / village — plutôt **plat**
 - **Logement social**: ~10 % (2023), **sous les 25 % SRU** → 300+ logements en cours (densification)
 - **Contraintes patrimoniales**: ponctuelles (village, plaine de Versailles) — à vérifier par parcelle
+- **Quartiers (cibler / éviter)**: cibler le **vieux village** et le pavillonnaire de la **plaine** ; vigilance sur les abords **voie T13 / couloir Saint-Cyr** (bruit) et les futurs **programmes SRU** (densification). Homogène sinon.
 - **Caractère**: village rural préservé, très résidentiel
 
 ## Structure de la population

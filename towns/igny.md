@@ -23,6 +23,7 @@ Commune familiale de l'Essonne, dans la vallée de la Bièvre, voisine de Bièvr
 - **Topographie**: vallée de la Bièvre / plateau — mixte
 - **Logement social**: modéré (quelques ensembles collectifs)
 - **Contraintes patrimoniales**: ponctuelles — à vérifier par parcelle
+- **Quartiers (cibler / éviter)**: cibler le pavillonnaire **Gommonvilliers** et les coteaux résidentiels ; vigilance sur les abords **RN118** (bruit) et le **couloir de Villacoublay**. Quelques ensembles collectifs près de la gare.
 - **Caractère**: commune familiale, pavillonnaire, la plus abordable de la sélection
 
 ## Structure de la population

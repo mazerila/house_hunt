@@ -23,6 +23,7 @@ Village peu dense de l'Essonne, dans la vallée de la Bièvre, entre Jouy-en-Jos
 - **Topographie**: vallée de la Bièvre — fond plat + coteaux
 - **Logement social**: faible
 - **Contraintes patrimoniales**: ponctuelles (village, secteurs classés vallée) — à vérifier par parcelle
+- **Quartiers (cibler / éviter)**: cibler le **centre-village** et le pavillonnaire de la **vallée** ; vigilance sur les abords **RN118 / voie ferrée** (bruit) et le **couloir de Villacoublay**. Homogène sinon.
 - **Caractère**: village de vallée verdoyant, peu dense, familial
 
 ## Structure de la population

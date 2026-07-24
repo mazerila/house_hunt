@@ -23,6 +23,7 @@ Village préservé au cœur de la vallée de la Bièvre, à ~15 km au sud-ouest 
 - **Topographie**: vallée de la Bièvre → souvent **en pente** (parcelle du listing ~9 %)
 - **Logement social**: faible (réservataire ; historiquement déficitaire SRU)
 - **Contraintes patrimoniales**: **fortes** — site inscrit Vallée de la Bièvre + abords MH (ABF)
+- **Quartiers (cibler / éviter)**: cibler **Centre-ville (village)**, **Les Metz**, **Parc de Diane** (résidentiel calme) ; **Petit-Jouy** = le long de la RN (villas mais axe passant). Pas de secteur "à éviter".
 - **Caractère**: village boisé, prestige ; pôles HEC / INRAE / Thalès
 
 ## Structure de la population

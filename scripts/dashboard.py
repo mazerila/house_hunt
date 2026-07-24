@@ -139,6 +139,11 @@ def load_db():
         db = json.load(f)
     db.setdefault("ignored", [])  # ids the user removed; import skips them (md stays on disk)
     settings = db.setdefault("settings", {})
+    to = settings.get("town_order")  # user's drag-reordered town list (shared)
+    if not isinstance(to, list):
+        settings["town_order"] = []
+    else:
+        settings["town_order"] = [t for t in to if isinstance(t, str)]
     cols = settings.get("columns")
     if not isinstance(cols, list) or not cols:
         settings["columns"] = list(DEFAULT_COLUMNS)
@@ -479,11 +484,13 @@ def import_listings(db):
 # never persisted in the db; edit the md and it shows on next tab open).
 # --------------------------------------------------------------------------
 
-# Preferred column order in the comparison; unknown towns fall after, alpha.
+# Default comparison order (used until the user drags to reorder — that choice is
+# saved server-side in settings["town_order"] and shared across everyone). Unknown
+# towns fall after, alpha.
 TOWN_ORDER = [
     "jouy-en-josas", "bievres", "igny", "chaville",
-    "noisy-le-roi", "bailly",
-    "vaucresson", "ville-d-avray", "la-celle-saint-cloud",
+    "noisy-le-roi", "bailly", "l-etang-la-ville", "marly-le-roi",
+    "vaucresson", "ville-d-avray", "la-celle-saint-cloud", "sartrouville",
 ]
 
 
@@ -503,17 +510,23 @@ def parse_town_md(path):
     }
 
 
-def list_towns():
+def list_towns(saved_order=None):
+    """Parsed town cards, ordered by the user's saved drag order first, then the
+    built-in TOWN_ORDER default, then alphabetically for anything unlisted."""
     if not os.path.isdir(TOWNS_DIR):
         return []
     towns = [parse_town_md(p) for p in glob.glob(os.path.join(TOWNS_DIR, "*.md"))]
+    saved = list(saved_order or [])
+    saved_rank = {tid: i for i, tid in enumerate(saved)}
 
     def sort_key(t):
+        if t["id"] in saved_rank:
+            return (0, saved_rank[t["id"]], "")
         try:
             rank = TOWN_ORDER.index(t["id"])
         except ValueError:
             rank = len(TOWN_ORDER)
-        return (rank, t["title"].lower())
+        return (1, rank, t["title"].lower())
 
     return sorted(towns, key=sort_key)
 
@@ -625,13 +638,15 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json({"listings": items})
             return
         if path == "/api/towns":
-            self._send_json({"towns": list_towns()})
+            db = load_db()
+            self._send_json({"towns": list_towns(db["settings"].get("town_order"))})
             return
         if path == "/api/settings":
             db = load_db()
             self._send_json({
                 "columns": db["settings"]["columns"],
                 "all_columns": ALLOWED_COLUMNS,
+                "town_order": db["settings"].get("town_order", []),
             })
             return
         m = re.match(r"^/api/listings/([^/]+)/photos$", path)
@@ -820,6 +835,28 @@ class Handler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             self._send_json({"error": "invalid json"}, 400)
             return
+        db = load_db()
+        # town_order: shared drag order for the Villes ciblées tab (list of town ids)
+        if "town_order" in body:
+            to = body.get("town_order")
+            if not isinstance(to, list):
+                self._send_json({"error": "town_order must be a list"}, 400)
+                return
+            seen_t, clean_t = set(), []
+            for t in to:
+                if isinstance(t, str) and t and t not in seen_t:
+                    seen_t.add(t)
+                    clean_t.append(t[:100])
+            db["settings"]["town_order"] = clean_t[:200]
+            # allow a town-order-only PUT (columns optional)
+            if "columns" not in body:
+                save_db(db)
+                self._send_json({
+                    "columns": db["settings"]["columns"],
+                    "all_columns": ALLOWED_COLUMNS,
+                    "town_order": db["settings"]["town_order"],
+                })
+                return
         cols = body.get("columns")
         if not isinstance(cols, list):
             self._send_json({"error": "columns must be a list"}, 400)
@@ -834,10 +871,13 @@ class Handler(BaseHTTPRequestHandler):
             clean.insert(0, "title")
         if not clean:
             clean = list(DEFAULT_COLUMNS)
-        db = load_db()
         db["settings"]["columns"] = clean
         save_db(db)
-        self._send_json({"columns": clean, "all_columns": ALLOWED_COLUMNS})
+        self._send_json({
+            "columns": clean,
+            "all_columns": ALLOWED_COLUMNS,
+            "town_order": db["settings"].get("town_order", []),
+        })
 
     def do_POST(self):
         if urlparse(self.path).path == "/api/reimport":

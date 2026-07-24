@@ -23,6 +23,7 @@ Commune résidentielle aisée en lisière de la forêt de Marly et du golf de Sa
 - **Topographie**: plateau / lisière forêt — globalement **plus plat** que Jouy
 - **Logement social**: faible (sous le seuil SRU)
 - **Contraintes patrimoniales**: ponctuelles (cœur ancien) — **pas** de site inscrit couvrant ; à vérifier par parcelle
+- **Quartiers (cibler / éviter)**: cibler le **pavillonnaire côté golf / forêt de Marly** et le **Vieux Noisy** ; éviter les **maisons le long de la voie du T13** (bruit riverains signalé). Commune globalement homogène.
 - **Caractère**: pavillonnaire aisé, golf, forêt de Marly ; calme et verdoyant
 
 ## Structure de la population

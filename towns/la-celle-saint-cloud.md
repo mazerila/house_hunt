@@ -23,6 +23,7 @@ Commune plus grande (~20 500 hab.) des Yvelines, très boisée (forêts de Marly
 - **Topographie**: coteaux boisés — **vallonné**
 - **Logement social**: **notable** (Beauregard / Élysée 2 ; +71 logements en cours) — le plus élevé des communes étudiées
 - **Contraintes patrimoniales**: ponctuelles (château, forêts) — à vérifier par parcelle
+- **Quartiers (cibler / éviter)**: cibler les secteurs villas **Les Gressets, Les Sablons, La Feuillaume, le Bourg, la Châtaigneraie** ; éviter (pour une maison) les grands ensembles **Beauregard** et **Élysée 1 & 2 / La Jonchère** (collectif / social).
 - **Caractère**: ville résidentielle boisée, socialement plus mixte
 
 ## Structure de la population

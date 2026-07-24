@@ -23,6 +23,7 @@ Ville résidentielle boisée des Hauts-de-Seine, entre les forêts de Meudon et 
 - **Topographie**: coteaux boisés — **vallonné**
 - **Logement social**: modéré (tissu plus collectif)
 - **Contraintes patrimoniales**: ponctuelles (forêts classées, abords) — à vérifier par parcelle
+- **Quartiers (cibler / éviter)**: cibler **Ursine** (quartier familial de maisons, prisé) et les abords forêt ; **Doisu** est surtout du collectif (~90 % d'appartements). Pas de secteur "à éviter".
 - **Caractère**: ville résidentielle boisée, très bien connectée, plus urbaine
 
 ## Structure de la population

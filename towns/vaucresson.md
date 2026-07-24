@@ -23,6 +23,7 @@ Commune très aisée des Hauts-de-Seine, entre la forêt de Fausses-Reposes et c
 - **Topographie**: coteaux boisés — **vallonné**
 - **Logement social**: ~7,5 % HLM (faible)
 - **Contraintes patrimoniales**: ponctuelles (proximité forêts / domaines) — à vérifier par parcelle
+- **Quartiers (cibler / éviter)**: cibler les **abords de la forêt de Fausses-Reposes / Marly** (maisons de standing) ; commune homogène et huppée, pas de secteur "à éviter".
 - **Caractère**: résidentiel haut de gamme, très boisé, calme
 
 ## Structure de la population
