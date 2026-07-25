@@ -39,6 +39,10 @@ USER_OWNED_FIELDS = {"rating", "status", "verdict", "tags", "comment", "mitoyenn
 # edited they are recorded in the record's "overrides" list and re-imports no
 # longer touch them.
 OVERRIDABLE_FIELDS = {"price", "surface", "land_surface"}
+# Text fields seeded from the announce (Identity bullets) but that the user may
+# fill/correct by hand when the listing doesn't carry them; edits are recorded in
+# "overrides" so re-imports no longer touch them (same contract as the numerics).
+OVERRIDABLE_STR_FIELDS = {"agency", "contact"}
 # Pure user-set numeric negotiation fields (never derived from the md): the
 # minimum price the seller might accept and the offer the buyer is willing to make.
 USER_NUMERIC_FIELDS = {"price_min", "price_offer"}
@@ -49,7 +53,7 @@ USER_NUMERIC_FIELDS = {"price_min", "price_offer"}
 ALLOWED_COLUMNS = [
     "code", "title", "commune", "type", "mitoyennete", "price", "price_min", "price_offer", "price_per_m2",
     "works_total", "land_surface", "surface", "dpe", "rating", "status", "verdict", "tags",
-    "created", "updated",
+    "agency", "contact", "created", "updated",
 ]
 DEFAULT_COLUMNS = [
     "code", "title", "commune", "mitoyennete", "price", "price_offer", "works_total", "land_surface", "surface",
@@ -168,6 +172,8 @@ def load_db():
         rec.setdefault("works_total", works_total(rec.get("works")))
         rec.setdefault("links", [])
         rec.setdefault("overrides", [])
+        rec.setdefault("agency", None)
+        rec.setdefault("contact", None)
         if "mitoyennete" not in rec:  # seed once from the md; user-editable thereafter
             rec["mitoyennete"] = extract_mitoyennete(rec.get("md_body", ""), rec.get("type"))
     return db
@@ -280,7 +286,11 @@ def extract_land_surface(body):
 
 def extract_type(text):
     low = text.lower()
-    if re.search(r"\bapt\b|appartement|étage|etage", low):
+    if re.search(r"\bapt\b|appartement", low):
+        return "apartment"
+    if re.search(r"maison|pavillon|villa", low):  # a house with an "étage" is still a house
+        return "house"
+    if re.search(r"étage|etage", low):
         return "apartment"
     if "terrain" in low and not re.search(r"maison|appartement", low):
         return "land"
@@ -352,6 +362,22 @@ def extract_facts(identity_section):
     return facts
 
 
+def extract_agency_contact(facts):
+    """Pull an agency name / contact person out of the Identity bullets when the
+    announce carried them (keys like 'Agence', 'Agency', 'Contact', 'Négociateur',
+    'Interlocuteur'). Returns (agency, contact) — each None if absent."""
+    agency = contact = None
+    for k, v in (facts or {}).items():
+        kl = k.lower()
+        val = re.sub(r"[*`]", "", str(v)).strip()[:200] or None
+        if agency is None and ("agence" in kl or "agency" in kl):
+            agency = val
+        elif contact is None and any(w in kl for w in
+                ("contact", "interlocuteur", "négociateur", "negociateur", "agent")):
+            contact = val
+    return agency, contact
+
+
 def extract_status_verdict_seed(body):
     m = re.search(r"Status:\s*\*\*(.*?)\*\*", body)
     verdict_text = m.group(1).strip() if m else None
@@ -390,6 +416,7 @@ def parse_listing_md(path):
     if price is not None and price < 20000:
         price = None  # too small for a property asking price — likely a €/m² or works figure
     facts = extract_facts(identity_section)
+    agency, contact = extract_agency_contact(facts)
     status_seed, verdict_seed = extract_status_verdict_seed(body)
     price_per_m2 = round(price / surface, 0) if price and surface else None
     return {
@@ -401,6 +428,8 @@ def parse_listing_md(path):
         "dpe": dpe,
         "price": price,
         "price_per_m2": price_per_m2,
+        "agency": agency,
+        "contact": contact,
         "facts": facts,
         "md_body": body,
         "_status_seed": status_seed,
@@ -443,6 +472,8 @@ def import_listings(db):
                 "links": [],
                 "dpe": parsed["dpe"],
                 "mitoyennete": parsed["_mitoyennete_seed"],
+                "agency": parsed["agency"],
+                "contact": parsed["contact"],
                 "rating": 0,
                 "status": parsed["_status_seed"],
                 "verdict": parsed["_verdict_seed"],
@@ -464,7 +495,7 @@ def import_listings(db):
             existing["commune"] = parsed["commune"]
             existing["type"] = parsed["type"]
             existing["dpe"] = parsed["dpe"]
-            for field in OVERRIDABLE_FIELDS:
+            for field in OVERRIDABLE_FIELDS | OVERRIDABLE_STR_FIELDS:
                 if field not in overrides:
                     existing[field] = parsed[field]
             p, s = existing.get("price"), existing.get("surface")
@@ -491,6 +522,7 @@ TOWN_ORDER = [
     "jouy-en-josas", "bievres", "igny", "chaville",
     "noisy-le-roi", "bailly", "l-etang-la-ville", "marly-le-roi",
     "vaucresson", "ville-d-avray", "la-celle-saint-cloud", "sartrouville",
+    "buc", "le-port-marly", "chavenay", "bois-d-arcy",
 ]
 
 
@@ -580,6 +612,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(data)))
+        # local dev tool: never let the browser serve a stale page (a cached copy
+        # would run old JS — e.g. missing the town drag-reorder/save wiring)
+        self.send_header("Cache-Control", "no-store, max-age=0")
         self.end_headers()
         self.wfile.write(data)
 
@@ -801,6 +836,16 @@ class Handler(BaseHTTPRequestHandler):
                     overrides.discard(key)
                 else:
                     rec[key] = float(body[key])
+                    overrides.add(key)
+        # agency / contact: same override contract, but strings. Blank clears it.
+        for key in OVERRIDABLE_STR_FIELDS:
+            if key in body:
+                val = body[key]
+                if val is None or str(val).strip() == "":
+                    rec[key] = None
+                    overrides.discard(key)
+                else:
+                    rec[key] = str(val).strip()[:200]
                     overrides.add(key)
         rec["overrides"] = sorted(overrides)
         p, s = rec.get("price"), rec.get("surface")
