@@ -27,11 +27,14 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
 PRIVATE_DIR = os.path.join(REPO_ROOT, "private")
 LISTINGS_DIR = os.path.join(PRIVATE_DIR, "listings")
+# Target-towns comparison data is generic public-record info (no user PII) → it
+# lives OUTSIDE private/ so it can be committed/shared, unlike the listings.
+TOWNS_DIR = os.path.join(REPO_ROOT, "towns")
 DB_PATH = os.path.join(PRIVATE_DIR, "dashboard_db.json")
 HTML_PATH = os.path.join(SCRIPT_DIR, "dashboard.html")
 
 STATUS_VALUES = {"researching", "visit-planned", "visited", "offer", "rejected"}
-USER_OWNED_FIELDS = {"rating", "status", "verdict", "tags", "comment"}
+USER_OWNED_FIELDS = {"rating", "status", "verdict", "tags", "comment", "mitoyennete"}
 # Numeric fields derived from the md but that the user may correct by hand; once
 # edited they are recorded in the record's "overrides" list and re-imports no
 # longer touch them.
@@ -44,12 +47,12 @@ USER_NUMERIC_FIELDS = {"price_min", "price_offer"}
 # renderers; the server only validates keys and persists the chosen visible set,
 # so the choice is shared across everyone hitting this server — "all users").
 ALLOWED_COLUMNS = [
-    "code", "title", "commune", "type", "price", "price_min", "price_offer", "price_per_m2",
+    "code", "title", "commune", "type", "mitoyennete", "price", "price_min", "price_offer", "price_per_m2",
     "works_total", "land_surface", "surface", "dpe", "rating", "status", "verdict", "tags",
     "created", "updated",
 ]
 DEFAULT_COLUMNS = [
-    "code", "title", "commune", "price", "price_offer", "works_total", "land_surface", "surface",
+    "code", "title", "commune", "mitoyennete", "price", "price_offer", "works_total", "land_surface", "surface",
     "dpe", "rating", "status", "updated",
 ]
 
@@ -136,11 +139,24 @@ def load_db():
         db = json.load(f)
     db.setdefault("ignored", [])  # ids the user removed; import skips them (md stays on disk)
     settings = db.setdefault("settings", {})
+    to = settings.get("town_order")  # user's drag-reordered town list (shared)
+    if not isinstance(to, list):
+        settings["town_order"] = []
+    else:
+        settings["town_order"] = [t for t in to if isinstance(t, str)]
     cols = settings.get("columns")
     if not isinstance(cols, list) or not cols:
         settings["columns"] = list(DEFAULT_COLUMNS)
     else:
         settings["columns"] = [c for c in cols if c in ALLOWED_COLUMNS] or list(DEFAULT_COLUMNS)
+    # One-shot: surface the newly added "mitoyennete" column in existing saved
+    # layouts (runs once; if the user then hides it, the flag keeps it hidden).
+    if not db.get("_mig_mitoyennete_col"):
+        vc = settings["columns"]
+        if "mitoyennete" not in vc:
+            at = vc.index("commune") + 1 if "commune" in vc else len(vc)
+            vc.insert(at, "mitoyennete")
+        db["_mig_mitoyennete_col"] = True
     # Migrations: "active" status folded into "researching"; new fields defaulted.
     for rec in db.get("listings", {}).values():
         if rec.get("status") == "active":
@@ -152,6 +168,8 @@ def load_db():
         rec.setdefault("works_total", works_total(rec.get("works")))
         rec.setdefault("links", [])
         rec.setdefault("overrides", [])
+        if "mitoyennete" not in rec:  # seed once from the md; user-editable thereafter
+            rec["mitoyennete"] = extract_mitoyennete(rec.get("md_body", ""), rec.get("type"))
     return db
 
 
@@ -269,6 +287,21 @@ def extract_type(text):
     return "house"
 
 
+def extract_mitoyennete(body, ptype):
+    """Heuristic seed for whether a house is semi-detached/terraced (mitoyenne)
+    or free-standing (individuelle). Only meaningful for houses; user-editable."""
+    if ptype != "house":
+        return None
+    low = (body or "").lower()
+    if re.search(r"non\s+mitoyen|sans\s+mitoyen|aucune\s+mitoyen", low):
+        return "individuelle"
+    if re.search(r"mitoyen|jumel[ée]e?|accol[ée]e?|maison\s+de\s+ville", low):
+        return "mitoyenne"
+    if re.search(r"maison\s+individuelle|ind[ée]pendante|quatre\s+façades|pavillon\s+isol", low):
+        return "individuelle"
+    return None
+
+
 def extract_dpe(*texts):
     for text in texts:
         if not text:
@@ -352,6 +385,7 @@ def parse_listing_md(path):
     surface = extract_surface(h1, dpe_section, identity_section)
     land_surface = extract_land_surface(body)
     dpe = extract_dpe(identity_section, dpe_section, body)
+    mitoyennete_seed = extract_mitoyennete(body, ptype)
     price = extract_price(body)
     if price is not None and price < 20000:
         price = None  # too small for a property asking price — likely a €/m² or works figure
@@ -371,6 +405,7 @@ def parse_listing_md(path):
         "md_body": body,
         "_status_seed": status_seed,
         "_verdict_seed": verdict_seed,
+        "_mitoyennete_seed": mitoyennete_seed,
     }
 
 
@@ -407,6 +442,7 @@ def import_listings(db):
                 "works_total": None,
                 "links": [],
                 "dpe": parsed["dpe"],
+                "mitoyennete": parsed["_mitoyennete_seed"],
                 "rating": 0,
                 "status": parsed["_status_seed"],
                 "verdict": parsed["_verdict_seed"],
@@ -441,6 +477,58 @@ def import_listings(db):
                 updated += 1
     ensure_codes(db)
     return db, added, updated
+
+
+# --------------------------------------------------------------------------
+# Target-towns study (reference data — parsed fresh from private/towns/*.md,
+# never persisted in the db; edit the md and it shows on next tab open).
+# --------------------------------------------------------------------------
+
+# Default comparison order (used until the user drags to reorder — that choice is
+# saved server-side in settings["town_order"] and shared across everyone). Unknown
+# towns fall after, alpha.
+TOWN_ORDER = [
+    "jouy-en-josas", "bievres", "igny", "chaville",
+    "noisy-le-roi", "bailly", "l-etang-la-ville", "marly-le-roi",
+    "vaucresson", "ville-d-avray", "la-celle-saint-cloud", "sartrouville",
+]
+
+
+def parse_town_md(path):
+    with open(path, "r", encoding="utf-8") as f:
+        body = f.read()
+    town_id = os.path.splitext(os.path.basename(path))[0]
+    title = extract_title(body) or town_id
+    reperes = parse_section(body, "## repères") or parse_section(body, "## reperes")
+    facts = extract_facts(reperes)
+    return {
+        "id": town_id,
+        "title": title,
+        # ordered list keeps the md's bullet order for the comparison rows
+        "reperes": [{"k": k, "v": v} for k, v in facts.items()],
+        "md_body": body,
+    }
+
+
+def list_towns(saved_order=None):
+    """Parsed town cards, ordered by the user's saved drag order first, then the
+    built-in TOWN_ORDER default, then alphabetically for anything unlisted."""
+    if not os.path.isdir(TOWNS_DIR):
+        return []
+    towns = [parse_town_md(p) for p in glob.glob(os.path.join(TOWNS_DIR, "*.md"))]
+    saved = list(saved_order or [])
+    saved_rank = {tid: i for i, tid in enumerate(saved)}
+
+    def sort_key(t):
+        if t["id"] in saved_rank:
+            return (0, saved_rank[t["id"]], "")
+        try:
+            rank = TOWN_ORDER.index(t["id"])
+        except ValueError:
+            rank = len(TOWN_ORDER)
+        return (1, rank, t["title"].lower())
+
+    return sorted(towns, key=sort_key)
 
 
 CODE_RE = re.compile(r"^H(\d+)$")
@@ -549,11 +637,16 @@ class Handler(BaseHTTPRequestHandler):
             items = sorted(db["listings"].values(), key=lambda r: r.get("updated", ""), reverse=True)
             self._send_json({"listings": items})
             return
+        if path == "/api/towns":
+            db = load_db()
+            self._send_json({"towns": list_towns(db["settings"].get("town_order"))})
+            return
         if path == "/api/settings":
             db = load_db()
             self._send_json({
                 "columns": db["settings"]["columns"],
                 "all_columns": ALLOWED_COLUMNS,
+                "town_order": db["settings"].get("town_order", []),
             })
             return
         m = re.match(r"^/api/listings/([^/]+)/photos$", path)
@@ -742,6 +835,28 @@ class Handler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             self._send_json({"error": "invalid json"}, 400)
             return
+        db = load_db()
+        # town_order: shared drag order for the Villes ciblées tab (list of town ids)
+        if "town_order" in body:
+            to = body.get("town_order")
+            if not isinstance(to, list):
+                self._send_json({"error": "town_order must be a list"}, 400)
+                return
+            seen_t, clean_t = set(), []
+            for t in to:
+                if isinstance(t, str) and t and t not in seen_t:
+                    seen_t.add(t)
+                    clean_t.append(t[:100])
+            db["settings"]["town_order"] = clean_t[:200]
+            # allow a town-order-only PUT (columns optional)
+            if "columns" not in body:
+                save_db(db)
+                self._send_json({
+                    "columns": db["settings"]["columns"],
+                    "all_columns": ALLOWED_COLUMNS,
+                    "town_order": db["settings"]["town_order"],
+                })
+                return
         cols = body.get("columns")
         if not isinstance(cols, list):
             self._send_json({"error": "columns must be a list"}, 400)
@@ -756,10 +871,13 @@ class Handler(BaseHTTPRequestHandler):
             clean.insert(0, "title")
         if not clean:
             clean = list(DEFAULT_COLUMNS)
-        db = load_db()
         db["settings"]["columns"] = clean
         save_db(db)
-        self._send_json({"columns": clean, "all_columns": ALLOWED_COLUMNS})
+        self._send_json({
+            "columns": clean,
+            "all_columns": ALLOWED_COLUMNS,
+            "town_order": db["settings"].get("town_order", []),
+        })
 
     def do_POST(self):
         if urlparse(self.path).path == "/api/reimport":
