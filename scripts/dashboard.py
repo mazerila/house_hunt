@@ -19,9 +19,10 @@ import re
 import socket
 import subprocess
 import tempfile
+import unicodedata
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
@@ -81,6 +82,59 @@ VIDEO_EXTS = {".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/we
 # HEIC rarely renders in browsers → transcode to JPEG on the fly (macOS `sips`).
 HEIC_EXTS = {".heic", ".heif"}
 MEDIA_EXTS = dict(IMAGE_EXTS, **VIDEO_EXTS)
+# Source documents (DDT, DPE, Carrez, ebook agence…) sit next to the photos in
+# private/listings/<id>/ (and an optional <id>/docs/ subfolder).
+DOC_EXTS = {".pdf": "application/pdf"}
+# Sellers' filenames are opaque ("DDT_-_LDI-26-3982-BARBONNE.pdf", "Surface
+# BARBONNE.pdf"), so the drawer shows a readable French title derived from
+# keywords in the name. First match wins → order matters (the more specific
+# document types come before the generic ones they contain).
+DOC_TITLE_RULES = [
+    (("audit energetique", "audit-energetique", "audit ener", "audit"), "Audit énergétique"),
+    (("ddt", "dossier de diagnostic", "diagnostic technique", "diagnostics"), "Dossier de diagnostic technique (DDT)"),
+    (("carrez", "superficie", "mesurage", "surface"), "Certificat de surface (loi Carrez)"),
+    (("dpe", "performance energetique"), "Diagnostic de performance énergétique (DPE)"),
+    (("amiante",), "Diagnostic amiante"),
+    (("crep", "plomb"), "Constat de risque d'exposition au plomb (CREP)"),
+    (("termite", "parasitaire", "merule"), "État parasitaire (termites)"),
+    (("electri", "electr", "elec"), "État de l'installation électrique"),
+    (("assainissement", "tout a l egout"), "Contrôle assainissement"),
+    (("gaz",), "État de l'installation gaz"),
+    (("erp", "etat des risques", "risques", "georisque"), "État des risques (ERP)"),
+    (("taxe fonc", "tax fonc", "foncier", "fonciere"), "Taxe foncière"),
+    (("taxe habitation", "habitation"), "Taxe d'habitation"),
+    (("compromis", "promesse de vente", "avant contrat"), "Compromis / promesse de vente"),
+    (("titre de propriete", "acte de vente", "acte authentique"), "Titre de propriété"),
+    (("reglement de copro", "copropriete", "copro", "pv ag", "assemblee generale", "charges"),
+     "Copropriété (règlement / PV / charges)"),
+    (("devis", "chiffrage"), "Devis travaux"),
+    (("geotech", "etude de sol", "g2 avp", "g2"), "Étude géotechnique"),
+    (("permis", "declaration prealable", "pc ", "urbanisme", "cub", "certificat d urbanisme"),
+     "Urbanisme (permis / DP / CU)"),
+    (("cadastr", "plan", "releve"), "Plan / cadastre"),
+    (("ebook", "brochure", "plaquette", "annonce", "mandat"), "Ebook agence / annonce"),
+]
+
+
+def _deaccent(s):
+    return "".join(c for c in unicodedata.normalize("NFD", s)
+                   if unicodedata.category(c) != "Mn")
+
+
+def doc_title(name):
+    """Short human title for a document filename, or None when nothing matches
+    (the UI then falls back to the filename itself)."""
+    stem = os.path.splitext(os.path.basename(name))[0]
+    # normalise separators so "tax-foncier-2025" and "taxe_fonciere" both match
+    hay = " " + re.sub(r"[^a-z0-9]+", " ", _deaccent(stem).lower()).strip() + " "
+    for keys, title in DOC_TITLE_RULES:
+        if any((" " + k.strip() + " ") in hay or k.strip() in hay for k in keys):
+            year = re.search(r"\b(19|20)\d{2}\b", stem)
+            # a year is meaningful on fiscal/annual documents, noise elsewhere
+            if year and ("Taxe" in title or "Copropriété" in title):
+                return title + " " + year.group(0)
+            return title
+    return None
 PHOTO_CACHE = os.path.join(PRIVATE_DIR, ".media_cache")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 
@@ -88,6 +142,31 @@ SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 def photo_dirs(listing_id):
     base = os.path.join(LISTINGS_DIR, listing_id)
     return [base, os.path.join(base, "photos")]
+
+
+def doc_dirs(listing_id):
+    base = os.path.join(LISTINGS_DIR, listing_id)
+    return [base, os.path.join(base, "docs")]
+
+
+def list_docs(listing_id):
+    """Sorted PDFs in the listing folder (+ /docs), each {rel, size} with rel
+    relative to the listing folder."""
+    if not SLUG_RE.match(listing_id or ""):
+        return []
+    base = os.path.join(LISTINGS_DIR, listing_id)
+    out = []
+    for d in doc_dirs(listing_id):
+        if not os.path.isdir(d):
+            continue
+        for name in os.listdir(d):
+            if os.path.splitext(name)[1].lower() not in DOC_EXTS:
+                continue
+            full = os.path.join(d, name)
+            if os.path.isfile(full):
+                out.append({"rel": os.path.relpath(full, base),
+                            "size": os.path.getsize(full)})
+    return sorted(out, key=lambda m: m["rel"])
 
 
 def list_photos(listing_id):
@@ -618,8 +697,9 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def _send_media(self, path, content_type):
-        """Serve a file with HTTP Range support (needed for <video> seeking)."""
+    def _send_media(self, path, content_type, extra=None):
+        """Serve a file with HTTP Range support (needed for <video> seeking and
+        for the browser's PDF viewer). `extra` adds response headers."""
         try:
             size = os.path.getsize(path)
         except OSError:
@@ -646,6 +726,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(length))
         if partial:
             self.send_header("Content-Range", "bytes %d-%d/%d" % (start, end, size))
+        for k, v in (extra or {}).items():
+            self.send_header(k, v)
         self.end_headers()
         if self.command == "HEAD":
             return
@@ -696,6 +778,19 @@ class Handler(BaseHTTPRequestHandler):
         if m:
             self._serve_photo(m.group(1), m.group(2))
             return
+        m = re.match(r"^/api/listings/([^/]+)/docs$", path)
+        if m:
+            listing_id = m.group(1)
+            docs = [{"name": d["rel"], "size": d["size"],
+                     "title": doc_title(d["rel"]),
+                     "url": "/docs/" + listing_id + "/" + quote(d["rel"])}
+                    for d in list_docs(listing_id)]
+            self._send_json({"docs": docs})
+            return
+        m = re.match(r"^/docs/([^/]+)/(.+)$", path)
+        if m:
+            self._serve_doc(m.group(1), m.group(2))
+            return
         m = re.match(r"^/api/listings/([^/]+)$", path)
         if m:
             db = load_db()
@@ -731,10 +826,35 @@ class Handler(BaseHTTPRequestHandler):
             # fall through: serve raw HEIC (Safari can render it)
         self._send_media(target, MEDIA_EXTS[ext])
 
+    def _serve_doc(self, listing_id, rel):
+        # Same traversal guard as the photos: slug-checked id, resolved file
+        # must stay inside the listing folder, and be a known document type.
+        rel = unquote(rel)
+        if not SLUG_RE.match(listing_id or ""):
+            self.send_error(404)
+            return
+        base = os.path.realpath(os.path.join(LISTINGS_DIR, listing_id))
+        target = os.path.realpath(os.path.join(base, rel))
+        if os.path.commonpath([base, target]) != base:
+            self.send_error(404)
+            return
+        ext = os.path.splitext(target)[1].lower()
+        if ext not in DOC_EXTS or not os.path.isfile(target):
+            self.send_error(404)
+            return
+        # inline → the browser's built-in PDF viewer renders it in the iframe
+        self._send_media(target, DOC_EXTS[ext],
+                         extra={"Content-Disposition": "inline"})
+
     def do_HEAD(self):
-        m = re.match(r"^/photos/([^/]+)/(.+)$", urlparse(self.path).path)
+        path = urlparse(self.path).path
+        m = re.match(r"^/photos/([^/]+)/(.+)$", path)
         if m:
             self._serve_photo(m.group(1), m.group(2))
+            return
+        m = re.match(r"^/docs/([^/]+)/(.+)$", path)
+        if m:
+            self._serve_doc(m.group(1), m.group(2))
             return
         self.send_error(404)
 
