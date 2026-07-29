@@ -9,6 +9,7 @@ For any listing it can:
 - **Fingerprint and harvest the DPE** (ADEME registry) — including locating withheld-address listings and cross-anchoring them to a building via the RNB id, then extracting the full works map (envelope, heating, surfaces).
 - **Read the market**: the parcel's own past sales and same-street comps from DVF.
 - **Check risks**: clay shrink-swell, quarries, ground movement, BASIAS/BASOL (Géorisques).
+- **Reconcile the seller's own documents** — DDT (diagnostics), certificat Carrez, audit énergétique, agency ebook — against the ad and the public registries, and re-price the listing on what they actually say.
 - **Scrape and structure listings** from portals with a persistent Playwright browser + Claude extraction.
 
 ## Quickstart
@@ -56,15 +57,18 @@ How to use:
 6. **Photos & videos** — drop media into the listing's folder `private/listings/<slug>/photos/` (or the folder itself); they appear as a **Photos** gallery at the top of the drawer. Click any to open full-size: **← → / Esc**, or **swipe left/right** (touch or mouse-drag) between images. Videos play in the viewer with controls.
    - Supported: `jpg png webp gif heic/heif` (HEIC is transcoded to JPEG on the fly so any browser shows it) and `mp4 mov webm m4v`. **Caveat:** iPhone `.mov` files are usually **HEVC/H.265**, which plays in Safari but not Chrome/Firefox — convert those to MP4/H.264 for cross-browser playback.
    - **Annonces** — at the bottom of the drawer, paste the listing's online announce URL(s); any URLs already in the research note are detected automatically. All are clickable.
-7. **Columns** — the **Colonnes** button picks which columns show; the choice is saved server-side (shared, persists across restarts). Every listing gets a short sortable **code** (H01, H02, …) for easy reference.
-8. **Themes** — the ◐ button toggles dark/light; your choice is remembered.
-9. **Network access & mobile** — see `--lan` above to open it from your phone; on small screens the grid collapses into one card per listing for comfortable browsing.
+7. **Documents (PDF)** — drop the seller's PDFs (DDT/diagnostics, DPE, certificat Carrez, audit énergétique, taxe foncière, ebook agence…) into the listing's folder `private/listings/<slug>/` (or a `docs/` subfolder). They appear as a **Documents** list under the photos — click one to read it in a built-in viewer (**‹ ›** between documents, **Esc** to close, plus *Nouvel onglet* / *Télécharger*). No naming convention needed: sellers' filenames are cryptic, so each row shows a **readable title** derived from the filename (`DDT_-_LDI-26-3982-DUPONT.pdf` → *Dossier de diagnostic technique (DDT)*) with the real filename underneath. Unrecognised names simply show as-is.
+8. **Columns** — the **Colonnes** button picks which columns show; the choice is saved server-side (shared, persists across restarts). Every listing gets a short sortable **code** (H01, H02, …) for easy reference.
+9. **Themes** — the ◐ button toggles dark/light; your choice is remembered.
+10. **Network access & mobile** — see `--lan` above to open it from your phone; on small screens the grid collapses into one card per listing for comfortable browsing.
 
 Extracted fields (price, surfaces, DPE, commune) come from heuristics over your notes — correct any misread in the drawer once, it sticks.
 
 ## The methodology
 
 The real value is in [CLAUDE.md](CLAUDE.md): a battle-tested **8-step parcel due-diligence checklist** (locate → planning layers → slope → frontage → DVF → DPE → permits → verdict), the pitfalls that produced it, all-in cost rules of thumb, and a hard-nosed section on French self-build (auto-construction) insurance/exit risks.
+
+It also carries a **seller-document reconciliation pass** for the moment an owner or agency finally hands over the paperwork. Those PDFs are the first contractual facts in the file, and they tend to contradict the ad in the seller's favour — so the checklist forces you to re-derive the surface from the **certificat Carrez** (adverts often quote *surface au sol*, not habitable, and that alone can move €/m² onto the local median), pull the **full ADEME record** from the DPE number in the DDT rather than trusting the advertised letter (it's where the real heating system shows up), read the **électricité** anomalies and the **assainissement** observations as costed works, treat the agency's own **ebook** condition grid as more honest than its portal ad, note what's **missing** (an absent ERP hides the clay/quarry risk), and then restate — not quietly delete — any earlier conclusion the documents overturn.
 
 `CLAUDE.md` doubles as the instruction file when you open this repo in [Claude Code](https://claude.com/claude-code): the agent reads it and runs the checklist for a listing you paste in, using the scripts and open APIs below.
 

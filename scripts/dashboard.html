@@ -282,6 +282,45 @@
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     color: #fff; font-size: 26px; text-shadow: 0 1px 6px rgba(0,0,0,.8); pointer-events: none;
   }
+  /* document (PDF) list in the drawer, under the photos */
+  .doclist { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+  .doc-item {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--panel-2); color: var(--text); font: inherit; font-size: 13px;
+    cursor: pointer; box-shadow: none;
+    transition: border-color .12s ease, filter .12s ease, transform .06s ease;
+  }
+  .doc-item:hover { filter: brightness(1.04); border-color: var(--accent); box-shadow: none; }
+  .doc-item:active { transform: scale(.995); }
+  .doc-item .doc-ico { flex: none; color: #c0392b; }
+  .doc-item .doc-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .doc-item .doc-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .doc-item .doc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--text-dim); }
+  .doc-item .doc-size { flex: none; font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  /* PDF viewer overlay */
+  #pdfbox {
+    /* above the drawer (101) and its overlay, same layer as the lightbox */
+    position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.85);
+    display: flex; flex-direction: column; padding: 40px 24px 24px;
+  }
+  #pdfbox[hidden] { display: none; }
+  #pdfbox .pdf-bar {
+    display: flex; align-items: center; gap: 12px; color: #fff;
+    font-size: 13px; padding: 0 2px 10px;
+  }
+  #pdfbox .pdf-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #pdfbox .pdf-bar a, #pdfbox .pdf-bar button {
+    background: rgba(255,255,255,.16); color: #fff; border: none; border-radius: 6px;
+    padding: 5px 12px; font: inherit; font-size: 13px; text-decoration: none; cursor: pointer;
+    box-shadow: none; flex: none;
+  }
+  #pdfbox .pdf-bar a:hover, #pdfbox .pdf-bar button:hover { background: rgba(255,255,255,.28); filter: none; box-shadow: none; }
+  #pdfbox .pdf-nav[disabled] { opacity: .3; cursor: default; }
+  #pdfbox iframe {
+    flex: 1; width: 100%; border: none; border-radius: 6px; background: #fff;
+    box-shadow: 0 8px 40px rgba(0,0,0,.6);
+  }
   /* find-in-drawer (search all text of the open listing) */
   .drawer-find {
     position: sticky; top: 0; z-index: 6;
@@ -639,6 +678,10 @@
       <label class="section-label">Photos</label>
       <div class="gallery" id="d-gallery"></div>
     </div>
+    <div class="drawer-section" id="d-docs-section" hidden>
+      <label class="section-label">Documents</label>
+      <div class="doclist" id="d-doclist"></div>
+    </div>
     <div class="field-row">
       <label>Note</label>
       <div class="stars-edit" id="d-stars"></div>
@@ -760,6 +803,18 @@
   <video id="lb-video" controls playsinline hidden></video>
   <button class="lb-nav lb-next" id="lb-next" title="Suivant (→)">&#8250;</button>
   <div class="lb-count" id="lb-count"></div>
+</div>
+
+<div id="pdfbox" hidden>
+  <div class="pdf-bar">
+    <button class="pdf-nav" id="pdf-prev" title="Document précédent (←)">&#8249;</button>
+    <button class="pdf-nav" id="pdf-next" title="Document suivant (→)">&#8250;</button>
+    <span class="pdf-title" id="pdf-title"></span>
+    <a id="pdf-open" href="#" target="_blank" rel="noopener">Nouvel onglet</a>
+    <a id="pdf-dl" href="#" download>Télécharger</a>
+    <button id="pdf-close" title="Fermer (Échap)">&times;</button>
+  </div>
+  <iframe id="pdf-frame" title="Document"></iframe>
 </div>
 
 <script>
@@ -1416,6 +1471,77 @@
     else if (e.key === "ArrowRight") lbStep(1);
   });
 
+  // ---- documents (PDF) list + viewer ----
+  var pdfState = { docs: [], index: 0 };
+  var PDF_ICON = '<svg class="doc-ico" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>';
+
+  function fmtSize(n) {
+    if (!n && n !== 0) return "";
+    if (n >= 1048576) return (n / 1048576).toFixed(n >= 10485760 ? 0 : 1).replace(".", ",") + " Mo";
+    return Math.max(1, Math.round(n / 1024)) + " Ko";
+  }
+
+  function loadDocs(id) {
+    var list = $("#d-doclist"), section = $("#d-docs-section");
+    list.innerHTML = "";
+    section.hidden = true;
+    pdfState.docs = [];
+    fetchJSON("/api/listings/" + encodeURIComponent(id) + "/docs").then(function (res) {
+      var docs = (res.data && res.data.docs) || [];
+      if (id !== state.currentId) return;  // drawer changed while loading
+      pdfState.docs = docs;
+      if (!docs.length) return;
+      section.hidden = false;
+      docs.forEach(function (d, i) {
+        var b = el("button", "doc-item");
+        b.type = "button";
+        b.innerHTML = PDF_ICON;
+        var txt = el("span", "doc-text");
+        // the seller's filename is rarely self-explanatory → show a derived
+        // title on top, with the actual filename underneath as the fallback/proof
+        txt.appendChild(el("span", "doc-title", d.title || d.name));
+        if (d.title) txt.appendChild(el("span", "doc-name", d.name));
+        b.appendChild(txt);
+        b.appendChild(el("span", "doc-size", fmtSize(d.size)));
+        b.addEventListener("click", function () { openPdf(i); });
+        list.appendChild(b);
+      });
+    });
+  }
+
+  function openPdf(i) {
+    if (!pdfState.docs.length) return;
+    pdfState.index = (i + pdfState.docs.length) % pdfState.docs.length;
+    var d = pdfState.docs[pdfState.index];
+    $("#pdf-title").textContent = (d.title ? d.title + "  —  " + d.name : d.name) +
+      (pdfState.docs.length > 1 ? "  ·  " + (pdfState.index + 1) + " / " + pdfState.docs.length : "");
+    $("#pdf-frame").src = d.url;
+    $("#pdf-open").href = d.url;
+    $("#pdf-dl").href = d.url;
+    $("#pdf-dl").setAttribute("download", d.name.split("/").pop());
+    var multi = pdfState.docs.length > 1;
+    $("#pdf-prev").disabled = !multi;
+    $("#pdf-next").disabled = !multi;
+    $("#pdfbox").hidden = false;
+  }
+  function closePdf() {
+    $("#pdfbox").hidden = true;
+    $("#pdf-frame").src = "about:blank";  // stop rendering / release the file
+  }
+  function pdfStep(d) { openPdf(pdfState.index + d); }
+
+  $("#pdf-close").addEventListener("click", closePdf);
+  $("#pdf-prev").addEventListener("click", function () { pdfStep(-1); });
+  $("#pdf-next").addEventListener("click", function () { pdfStep(1); });
+  $("#pdfbox").addEventListener("click", function (e) { if (e.target === $("#pdfbox")) closePdf(); });
+  document.addEventListener("keydown", function (e) {
+    if ($("#pdfbox").hidden) return;
+    if (e.key === "Escape") closePdf();
+    // the iframe swallows arrows while focused; they work from the bar/backdrop
+    else if (e.key === "ArrowLeft") pdfStep(-1);
+    else if (e.key === "ArrowRight") pdfStep(1);
+  });
+
   // Touch controller: pinch-to-zoom + pan + double-tap on the image, swipe to change
   // photo only when not zoomed. The lightbox owns all touch gestures (touch-action:none),
   // so the browser's own page-zoom can never fight the image zoom on mobile.
@@ -1689,6 +1815,7 @@
     $("#d-title").textContent = l.title || l.id;
     $("#d-subtitle").textContent = [l.code, TYPE_LABELS[l.type] || l.type, l.commune].filter(Boolean).join(" · ");
     loadGallery(id);
+    loadDocs(id);
     state.works = (l.works || []).map(function (w) { return { label: w.label, cost: w.cost }; });
     renderWorks();
     state.links = (l.links || []).slice();
@@ -1717,6 +1844,7 @@
     }
     state.commentDirty = false;
     findReset();
+    closePdf();
     $("#overlay").classList.remove("open");
     $("#drawer").classList.remove("open");
     state.currentId = null;
@@ -1725,7 +1853,7 @@
   $("#d-close").addEventListener("click", function () { closeDrawer(false); });
   $("#overlay").addEventListener("click", function () { closeDrawer(false); });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && $("#lightbox").hidden && $("#drawer").classList.contains("open")) closeDrawer(false);
+    if (e.key === "Escape" && $("#lightbox").hidden && $("#pdfbox").hidden && $("#drawer").classList.contains("open")) closeDrawer(false);
   });
 
   // ---- find-in-drawer: highlight every occurrence of a term across the open listing's text ----
