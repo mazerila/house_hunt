@@ -47,6 +47,29 @@ OVERRIDABLE_STR_FIELDS = {"agency", "contact"}
 # Pure user-set numeric negotiation fields (never derived from the md): the
 # minimum price the seller might accept and the offer the buyer is willing to make.
 USER_NUMERIC_FIELDS = {"price_min", "price_offer"}
+# Key dates, user-owned and never derived from the md: "visits" is the ordered
+# list of visit dates (1st, 2nd, ...) and "offer_date" the day the offer went in.
+# Both are plain ISO "YYYY-MM-DD" strings so they sort as text.
+USER_DATE_FIELDS = {"offer_date"}
+ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def clean_dates(values):
+    """Keep well-formed ISO dates, de-duplicate, and sort so index 0 = 1st visit."""
+    seen, out = set(), []
+    for v in values or []:
+        if not isinstance(v, str):
+            continue
+        v = v.strip()
+        if not ISO_DATE_RE.match(v) or v in seen:
+            continue
+        try:
+            datetime.strptime(v, "%Y-%m-%d")
+        except ValueError:
+            continue
+        seen.add(v)
+        out.append(v)
+    return sorted(out)
 
 # Column-picker: every column the grid can show (the frontend holds the labels &
 # renderers; the server only validates keys and persists the chosen visible set,
@@ -54,11 +77,11 @@ USER_NUMERIC_FIELDS = {"price_min", "price_offer"}
 ALLOWED_COLUMNS = [
     "code", "title", "commune", "type", "mitoyennete", "price", "price_min", "price_offer", "price_per_m2",
     "works_total", "land_surface", "surface", "dpe", "rating", "status", "verdict", "tags",
-    "agency", "contact", "created", "updated",
+    "visits", "offer_date", "agency", "contact", "created", "updated",
 ]
 DEFAULT_COLUMNS = [
     "code", "title", "commune", "mitoyennete", "price", "price_offer", "works_total", "land_surface", "surface",
-    "dpe", "rating", "status", "updated",
+    "dpe", "rating", "status", "visits", "offer_date", "updated",
 ]
 
 
@@ -240,6 +263,15 @@ def load_db():
             at = vc.index("commune") + 1 if "commune" in vc else len(vc)
             vc.insert(at, "mitoyennete")
         db["_mig_mitoyennete_col"] = True
+    # Same one-shot for the key-date columns (visits / offer date).
+    if not db.get("_mig_dates_cols"):
+        vc = settings["columns"]
+        at = vc.index("status") + 1 if "status" in vc else len(vc)
+        for key in ("visits", "offer_date"):
+            if key not in vc:
+                vc.insert(at, key)
+                at += 1
+        db["_mig_dates_cols"] = True
     # Migrations: "active" status folded into "researching"; new fields defaulted.
     for rec in db.get("listings", {}).values():
         if rec.get("status") == "active":
@@ -253,6 +285,8 @@ def load_db():
         rec.setdefault("overrides", [])
         rec.setdefault("agency", None)
         rec.setdefault("contact", None)
+        rec["visits"] = clean_dates(rec.get("visits"))
+        rec.setdefault("offer_date", None)
         if "mitoyennete" not in rec:  # seed once from the md; user-editable thereafter
             rec["mitoyennete"] = extract_mitoyennete(rec.get("md_body", ""), rec.get("type"))
     return db
@@ -546,6 +580,8 @@ def import_listings(db):
                 "price_per_m2": parsed["price_per_m2"],
                 "price_min": None,
                 "price_offer": None,
+                "visits": [],
+                "offer_date": None,
                 "works": [],
                 "works_total": None,
                 "links": [],
@@ -900,6 +936,15 @@ class Handler(BaseHTTPRequestHandler):
         if "links" in body and not isinstance(body["links"], list):
             self._send_json({"error": "links must be a list"}, 400)
             return
+        if "visits" in body and not isinstance(body["visits"], list):
+            self._send_json({"error": "visits must be a list"}, 400)
+            return
+        for key in USER_DATE_FIELDS:
+            if key in body and body[key] is not None:
+                val = str(body[key]).strip()
+                if val and not clean_dates([val]):
+                    self._send_json({"error": "invalid " + key}, 400)
+                    return
         for key in OVERRIDABLE_FIELDS | USER_NUMERIC_FIELDS:
             if key not in body:
                 continue
@@ -920,6 +965,15 @@ class Handler(BaseHTTPRequestHandler):
         for key in USER_NUMERIC_FIELDS:
             if key in body:
                 rec[key] = None if body[key] is None else float(body[key])
+        # key dates: visits are normalised (valid ISO only, de-duplicated, sorted
+        # so index 0 is the 1st visit); the offer date is a single nullable day
+        if "visits" in body:
+            rec["visits"] = clean_dates(body["visits"])
+        for key in USER_DATE_FIELDS:
+            if key in body:
+                val = body[key]
+                val = str(val).strip() if val is not None else ""
+                rec[key] = val or None
         # renovation line-items: sanitize [{label, cost}], recompute the total
         if "works" in body:
             clean = []

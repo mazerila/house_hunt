@@ -227,6 +227,10 @@
   td.col-clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* travaux (renovation line-items) editor */
   .works-total { float: right; text-transform: none; letter-spacing: 0; font-weight: 700; color: var(--text); }
+  .visit-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+  .visit-row .v-rank { flex: 0 0 62px; font-size: 13px; color: var(--muted); }
+  .visit-row input.v-date { flex: 1; }
+  .visits-empty { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
   .works-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
   .works-row input.w-label { flex: 1; }
   .works-row input.w-cost { width: 110px; text-align: right; }
@@ -724,6 +728,17 @@
     <div class="field-row" style="margin-top:-8px">
       <div class="hint" id="d-nego-hint"></div>
     </div>
+    <div class="field-row">
+      <label>Dates clés</label>
+      <div id="d-visits-list"></div>
+      <button class="secondary works-add" id="d-visit-add">+ Ajouter une visite</button>
+    </div>
+    <div class="field-grid">
+      <div class="field-row">
+        <label>Date de l'offre</label>
+        <input type="date" id="d-offer-date" placeholder="—">
+      </div>
+    </div>
     <div class="field-grid">
       <div class="field-row">
         <label>Terrain (m²)</label>
@@ -833,7 +848,7 @@
     applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
   });
 
-  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], townsAll: [], townHidden: null, townSort: null };
+  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], visits: [], townsAll: [], townHidden: null, townSort: null };
 
   var STATUS_LABELS = {
     "researching": "⚲ Recherche",
@@ -928,6 +943,11 @@
     var numeric = !!NUMERIC_KEYS[key];
     state.filtered.sort(function (a, b) {
       var av = a[key], bv = b[key];
+      // "visits" is a list — sort on the most recent visit so empties fall last
+      if (key === "visits") {
+        av = (av && av.length) ? av[av.length - 1] : "";
+        bv = (bv && bv.length) ? bv[bv.length - 1] : "";
+      }
       var aEmpty = av === null || av === undefined || av === "";
       var bEmpty = bv === null || bv === undefined || bv === "";
       if (aEmpty && bEmpty) return 0;
@@ -960,6 +980,13 @@
       if (amt >= 1) return "il y a " + amt + " " + (amt > 1 ? units[i][1] : units[i][0]);
     }
     return "à l'instant";
+  }
+  // Key dates are stored as plain "YYYY-MM-DD"; render them as fr-FR days.
+  function fmtDay(iso) {
+    if (!iso) return "—";
+    var p = String(iso).split("-");
+    if (p.length !== 3) return iso;
+    return p[2] + "/" + p[1] + "/" + p[0];
   }
   function starsHtml(rating) {
     rating = rating || 0;
@@ -1028,6 +1055,14 @@
     { key: "status", label: "Statut", cell: function (td, l) { td.appendChild(statusSelect(l)); } },
     { key: "verdict", label: "Verdict", cls: "col-clip", cell: function (td, l) { td.textContent = l.verdict || "—"; td.title = l.verdict || ""; } },
     { key: "tags", label: "Tags", cls: "col-clip", cell: function (td, l) { var t = (l.tags && l.tags.length) ? l.tags.join(", ") : "—"; td.textContent = t; td.title = t; } },
+    { key: "visits", label: "Visites", cell: function (td, l) {
+      var v = l.visits || [];
+      if (!v.length) { td.textContent = "—"; return; }
+      // show the most recent visit, prefixed by the count when there were several
+      td.textContent = (v.length > 1 ? v.length + " · " : "") + fmtDay(v[v.length - 1]);
+      td.title = v.map(function (d, i) { return ordinalVisit(i) + " : " + fmtDay(d); }).join("\n");
+    } },
+    { key: "offer_date", label: "Offre le", cell: function (td, l) { td.textContent = l.offer_date ? fmtDay(l.offer_date) : "—"; } },
     { key: "agency", label: "Agence", cls: "col-clip", cell: function (td, l) { td.textContent = l.agency || "—"; td.title = l.agency || ""; } },
     { key: "contact", label: "Contact", cls: "col-clip", cell: function (td, l) { td.textContent = l.contact || "—"; td.title = l.contact || ""; } },
     { key: "created", label: "Créé", cell: function (td, l) { td.textContent = fmtRelTime(l.created); } },
@@ -1378,6 +1413,9 @@
     $("#d-price-offer").value = numOrBlank(l.price_offer);
     $("#d-land").value = numOrBlank(l.land_surface);
     $("#d-surface").value = numOrBlank(l.surface);
+    state.visits = (l.visits || []).slice();
+    renderVisits();
+    $("#d-offer-date").value = l.offer_date || "";
     renderNegoHint(l);
   }
 
@@ -1654,6 +1692,55 @@
       if (z.scale > 1) reset(true); else { scaleAround(DBL, e.clientX, e.clientY); apply(true); }
     });
   })();
+
+  // ---- dates clés (visites + offre) ----
+  // state.visits holds the raw list; the server re-sorts on save, so after each
+  // patch we re-render from the record it returns (index 0 = 1re visite).
+  function ordinalVisit(i) { return i === 0 ? "1re visite" : (i + 1) + "e visite"; }
+
+  function renderVisits() {
+    var list = $("#d-visits-list");
+    if (!list) return;
+    list.innerHTML = "";
+    if (!state.visits.length) {
+      list.appendChild(el("div", "visits-empty", "Aucune visite enregistrée."));
+    }
+    state.visits.forEach(function (d, i) {
+      var row = el("div", "visit-row");
+      row.appendChild(el("span", "v-rank", ordinalVisit(i)));
+      var inp = document.createElement("input");
+      inp.type = "date"; inp.className = "v-date"; inp.value = d || "";
+      inp.addEventListener("change", function () { state.visits[i] = inp.value; saveVisits(); });
+      var del = el("button", "w-del", "✕");
+      del.title = "Supprimer cette visite";
+      del.addEventListener("click", function () { state.visits.splice(i, 1); renderVisits(); saveVisits(); });
+      row.appendChild(inp); row.appendChild(del);
+      list.appendChild(row);
+    });
+  }
+
+  function saveVisits() {
+    if (!state.currentId) return;
+    var clean = state.visits.filter(function (d) { return d; });
+    patchListing(state.currentId, { visits: clean }).then(function (rec) {
+      updateLocal(rec);
+      state.visits = (rec.visits || []).slice();
+      renderVisits();
+    });
+  }
+
+  $("#d-visit-add").addEventListener("click", function () {
+    state.visits.push("");
+    renderVisits();
+    var inputs = $("#d-visits-list").querySelectorAll("input.v-date");
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+
+  $("#d-offer-date").addEventListener("change", function () {
+    if (!state.currentId) return;
+    var v = $("#d-offer-date").value || null;
+    patchListing(state.currentId, { offer_date: v }).then(updateLocal);
+  });
 
   // ---- travaux (renovation line-items) ----
   function renderWorks() {
