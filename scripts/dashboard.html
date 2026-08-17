@@ -68,6 +68,36 @@
   button.secondary {
     background: var(--panel); color: var(--text); border: 1px solid var(--border);
   }
+  /* archive view switch: sits at the right of the filter bar, above the grid.
+     "on" = the grid is showing the archive instead of the active listings. */
+  .archive-switch {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 6px 11px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--panel); color: var(--text-dim); font-size: 13px;
+    user-select: none; white-space: nowrap; transition: color .15s, border-color .15s;
+  }
+  .archive-switch:hover { border-color: var(--accent); }
+  .archive-switch .track {
+    position: relative; width: 30px; height: 17px; flex: 0 0 30px;
+    border-radius: 9px; background: var(--border); transition: background .18s;
+  }
+  .archive-switch .knob {
+    position: absolute; top: 2px; left: 2px; width: 13px; height: 13px;
+    border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.35);
+    transition: transform .18s;
+  }
+  .archive-switch.on { color: var(--accent); border-color: var(--accent); }
+  .archive-switch.on .track { background: var(--accent); }
+  .archive-switch.on .knob { transform: translateX(13px); }
+  .archive-switch .badge {
+    display: inline-block; min-width: 16px; padding: 0 4px; border-radius: 8px;
+    background: var(--border); color: var(--text-dim);
+    font-size: 11px; line-height: 16px; text-align: center;
+  }
+  .archive-switch.on .badge { background: var(--accent); color: #fff; }
+  /* archive/un-archive action button, shown next to the delete button */
+  button.secondary.toggle-on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .danger-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   #theme-btn { font-size: 16px; padding: 6px 10px; line-height: 1; }
   .filters {
     display: flex; gap: 10px; padding: 12px 20px; flex-wrap: wrap;
@@ -123,6 +153,103 @@
   tbody tr:hover { background: var(--row-hover); cursor: pointer; }
   tbody tr:active { filter: brightness(.96); }
   .num { text-align: right; font-variant-numeric: tabular-nums; }
+  /* red-flag screen badges (computed by scripts/enrich.py) */
+  .flag-pill {
+    display: inline-block; min-width: 20px; padding: 1px 6px; margin-right: 3px;
+    border-radius: 9px; font-size: 11px; font-weight: 700; text-align: center;
+  }
+  .flag-pill.red   { background: #fee2e2; color: #991b1b; }
+  .flag-pill.amber { background: #fef3c7; color: #92400e; }
+  .flag-pill.ok    { background: #dcfce7; color: #166534; font-weight: 600; }
+  html[data-theme="dark"] .flag-pill.red   { background: #4a1d1d; color: #fca5a5; }
+  html[data-theme="dark"] .flag-pill.amber { background: #463209; color: #fcd34d; }
+  html[data-theme="dark"] .flag-pill.ok    { background: #14361f; color: #86efac; }
+  /* all-in vs post-works value */
+  .spread { font-weight: 600; }
+  .spread.pos { color: #15803d; }
+  .spread.neg { color: #b91c1c; }
+  html[data-theme="dark"] .spread.pos { color: #4ade80; }
+  html[data-theme="dark"] .spread.neg { color: #f87171; }
+  /* dashed underline = works cost not captured yet, so the figure is optimistic */
+  .spread.partial { text-decoration: underline dashed 1px; text-underline-offset: 3px; opacity: .75; }
+  .muted { color: var(--text-dim); }
+
+  /* ---- Critères tab ---- */
+  .crit-main { padding: 0 20px 60px; }
+  .crit-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 6px 0 16px; }
+  /* roomier than the grid filters — these two carry long listing titles */
+  .crit-bar select { padding: 9px 12px; font-size: 13.5px; line-height: 1.35; }
+  .crit-bar #crit-listing { max-width: 460px; }
+  /* Immuable / Modifiable segmented control — only one part is rendered at a
+     time, so the 85-item list never needs scrolling through the other half. */
+  .crit-parts-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .crit-part-tab {
+    display: inline-flex; align-items: baseline; gap: 8px;
+    padding: 9px 16px; border-radius: 8px; cursor: pointer; user-select: none;
+    background: var(--panel); border: 1px solid var(--border); color: var(--text-dim);
+    font-size: 13.5px; font-weight: 600; transition: color .15s, border-color .15s, background .15s;
+  }
+  .crit-part-tab:hover { color: var(--text); border-color: var(--accent); }
+  .crit-part-tab .n {
+    font-size: 11.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+    background: var(--row-hover); color: var(--text-dim);
+  }
+  .crit-part-tab.active { color: #fff; border-color: transparent; }
+  .crit-part-tab.active .n { background: rgba(255,255,255,.22); color: #fff; }
+  .crit-part-tab.immuable.active { background: #b91c1c; }
+  .crit-part-tab.modifiable.active { background: #15803d; }
+  .crit-progress { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .crit-part { margin-bottom: 30px; }
+  .crit-part-head {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    padding: 10px 14px; border-radius: 8px 8px 0 0; border: 1px solid var(--border); border-bottom: none;
+  }
+  .crit-part.immuable .crit-part-head { background: rgba(185,28,28,.09); }
+  .crit-part.modifiable .crit-part-head { background: rgba(21,128,61,.09); }
+  .crit-part-head h2 { margin: 0; font-size: 16px; }
+  .crit-part-head .crit-part-sub { font-size: 12.5px; color: var(--text-dim); }
+  .crit-part-body { border: 1px solid var(--border); border-radius: 8px; background: var(--panel); overflow: hidden; }
+  .crit-group { border-top: 1px solid var(--border); }
+  .crit-group:first-child { border-top: none; }
+  .crit-group h3 {
+    margin: 0; padding: 9px 14px; font-size: 12px; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--text-dim); background: var(--row-hover);
+  }
+  .crit-item {
+    display: flex; gap: 10px; padding: 9px 14px; border-top: 1px solid var(--border);
+    align-items: flex-start; cursor: pointer;
+  }
+  .crit-item:first-of-type { border-top: none; }
+  .crit-item:hover { background: var(--row-hover); }
+  .crit-tick {
+    flex: 0 0 22px; width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; background: var(--bg); user-select: none; margin-top: 1px;
+  }
+  .crit-item.ok  .crit-tick { background: #dcfce7; border-color: #16a34a; color: #166534; }
+  .crit-item.ko  .crit-tick { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+  html[data-theme="dark"] .crit-item.ok .crit-tick { background: #14361f; color: #86efac; }
+  html[data-theme="dark"] .crit-item.ko .crit-tick { background: #4a1d1d; color: #fca5a5; }
+  .crit-item.ok .crit-label { text-decoration: line-through; opacity: .6; }
+  .crit-none { padding: 12px 14px; font-size: 12.5px; color: var(--text-dim); font-style: italic; }
+  .crit-text { flex: 1; min-width: 0; }
+  .crit-label { font-weight: 600; font-size: 13.5px; }
+  .crit-detail { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; line-height: 1.45; }
+  .crit-cost {
+    display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+    background: var(--row-hover); border: 1px solid var(--border);
+    font-size: 11.5px; font-weight: 700; white-space: nowrap; color: var(--text);
+  }
+  .crit-tag {
+    display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  }
+  .crit-tag.elim { background: #fee2e2; color: #991b1b; }
+  .crit-tag.visite { background: #dbeafe; color: #1e40af; }
+  html[data-theme="dark"] .crit-tag.elim { background: #4a1d1d; color: #fca5a5; }
+  html[data-theme="dark"] .crit-tag.visite { background: #1e3a5f; color: #93c5fd; }
+  @media (max-width: 760px) { .crit-main { padding: 0 12px 60px; } }
+
   /* inline status editor in the grid, styled as a pill */
   select.status-select {
     font: inherit; font-size: 12px; font-weight: 600;
@@ -225,8 +352,25 @@
   header h1 .ico { opacity: .85; }
   td.offer-pos { color: #166534; }
   td.col-clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Row height control. The address column was wrapping to 6+ lines and dragging
+     every other cell down with it: give it real width, stop the short columns
+     wrapping at all, and hard-cap the title at 3 lines with an ellipsis. */
+  #grid th.col-title, #grid td.col-title { min-width: 306px; width: 306px; }
+  #grid td.col-title {
+    white-space: normal;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  #grid th.col-commune, #grid td.col-commune { min-width: 110px; white-space: nowrap; }
+  #grid td { vertical-align: middle; }
+  /* numeric / short columns must never be the reason a row grows */
+  #grid td.col-nowrap, #grid th.col-nowrap { white-space: nowrap; }
   /* travaux (renovation line-items) editor */
   .works-total { float: right; text-transform: none; letter-spacing: 0; font-weight: 700; color: var(--text); }
+  .visit-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+  .visit-row .v-rank { flex: 0 0 62px; font-size: 13px; color: var(--muted); }
+  .visit-row input.v-date { flex: 1; }
+  .visits-empty { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
   .works-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
   .works-row input.w-label { flex: 1; }
   .works-row input.w-cost { width: 110px; text-align: right; }
@@ -473,6 +617,9 @@
   }
   .towns-toggle .town-order-btn:hover { background: var(--row-hover); color: var(--text); box-shadow: none; filter: none; }
   .towns-toggle .town-order-btn.restore { color: var(--accent); border-color: var(--accent); }
+  /* master select/deselect-all — sits with the label, ahead of the city chips */
+  .towns-toggle .town-order-btn.all-toggle { color: var(--text); border-style: dashed; }
+  .towns-toggle .town-order-btn.all-toggle:hover { border-style: solid; border-color: var(--accent); color: var(--accent); }
   .towns-toggle .town-order-sep { flex-basis: 100%; height: 0; }
   .town-chip {
     display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
@@ -602,6 +749,7 @@
 <nav class="tabs">
   <button class="tab active" data-view="listings"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg> Annonces</button>
   <button class="tab" data-view="towns"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 0 1 12 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg> Villes ciblées</button>
+  <button class="tab" data-view="criteria"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Critères</button>
 </nav>
 
 <div id="view-listings" class="view">
@@ -616,6 +764,12 @@
     <option value="rejected">&#10005; Rejeté</option>
   </select>
   <select id="f-commune"><option value="">Toutes communes</option></select>
+  <select id="f-flags" title="Filtre sur le criblage réglementaire (scripts/enrich.py)">
+    <option value="">Tous drapeaux</option>
+    <option value="clean">✓ Sans drapeau rouge</option>
+    <option value="nolock">⌂ Sans verrouillage patrimonial</option>
+    <option value="red">🔴 Avec drapeau rouge</option>
+  </select>
   <select id="f-rating">
     <option value="0">Toutes notes</option>
     <option value="1">1+ ★</option>
@@ -625,6 +779,10 @@
     <option value="5">5 ★</option>
   </select>
   <div class="spacer"></div>
+  <span class="archive-switch" id="archive-switch" role="switch" aria-checked="false" tabindex="0" title="Afficher les annonces archivées">
+    <span class="track"><span class="knob"></span></span>
+    Archives<span class="badge" id="archive-count">0</span>
+  </span>
   <div class="col-picker">
     <button class="secondary" id="cols-btn">&#9776; Colonnes</button>
     <div class="col-menu" id="cols-menu" hidden></div>
@@ -648,6 +806,29 @@
     <div class="towns-toggle" id="towns-toggle"></div>
     <div class="towns-compare-wrap" id="towns-compare"></div>
     <div class="town-cards" id="town-cards"></div>
+  </main>
+</div>
+
+<div id="view-criteria" class="view" hidden>
+  <main class="crit-main">
+    <p class="towns-intro" id="crit-intro"></p>
+    <div class="crit-bar">
+      <label class="toggle-label" for="crit-listing">Cocher pour&nbsp;:</label>
+      <select id="crit-listing"><option value="">— lecture seule (aucune annonce) —</option></select>
+      <select id="crit-filter">
+        <option value="">Tous les critères</option>
+        <option value="todo">Non cochés</option>
+        <option value="ko">✗ Problème</option>
+        <option value="ok">✓ Validé</option>
+        <option value="elim">⚠ Éliminatoires</option>
+        <option value="visite">◉ À vérifier sur place</option>
+      </select>
+      <div class="spacer"></div>
+      <span class="crit-progress" id="crit-progress"></span>
+      <button class="secondary" id="crit-reset" title="Effacer toutes les coches de cette annonce">↺ Réinitialiser</button>
+    </div>
+    <div class="crit-parts-tabs" id="crit-parts"></div>
+    <div id="crit-body"></div>
   </main>
 </div>
 
@@ -695,6 +876,7 @@
           <option value="visited">&#10003; Visité</option>
           <option value="offer">&#8364; Offre</option>
           <option value="rejected">&#10005; Rejeté</option>
+          <option value="archived">&#9187; Archivé</option>
         </select>
       </div>
       <div class="field-row">
@@ -720,9 +902,24 @@
         <label>Offre acceptable (€)</label>
         <input type="number" id="d-price-offer" min="0" step="1000" placeholder="—">
       </div>
+      <div class="field-row">
+        <label title="Valeur au m² retenue après travaux. Vide = p75 DVF de la commune.">Valeur post-travaux (€/m²)</label>
+        <input type="number" id="d-value-m2" min="0" step="50" placeholder="p75 DVF commune">
+      </div>
     </div>
     <div class="field-row" style="margin-top:-8px">
       <div class="hint" id="d-nego-hint"></div>
+    </div>
+    <div class="field-row">
+      <label>Dates clés</label>
+      <div id="d-visits-list"></div>
+      <button class="secondary works-add" id="d-visit-add">+ Ajouter une visite</button>
+    </div>
+    <div class="field-grid">
+      <div class="field-row">
+        <label>Date de l'offre</label>
+        <input type="date" id="d-offer-date" placeholder="—">
+      </div>
     </div>
     <div class="field-grid">
       <div class="field-row">
@@ -784,7 +981,11 @@
       </div>
     </div>
     <div class="danger-zone">
-      <button class="danger" id="d-delete">&#10005; Retirer cette annonce</button>
+      <div class="danger-row">
+        <button class="secondary" id="d-archive-btn"></button>
+        <button class="danger" id="d-delete">&#10005; Retirer cette annonce</button>
+      </div>
+      <div class="hint" id="d-archive-hint">L'archivage masque l'annonce de la liste sans rien supprimer : elle reste consultable en basculant l'interrupteur « Archives », et se désarchive au statut qu'elle avait avant.</div>
       <div class="hint">Retire l'annonce du tableau de bord. La fiche <code>.md</code> reste sur le disque ; réimporter ne la remet pas.</div>
     </div>
   </div>
@@ -833,29 +1034,31 @@
     applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
   });
 
-  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], townsAll: [], townHidden: null, townSort: null };
+  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], visits: [], townsAll: [], townHidden: null, townSort: null, showArchived: false, critPart: 0 };
 
   var STATUS_LABELS = {
     "researching": "⚲ Recherche",
     "visit-planned": "⚑ Visite prévue",
     "visited": "✓ Visité",
     "offer": "€ Offre",
-    "rejected": "✕ Rejeté"
+    "rejected": "✕ Rejeté",
+    "archived": "⛁ Archivé"
   };
-  var STATUS_ORDER = ["researching", "visit-planned", "visited", "offer", "rejected"];
+  var STATUS_ORDER = ["researching", "visit-planned", "visited", "offer", "rejected", "archived"];
   var STATUS_COLORS = {
     "researching": { bg: "#e0e7ff", fg: "#3730a3" },
     "visit-planned": { bg: "#fef3c7", fg: "#92400e" },
     "visited": { bg: "#f3e8ff", fg: "#6b21a8" },
     "offer": { bg: "#dcfce7", fg: "#166534" },
-    "rejected": { bg: "#fee2e2", fg: "#991b1b" }
+    "rejected": { bg: "#fee2e2", fg: "#991b1b" },
+    "archived": { bg: "#e2e5e9", fg: "#4b5563" }
   };
   var TYPE_LABELS = { apartment: "Appartement", house: "Maison", land: "Terrain" };
   var DPE_COLORS = {
     A: "#0a9a3e", B: "#4cb848", C: "#a8c63a", D: "#f4e02a",
     E: "#f2a91b", F: "#e8631a", G: "#d81f26"
   };
-  var NUMERIC_KEYS = { price: 1, price_min: 1, price_offer: 1, land_surface: 1, surface: 1, price_per_m2: 1, rating: 1 };
+  var NUMERIC_KEYS = { price: 1, price_min: 1, price_offer: 1, land_surface: 1, surface: 1, price_per_m2: 1, rating: 1, works_total: 1, spread: 1, commute_a: 1, commute_b: 1, flags: 1 };
 
   function $(sel) { return document.querySelector(sel); }
   function el(tag, cls, text) {
@@ -903,15 +1106,53 @@
     };
   }
 
+  // --- archive view switch -------------------------------------------------
+  // Deliberately transient: reloading the dashboard always lands on the active
+  // listings, never on the archive.
+  function syncArchiveBtn() {
+    var btn = $("#archive-switch");
+    if (!btn) return;
+    var n = state.listings.filter(function (l) { return l.status === "archived"; }).length;
+    $("#archive-count").textContent = n;
+    btn.classList.toggle("on", state.showArchived);
+    btn.setAttribute("aria-checked", state.showArchived ? "true" : "false");
+    btn.title = state.showArchived
+      ? "Revenir aux annonces actives"
+      : "Afficher les annonces archivées";
+    // In the archive every row is archived, so the status filter has nothing
+    // left to say — park it rather than let it silently empty the grid.
+    var fs = $("#f-status");
+    fs.disabled = state.showArchived;
+    fs.style.opacity = state.showArchived ? ".45" : "";
+  }
+
+  function setArchiveView(on) {
+    if (state.showArchived === on) return;
+    state.showArchived = on;
+    if (on) $("#f-status").value = "";
+    applyFilters();
+  }
+
   function applyFilters() {
     var q = $("#f-search").value.trim().toLowerCase();
     var status = $("#f-status").value;
     var commune = $("#f-commune").value;
+    var flagMode = $("#f-flags").value;
     var minRating = parseInt($("#f-rating").value, 10) || 0;
 
     state.filtered = state.listings.filter(function (l) {
+      // The archive is a separate list, not a filter value: the normal grid
+      // never shows archived listings, and the archive view shows only those.
+      if ((l.status === "archived") !== state.showArchived) return false;
       if (status && l.status !== status) return false;
       if (commune && l.commune !== commune) return false;
+      if (flagMode) {
+        var reds = (l.flags || []).filter(function (f) { return f.level === "red"; });
+        if (flagMode === "clean" && reds.length) return false;
+        if (flagMode === "red" && !reds.length) return false;
+        // "nolock" = the buyer's hard filter: no ABF / site inscrit / SPR
+        if (flagMode === "nolock" && l.heritage_locked) return false;
+      }
       if ((l.rating || 0) < minRating) return false;
       if (q) {
         var hay = [l.title, l.commune, l.verdict, l.agency, l.contact, (l.tags || []).join(" ")].join(" ").toLowerCase();
@@ -928,6 +1169,27 @@
     var numeric = !!NUMERIC_KEYS[key];
     state.filtered.sort(function (a, b) {
       var av = a[key], bv = b[key];
+      // "visits" is a list — sort on the most recent visit so empties fall last
+      if (key === "visits") {
+        av = (av && av.length) ? av[av.length - 1] : "";
+        bv = (bv && bv.length) ? bv[bv.length - 1] : "";
+      }
+      // computed columns hold objects — reduce them to the scalar you'd sort on
+      if (key === "spread") { av = av && av.spread; bv = bv && bv.spread; }
+      if (key === "commute_a" || key === "commute_b") {
+        av = av && (av.min != null ? av.min : av.km);
+        bv = bv && (bv.min != null ? bv.min : bv.km);
+      }
+      // flags: rank by severity (reds first, then ambers, then clean)
+      if (key === "flags") {
+        var score = function (fs) {
+          if (!fs) return -1;
+          var r = 0, m = 0;
+          fs.forEach(function (f) { if (f.level === "red") r++; else if (f.level === "amber") m++; });
+          return r * 100 + m;
+        };
+        av = score(av); bv = score(bv);
+      }
       var aEmpty = av === null || av === undefined || av === "";
       var bEmpty = bv === null || bv === undefined || bv === "";
       if (aEmpty && bEmpty) return 0;
@@ -960,6 +1222,13 @@
       if (amt >= 1) return "il y a " + amt + " " + (amt > 1 ? units[i][1] : units[i][0]);
     }
     return "à l'instant";
+  }
+  // Key dates are stored as plain "YYYY-MM-DD"; render them as fr-FR days.
+  function fmtDay(iso) {
+    if (!iso) return "—";
+    var p = String(iso).split("-");
+    if (p.length !== 3) return iso;
+    return p[2] + "/" + p[1] + "/" + p[0];
   }
   function starsHtml(rating) {
     rating = rating || 0;
@@ -996,6 +1265,13 @@
       e.stopPropagation();
       patchListing(l.id, { status: sel.value }).then(function (rec) {
         paint();
+        // Archiving (or un-archiving) drops the row out of the current view —
+        // say so, otherwise the listing just silently disappears.
+        if (rec.status === "archived") {
+          showToast("⛃ " + (rec.code || rec.title || "Annonce") + " archivé — visible via « Archives »");
+        } else if (state.showArchived) {
+          showToast("⤺ " + (rec.code || rec.title || "Annonce") + " désarchivé");
+        }
         updateLocal(rec);
       });
     });
@@ -1003,36 +1279,93 @@
   }
 
   // ---- column catalog (frontend owns labels + cell renderers; server persists which are visible) ----
-  var DEFAULT_COLS = ["code", "title", "commune", "mitoyennete", "price", "price_offer", "works_total", "land_surface", "surface", "dpe", "rating", "status", "updated"];
+  var DEFAULT_COLS = ["code", "title", "commune", "flags", "price", "price_offer", "spread", "works_total", "land_surface", "surface", "dpe", "rating", "status", "visits", "offer_date", "updated"];
   var COLUMN_CATALOG = [
     { key: "code", label: "Code", cell: function (td, l) { td.textContent = l.code || "—"; } },
-    { key: "title", label: "Titre", cell: function (td, l) { td.textContent = l.title || l.id; } },
-    { key: "commune", label: "Commune", cell: function (td, l) { td.innerHTML = l.commune ? '<span class="ico">⌂</span> ' + escapeHtml(l.commune) : "—"; } },
+    { key: "title", label: "Titre", cls: "col-title", cell: function (td, l) { var t = l.title || l.id; td.textContent = t; td.title = t; } },
+    { key: "commune", label: "Commune", cls: "col-commune", cell: function (td, l) { td.innerHTML = l.commune ? '<span class="ico">⌂</span> ' + escapeHtml(l.commune) : "—"; } },
     { key: "type", label: "Type", cell: function (td, l) { td.textContent = TYPE_LABELS[l.type] || l.type || "—"; } },
-    { key: "mitoyennete", label: "Mitoyen.", cell: function (td, l) {
+    { key: "mitoyennete", label: "Mitoyen.", cls: "col-nowrap", cell: function (td, l) {
       var m = l.mitoyennete;
       if (!m || m === "n/a") { td.textContent = "—"; return; }
       var lab = m === "mitoyenne" ? "Mitoyenne" : (m === "individuelle" ? "Individuelle" : m);
       var bg = m === "mitoyenne" ? "#fde68a" : "#bbf7d0";
       td.innerHTML = '<span class="pill" style="background:' + bg + ';color:#333">' + escapeHtml(lab) + '</span>';
     } },
-    { key: "price", label: "Prix demandé", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.price); } },
-    { key: "price_min", label: "Prix min", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.price_min); } },
-    { key: "price_offer", label: "Offre", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.price_offer); } },
-    { key: "price_per_m2", label: "€/m²", num: true, cell: function (td, l) { td.textContent = l.price_per_m2 ? fmtMoney(l.price_per_m2) : "—"; } },
-    { key: "works_total", label: "Travaux", num: true, cell: function (td, l) { td.textContent = fmtMoney(l.works_total); } },
-    { key: "land_surface", label: "Terrain", num: true, cell: function (td, l) { td.textContent = l.land_surface ? fmtNum(l.land_surface) + " m²" : "—"; } },
-    { key: "surface", label: "Surface", num: true, cell: function (td, l) { td.textContent = l.surface ? fmtNum(l.surface) + " m²" : "—"; } },
+    { key: "price", label: "Prix demandé", num: true, cls: "col-nowrap", cell: function (td, l) { td.textContent = fmtMoney(l.price); } },
+    { key: "price_min", label: "Prix min", num: true, cls: "col-nowrap", cell: function (td, l) { td.textContent = fmtMoney(l.price_min); } },
+    { key: "price_offer", label: "Offre", num: true, cls: "col-nowrap", cell: function (td, l) { td.textContent = fmtMoney(l.price_offer); } },
+    { key: "price_per_m2", label: "€/m²", num: true, cls: "col-nowrap", cell: function (td, l) { td.textContent = l.price_per_m2 ? fmtMoney(l.price_per_m2) : "—"; } },
+    { key: "works_total", label: "Travaux", num: true, cls: "col-nowrap", cell: function (td, l) { td.textContent = fmtMoney(l.works_total); } },
+    { key: "land_surface", label: "Terrain", num: true, cls: "col-nowrap", cell: function (td, l) { td.textContent = l.land_surface ? fmtNum(l.land_surface) + " m²" : "—"; } },
+    { key: "surface", label: "Surface", num: true, cls: "col-nowrap", cell: function (td, l) { td.textContent = l.surface ? fmtNum(l.surface) + " m²" : "—"; } },
     { key: "dpe", label: "DPE", cell: function (td, l) { td.innerHTML = dpeBadge(l.dpe); } },
     { key: "rating", label: "Note", cell: function (td, l) { td.innerHTML = starsHtml(l.rating); } },
     { key: "status", label: "Statut", cell: function (td, l) { td.appendChild(statusSelect(l)); } },
     { key: "verdict", label: "Verdict", cls: "col-clip", cell: function (td, l) { td.textContent = l.verdict || "—"; td.title = l.verdict || ""; } },
     { key: "tags", label: "Tags", cls: "col-clip", cell: function (td, l) { var t = (l.tags && l.tags.length) ? l.tags.join(", ") : "—"; td.textContent = t; td.title = t; } },
+    { key: "visits", label: "Visites", cls: "col-nowrap", cell: function (td, l) {
+      var v = l.visits || [];
+      if (!v.length) { td.textContent = "—"; return; }
+      // show the most recent visit, prefixed by the count when there were several
+      td.textContent = (v.length > 1 ? v.length + " · " : "") + fmtDay(v[v.length - 1]);
+      td.title = v.map(function (d, i) { return ordinalVisit(i) + " : " + fmtDay(d); }).join("\n");
+    } },
+    { key: "offer_date", label: "Offre le", cls: "col-nowrap", cell: function (td, l) { td.textContent = l.offer_date ? fmtDay(l.offer_date) : "—"; } },
     { key: "agency", label: "Agence", cls: "col-clip", cell: function (td, l) { td.textContent = l.agency || "—"; td.title = l.agency || ""; } },
     { key: "contact", label: "Contact", cls: "col-clip", cell: function (td, l) { td.textContent = l.contact || "—"; td.title = l.contact || ""; } },
-    { key: "created", label: "Créé", cell: function (td, l) { td.textContent = fmtRelTime(l.created); } },
-    { key: "updated", label: "Modifié", cell: function (td, l) { td.textContent = fmtRelTime(l.updated); } }
+    { key: "created", label: "Créé", cls: "col-nowrap", cell: function (td, l) { td.textContent = fmtRelTime(l.created); } },
+    { key: "updated", label: "Modifié", cls: "col-nowrap", cell: function (td, l) { td.textContent = fmtRelTime(l.updated); } },
+    // ---- computed by scripts/enrich.py -------------------------------------
+    { key: "flags", label: "Drapeaux", cls: "col-nowrap", cell: function (td, l) { td.innerHTML = flagsHtml(l.flags); } },
+    { key: "zone", label: "Zone PLU", cls: "col-nowrap", cell: function (td, l) { td.textContent = l.zone || "—"; } },
+    { key: "spread", label: "Écart", num: true, cls: "col-nowrap", cell: function (td, l) {
+      var s = l.spread;
+      if (!s) { td.textContent = "—"; return; }
+      if (s.blocked === "works") {
+        // deliberately NOT a number: price-vs-value without a works estimate
+        // reads as a bargain on a house that needs gutting
+        var q = el("span", "spread partial", "travaux ?");
+        td.appendChild(q);
+        td.title = "Écart non calculable : aucun chiffrage de travaux saisi.\n\n"
+          + "Valeur post-travaux estimée " + fmtMoney(s.value_post)
+          + " (" + fmtMoney(s.value_m2) + "/m² = p75 DVF de la commune)\n"
+          + "Prix + notaire " + fmtMoney(s.all_in_ex_works) + "\n\n"
+          + "→ Renseignez les travaux dans le tiroir pour obtenir l'écart réel.";
+        return;
+      }
+      var sign = s.spread >= 0 ? "+" : "−";
+      td.appendChild(el("span", "spread " + (s.spread >= 0 ? "pos" : "neg"),
+                        sign + fmtMoney(Math.abs(s.spread))));
+      td.title = "Valeur post-travaux " + fmtMoney(s.value_post) + " (" + fmtMoney(s.value_m2) + "/m² = p75 DVF commune)"
+        + "\n− Tout compris " + fmtMoney(s.all_in) + " (prix + 7,5% notaire + " + fmtMoney(s.works_used) + " travaux)"
+        + "\n= " + sign + fmtMoney(Math.abs(s.spread));
+    } },
+    { key: "commute_a", label: "Trajet A", num: true, cls: "col-nowrap", cell: function (td, l) { td.innerHTML = commuteHtml(l.commute_a); } },
+    { key: "commute_b", label: "Trajet B", num: true, cls: "col-nowrap", cell: function (td, l) { td.innerHTML = commuteHtml(l.commute_b); } }
   ];
+
+  // compact red/amber/green flag badges; full labels in the tooltip
+  function flagsHtml(flags) {
+    if (!flags || !flags.length) return '<span class="muted">—</span>';
+    var red = flags.filter(function (f) { return f.level === "red"; });
+    var amb = flags.filter(function (f) { return f.level === "amber"; });
+    var title = flags.map(function (f) {
+      return (f.level === "red" ? "🔴 " : f.level === "amber" ? "🟠 " : "🟢 ") + f.label;
+    }).join("\n");
+    if (!red.length && !amb.length) return '<span class="flag-pill ok" title="' + escapeHtml(title) + '">✓ RAS</span>';
+    var out = "";
+    if (red.length) out += '<span class="flag-pill red">' + red.length + '</span>';
+    if (amb.length) out += '<span class="flag-pill amber">' + amb.length + '</span>';
+    return '<span title="' + escapeHtml(title) + '">' + out + "</span>";
+  }
+
+  function commuteHtml(c) {
+    if (!c) return '<span class="muted">—</span>';
+    if (c.min) return '<span title="' + escapeHtml(c.label || "") + ' — porte à porte">' + c.min + " min</span>";
+    return '<span class="muted" title="' + escapeHtml((c.label || "") +
+      " — distance à vol d\'oiseau (pas de clé Navitia : voir README)") + '">' + c.km + " km</span>";
+  }
   var CATALOG_BY_KEY = {};
   COLUMN_CATALOG.forEach(function (c) { CATALOG_BY_KEY[c.key] = c; });
   var CATALOG_ORDER = COLUMN_CATALOG.map(function (c) { return c.key; });
@@ -1046,6 +1379,7 @@
       var th = document.createElement("th");
       th.setAttribute("data-key", key);
       if (col.num) th.className = "num";
+      if (col.cls) th.classList.add(col.cls);
       th.textContent = col.label + (key === state.sortKey ? " " + (state.sortDir === "asc" ? "▲" : "▼") : "");
       th.addEventListener("click", function () {
         if (state.sortKey === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
@@ -1111,10 +1445,26 @@
   }
 
   function render() {
-    var n = state.listings.length;
-    $("#listing-count").textContent = n + " annonce" + (n === 1 ? "" : "s");
+    syncArchiveBtn();
+    // The header count describes the list actually on screen, so the archive
+    // view doesn't claim the active listings' total.
+    var pool = state.listings.filter(function (l) {
+      return (l.status === "archived") === state.showArchived;
+    });
+    var n = pool.length;
+    $("#listing-count").textContent = n + " annonce" + (n === 1 ? "" : "s")
+      + (state.showArchived ? " archivée" + (n === 1 ? "" : "s") : "");
     var grid = $("#grid"), body = $("#grid-body"), emptyState = $("#empty-state");
 
+    if (state.showArchived && n === 0) {
+      grid.style.display = "none";
+      emptyState.style.display = "flex";
+      emptyState.innerHTML = "<div>Aucune annonce archivée.</div>";
+      var abtn = el("button", "secondary", "Retour aux annonces");
+      abtn.addEventListener("click", function () { setArchiveView(false); });
+      emptyState.appendChild(abtn);
+      return;
+    }
     if (state.listings.length === 0) {
       grid.style.display = "none";
       emptyState.style.display = "flex";
@@ -1159,6 +1509,7 @@
     $("#f-search").value = "";
     $("#f-status").value = "";
     $("#f-commune").value = "";
+    $("#f-flags").value = "";
     $("#f-rating").value = "0";
     applyFilters();
   }
@@ -1174,9 +1525,15 @@
     if (!m.hidden && !document.querySelector(".col-picker").contains(e.target)) m.hidden = true;
   });
 
+  $("#archive-switch").addEventListener("click", function () { setArchiveView(!state.showArchived); });
+  $("#archive-switch").addEventListener("keydown", function (e) {
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); setArchiveView(!state.showArchived); }
+  });
+
   $("#f-search").addEventListener("input", debounce(applyFilters, 300));
   $("#f-status").addEventListener("change", applyFilters);
   $("#f-commune").addEventListener("change", applyFilters);
+  $("#f-flags").addEventListener("change", applyFilters);
   $("#f-rating").addEventListener("change", applyFilters);
 
   function showToast(msg) {
@@ -1376,8 +1733,12 @@
     $("#d-price").value = numOrBlank(l.price);
     $("#d-price-min").value = numOrBlank(l.price_min);
     $("#d-price-offer").value = numOrBlank(l.price_offer);
+    $("#d-value-m2").value = numOrBlank(l.value_m2_post);
     $("#d-land").value = numOrBlank(l.land_surface);
     $("#d-surface").value = numOrBlank(l.surface);
+    state.visits = (l.visits || []).slice();
+    renderVisits();
+    $("#d-offer-date").value = l.offer_date || "";
     renderNegoHint(l);
   }
 
@@ -1655,6 +2016,55 @@
     });
   })();
 
+  // ---- dates clés (visites + offre) ----
+  // state.visits holds the raw list; the server re-sorts on save, so after each
+  // patch we re-render from the record it returns (index 0 = 1re visite).
+  function ordinalVisit(i) { return i === 0 ? "1re visite" : (i + 1) + "e visite"; }
+
+  function renderVisits() {
+    var list = $("#d-visits-list");
+    if (!list) return;
+    list.innerHTML = "";
+    if (!state.visits.length) {
+      list.appendChild(el("div", "visits-empty", "Aucune visite enregistrée."));
+    }
+    state.visits.forEach(function (d, i) {
+      var row = el("div", "visit-row");
+      row.appendChild(el("span", "v-rank", ordinalVisit(i)));
+      var inp = document.createElement("input");
+      inp.type = "date"; inp.className = "v-date"; inp.value = d || "";
+      inp.addEventListener("change", function () { state.visits[i] = inp.value; saveVisits(); });
+      var del = el("button", "w-del", "✕");
+      del.title = "Supprimer cette visite";
+      del.addEventListener("click", function () { state.visits.splice(i, 1); renderVisits(); saveVisits(); });
+      row.appendChild(inp); row.appendChild(del);
+      list.appendChild(row);
+    });
+  }
+
+  function saveVisits() {
+    if (!state.currentId) return;
+    var clean = state.visits.filter(function (d) { return d; });
+    patchListing(state.currentId, { visits: clean }).then(function (rec) {
+      updateLocal(rec);
+      state.visits = (rec.visits || []).slice();
+      renderVisits();
+    });
+  }
+
+  $("#d-visit-add").addEventListener("click", function () {
+    state.visits.push("");
+    renderVisits();
+    var inputs = $("#d-visits-list").querySelectorAll("input.v-date");
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
+
+  $("#d-offer-date").addEventListener("change", function () {
+    if (!state.currentId) return;
+    var v = $("#d-offer-date").value || null;
+    patchListing(state.currentId, { offer_date: v }).then(updateLocal);
+  });
+
   // ---- travaux (renovation line-items) ----
   function renderWorks() {
     var list = $("#d-works-list");
@@ -1822,6 +2232,7 @@
     renderLinks(l);
     renderStarsEdit(l.rating);
     $("#d-status").value = l.status || "researching";
+    syncDrawerArchiveBtn(l);
     $("#d-mitoyennete").value = l.mitoyennete || "";
     fillNumericFields(l);
     $("#d-tags").value = (l.tags || []).join(", ");
@@ -1974,13 +2385,41 @@
   });
 
   $("#d-status").addEventListener("change", function () {
-    patchListing(state.currentId, { status: $("#d-status").value }).then(updateLocal);
+    patchListing(state.currentId, { status: $("#d-status").value }).then(function (rec) {
+      syncDrawerArchiveBtn(rec);
+      updateLocal(rec);
+    });
+  });
+
+  // One-click archive/un-archive. Un-archiving sends {archived:false} so the
+  // server restores whatever status the listing had before it was archived.
+  function syncDrawerArchiveBtn(l) {
+    var btn = $("#d-archive-btn");
+    if (!btn) return;
+    var isArch = (l || {}).status === "archived";
+    btn.textContent = isArch ? "⤺ Désarchiver" : "⛃ Archiver";
+    btn.classList.toggle("toggle-on", isArch);
+  }
+
+  $("#d-archive-btn").addEventListener("click", function () {
+    if (!state.currentId) return;
+    var cur = state.listings.filter(function (l) { return l.id === state.currentId; })[0];
+    var toArchive = !cur || cur.status !== "archived";
+    patchListing(state.currentId, { archived: toArchive }).then(function (rec) {
+      $("#d-status").value = rec.status || "researching";
+      syncDrawerArchiveBtn(rec);
+      updateLocal(rec);
+      showToast(toArchive
+        ? "⛃ Archivé — visible via « Archives »"
+        : "⤺ Désarchivé — statut « " + (STATUS_LABELS[rec.status] || rec.status) + " »");
+    });
   });
 
   $("#d-mitoyennete").addEventListener("change", function () {
     patchListing(state.currentId, { mitoyennete: $("#d-mitoyennete").value || null }).then(updateLocal);
   });
 
+  bindNumericField("#d-value-m2", "value_m2_post");
   bindNumericField("#d-price", "price");
   bindNumericField("#d-price-min", "price_min");
   bindNumericField("#d-price-offer", "price_offer");
@@ -2034,10 +2473,197 @@
     });
     $("#view-listings").hidden = name !== "listings";
     $("#view-towns").hidden = name !== "towns";
+    $("#view-criteria").hidden = name !== "criteria";
     if (name === "towns" && !townsLoaded) { townsLoaded = true; loadTowns(); }
+    if (name === "criteria" && !critLoaded) { critLoaded = true; loadCriteria(); }
   }
   document.querySelectorAll(".tabs .tab").forEach(function (b) {
     b.addEventListener("click", function () { switchView(b.getAttribute("data-view")); });
+  });
+
+  // ---- Critères : reference checklist + per-listing visit ticks ----------
+  // The list itself is generic knowledge (tracked criteria.md). The ticks are
+  // per-listing and user-owned, stored on the record as criteria_state:
+  // { <itemId>: "ok" | "ko" }. Absent = not looked at yet.
+  var critLoaded = false;
+  var critData = null;
+
+  function loadCriteria() {
+    fetchJSON("/api/criteria").then(function (res) {
+      critData = res.data || { parts: [] };
+      $("#crit-intro").innerHTML = renderMarkdown(critData.intro || "");
+      buildCritListingPicker();
+      renderCriteria();
+    }, function () {
+      $("#crit-body").innerHTML = '<div class="empty" style="display:flex">Chargement de criteria.md impossible.</div>';
+    });
+  }
+
+  function buildCritListingPicker() {
+    var sel = $("#crit-listing");
+    var keep = sel.value;
+    sel.innerHTML = '<option value="">— lecture seule (aucune annonce) —</option>';
+    state.listings.slice().sort(function (a, b) {
+      return (a.code || "").localeCompare(b.code || "");
+    }).forEach(function (l) {
+      var o = document.createElement("option");
+      o.value = l.id;
+      o.textContent = (l.code ? l.code + " · " : "") + (l.title || l.id);
+      sel.appendChild(o);
+    });
+    sel.value = keep;
+  }
+
+  function critCurrent() {
+    var id = $("#crit-listing").value;
+    if (!id) return null;
+    return state.listings.filter(function (l) { return l.id === id; })[0] || null;
+  }
+
+  function critState() {
+    var l = critCurrent();
+    return (l && l.criteria_state) || {};
+  }
+
+  function setCritTick(itemId, value) {
+    var l = critCurrent();
+    if (!l) { showToast("Choisissez une annonce pour cocher"); return; }
+    var next = Object.assign({}, l.criteria_state || {});
+    if (value) next[itemId] = value; else delete next[itemId];
+    patchListing(l.id, { criteria_state: next }).then(function (rec) {
+      updateLocal(rec);          // refreshes state.listings
+      renderCriteria();
+    });
+  }
+
+  function renderCriteria() {
+    if (!critData) return;
+    var box = $("#crit-body");
+    box.innerHTML = "";
+    var st = critState();
+    var mode = $("#crit-filter").value;
+    var hasListing = !!critCurrent();
+    var total = 0, done = 0, ko = 0;
+
+    // ---- part sub-tabs: render only the active half of the list -----------
+    var tabsBox = $("#crit-parts");
+    tabsBox.innerHTML = "";
+    if (state.critPart >= critData.parts.length) state.critPart = 0;
+    critData.parts.forEach(function (part, idx) {
+      var isImm = /immuable/i.test(part.title);
+      // how many of this part's items survive the current filter
+      var shown = 0;
+      part.groups.forEach(function (g) {
+        g.items.forEach(function (it) {
+          var v = st[it.id];
+          if (mode === "todo" && v) return;
+          if (mode === "ok" && v !== "ok") return;
+          if (mode === "ko" && v !== "ko") return;
+          if (mode === "elim" && it.flags.indexOf("eliminatoire") === -1) return;
+          if (mode === "visite" && it.flags.indexOf("visite") === -1) return;
+          shown++;
+        });
+      });
+      var tab = el("div", "crit-part-tab " + (isImm ? "immuable" : "modifiable")
+                    + (idx === state.critPart ? " active" : ""));
+      tab.appendChild(document.createTextNode(part.title));
+      tab.appendChild(el("span", "n", String(shown)));
+      tab.title = isImm
+        ? "Ce qu'aucun budget ne corrige — un défaut ici disqualifie ou se paie en décote"
+        : "Ce qui se répare avec de l'argent — un défaut ici est une ligne de chiffrage";
+      tab.addEventListener("click", function () {
+        state.critPart = idx;
+        renderCriteria();
+        $("#crit-parts").scrollIntoView({ block: "nearest" });
+      });
+      tabsBox.appendChild(tab);
+    });
+
+    critData.parts.forEach(function (part, partIdx) {
+      // progress is global across both parts, so tally before the early return
+      part.groups.forEach(function (g) {
+        g.items.forEach(function (it) {
+          total++;
+          if (st[it.id] === "ok") done++;
+          if (st[it.id] === "ko") ko++;
+        });
+      });
+      if (partIdx !== state.critPart) return;   // the other half lives on its own tab
+      var isImm = /immuable/i.test(part.title);
+      var partEl = el("div", "crit-part " + (isImm ? "immuable" : "modifiable"));
+      var body = el("div", "crit-part-body");
+      var shownInPart = 0;
+
+      part.groups.forEach(function (g) {
+        var items = g.items.filter(function (it) {
+          var v = st[it.id];
+          if (mode === "todo") return !v;
+          if (mode === "ok") return v === "ok";
+          if (mode === "ko") return v === "ko";
+          if (mode === "elim") return it.flags.indexOf("eliminatoire") !== -1;
+          if (mode === "visite") return it.flags.indexOf("visite") !== -1;
+          return true;
+        });
+        if (!items.length) return;
+        shownInPart += items.length;
+        var gEl = el("div", "crit-group");
+        if (g.title) gEl.appendChild(el("h3", "", g.title));
+        items.forEach(function (it) {
+          var v = st[it.id];
+          var row = el("div", "crit-item" + (v ? " " + v : ""));
+          var tick = el("span", "crit-tick", v === "ok" ? "✓" : v === "ko" ? "✗" : "");
+          row.appendChild(tick);
+          var txt = el("div", "crit-text");
+          var lab = el("div", "crit-label");
+          lab.appendChild(document.createTextNode(it.label));
+          if (it.flags.indexOf("eliminatoire") !== -1) lab.appendChild(el("span", "crit-tag elim", "éliminatoire"));
+          if (it.flags.indexOf("visite") !== -1) lab.appendChild(el("span", "crit-tag visite", "visite"));
+          if (it.cost) lab.appendChild(el("span", "crit-cost", it.cost));
+          txt.appendChild(lab);
+          if (it.detail) {
+            var d = el("div", "crit-detail");
+            d.innerHTML = renderInline(it.detail);
+            txt.appendChild(d);
+          }
+          row.appendChild(txt);
+          row.title = hasListing
+            ? "Clic : à vérifier → ✓ validé → ✗ problème → à vérifier"
+            : "Choisissez une annonce en haut pour cocher";
+          // tri-state cycle: blank -> ok -> ko -> blank
+          row.addEventListener("click", function () {
+            setCritTick(it.id, v === "ok" ? "ko" : v === "ko" ? null : "ok");
+          });
+          gEl.appendChild(row);
+        });
+        body.appendChild(gEl);
+      });
+
+      if (!shownInPart) {
+        var none = el("div", "crit-group");
+        none.appendChild(el("div", "crit-none", "Aucun critère de cette partie avec ce filtre."));
+        body.appendChild(none);
+      }
+      partEl.appendChild(body);
+      box.appendChild(partEl);
+    });
+
+    $("#crit-progress").textContent = hasListing
+      ? done + " validé" + (done > 1 ? "s" : "") + " · " + ko + " problème" + (ko > 1 ? "s" : "")
+        + " · " + (total - done - ko) + " à voir  (" + total + ")"
+      : total + " critères — lecture seule";
+    $("#crit-reset").style.display = hasListing ? "" : "none";
+  }
+
+  $("#crit-listing").addEventListener("change", renderCriteria);
+  $("#crit-filter").addEventListener("change", renderCriteria);
+  $("#crit-reset").addEventListener("click", function () {
+    var l = critCurrent();
+    if (!l) return;
+    patchListing(l.id, { criteria_state: {} }).then(function (rec) {
+      updateLocal(rec);
+      renderCriteria();
+      showToast("↺ Coches effacées");
+    });
   });
 
   // ---- target-towns study ----
@@ -2186,6 +2812,24 @@
     box.innerHTML = "";
     if (!state.townsAll.length) return;
     box.appendChild(el("span", "toggle-label", "Afficher · glisser pour réordonner :"));
+    // Master show/hide. One button, label says what the click will do; the
+    // counter makes the current selection legible with 26 communes on screen.
+    var shownCount = state.townsAll.filter(function (t) { return !state.townHidden.has(t.id); }).length;
+    var allOn = shownCount === state.townsAll.length;
+    var allBtn = el("button", "town-order-btn all-toggle",
+      (allOn ? "☐ Tout masquer" : "☑ Tout afficher") + "  " + shownCount + "/" + state.townsAll.length);
+    allBtn.title = allOn
+      ? "Masquer toutes les communes"
+      : "Afficher toutes les communes (" + (state.townsAll.length - shownCount) + " masquée(s))";
+    allBtn.addEventListener("click", function () {
+      if (allOn) state.townsAll.forEach(function (t) { state.townHidden.add(t.id); });
+      else state.townHidden.clear();
+      saveTownHidden();
+      buildTownToggle();
+      renderTownViews();
+      showToast(allOn ? "Toutes les communes masquées" : "Toutes les communes affichées");
+    });
+    box.appendChild(allBtn);
     state.townsAll.forEach(function (t) {
       var on = !state.townHidden.has(t.id);
       var chip = el("span", "town-chip" + (on ? "" : " off"));

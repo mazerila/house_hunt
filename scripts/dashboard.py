@@ -34,8 +34,13 @@ TOWNS_DIR = os.path.join(REPO_ROOT, "towns")
 DB_PATH = os.path.join(PRIVATE_DIR, "dashboard_db.json")
 HTML_PATH = os.path.join(SCRIPT_DIR, "dashboard.html")
 
-STATUS_VALUES = {"researching", "visit-planned", "visited", "offer", "rejected"}
-USER_OWNED_FIELDS = {"rating", "status", "verdict", "tags", "comment", "mitoyennete"}
+# "archived" is a real status, but it doubles as a visibility switch: the grid
+# hides archived listings unless the user flips to the archive view. Archiving
+# stashes the previous status in "prev_status" so un-archiving restores it
+# instead of forcing the user to remember whether the house was visited/rejected.
+STATUS_VALUES = {"researching", "visit-planned", "visited", "offer", "rejected", "archived"}
+USER_OWNED_FIELDS = {"rating", "status", "verdict", "tags", "comment", "mitoyennete",
+                     "criteria_state"}
 # Numeric fields derived from the md but that the user may correct by hand; once
 # edited they are recorded in the record's "overrides" list and re-imports no
 # longer touch them.
@@ -46,7 +51,33 @@ OVERRIDABLE_FIELDS = {"price", "surface", "land_surface"}
 OVERRIDABLE_STR_FIELDS = {"agency", "contact"}
 # Pure user-set numeric negotiation fields (never derived from the md): the
 # minimum price the seller might accept and the offer the buyer is willing to make.
-USER_NUMERIC_FIELDS = {"price_min", "price_offer"}
+# value_m2_post overrides the DVF p75 used for the post-works value: the commune
+# p75 is too generous for a defect-carrying property (steep slope, unfinished
+# works) or where a commune nouvelle drags in a pricier parent commune's sales.
+USER_NUMERIC_FIELDS = {"price_min", "price_offer", "value_m2_post"}
+# Key dates, user-owned and never derived from the md: "visits" is the ordered
+# list of visit dates (1st, 2nd, ...) and "offer_date" the day the offer went in.
+# Both are plain ISO "YYYY-MM-DD" strings so they sort as text.
+USER_DATE_FIELDS = {"offer_date"}
+ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def clean_dates(values):
+    """Keep well-formed ISO dates, de-duplicate, and sort so index 0 = 1st visit."""
+    seen, out = set(), []
+    for v in values or []:
+        if not isinstance(v, str):
+            continue
+        v = v.strip()
+        if not ISO_DATE_RE.match(v) or v in seen:
+            continue
+        try:
+            datetime.strptime(v, "%Y-%m-%d")
+        except ValueError:
+            continue
+        seen.add(v)
+        out.append(v)
+    return sorted(out)
 
 # Column-picker: every column the grid can show (the frontend holds the labels &
 # renderers; the server only validates keys and persists the chosen visible set,
@@ -54,12 +85,70 @@ USER_NUMERIC_FIELDS = {"price_min", "price_offer"}
 ALLOWED_COLUMNS = [
     "code", "title", "commune", "type", "mitoyennete", "price", "price_min", "price_offer", "price_per_m2",
     "works_total", "land_surface", "surface", "dpe", "rating", "status", "verdict", "tags",
-    "agency", "contact", "created", "updated",
+    "visits", "offer_date", "agency", "contact", "created", "updated",
+    # computed by scripts/enrich.py (red-flag screen, DVF, commute) + spread
+    "flags", "zone", "spread", "commute_a", "commute_b",
 ]
 DEFAULT_COLUMNS = [
-    "code", "title", "commune", "mitoyennete", "price", "price_offer", "works_total", "land_surface", "surface",
-    "dpe", "rating", "status", "updated",
+    "code", "title", "commune", "flags", "price", "price_offer", "spread", "works_total", "land_surface", "surface",
+    "dpe", "rating", "status", "visits", "offer_date", "updated",
 ]
+
+# Round-trip transaction costs, from CLAUDE.md: ~45 k€ notaire on a ~700 k€ buy
+# (~6.5-7.5%). Used for the all-in figure behind the spread column.
+NOTAIRE_RATE = 0.075
+
+
+def computed_spread(rec):
+    """all-in cost vs realistic post-works resale value.
+
+    all-in  = prix + frais de notaire + travaux estimés
+    valeur  = surface habitable x DVF p75 €/m² of the commune (p75 = the
+              renovated top-of-range, not the median of everything sold)
+    Returns None unless price, surface and the DVF read are all available, so
+    the column stays empty rather than showing a made-up number.
+    """
+    enr = rec.get("enrichment") or {}
+    dvf = enr.get("dvf") or {}
+    price, surface = rec.get("price"), rec.get("surface")
+    p75 = rec.get("value_m2_post") or dvf.get("p75_m2")
+    if not (price and surface and p75):
+        return None
+    works = rec.get("works_total")
+    if not works:
+        # Without a works figure the "spread" is just price-vs-value, which on a
+        # house needing 200 k€ of work reads as a big green number and is flatly
+        # misleading. Report the gap as unresolved instead of guessing.
+        return {"spread": None, "blocked": "works", "value_m2": p75,
+                "value_post": round(surface * p75),
+                "all_in_ex_works": round(price * (1 + NOTAIRE_RATE))}
+    all_in = price * (1 + NOTAIRE_RATE) + works
+    value = surface * p75
+    return {
+        "all_in": round(all_in),
+        "value_post": round(value),
+        "spread": round(value - all_in),
+        "value_m2": p75,
+        "value_m2_source": "manuel" if rec.get("value_m2_post") else "DVF p75 commune",
+        "works_used": works,
+        "works_known": True,
+    }
+
+
+def decorate(rec):
+    """Record + the derived fields the grid needs (never persisted)."""
+    out = dict(rec)
+    enr = rec.get("enrichment") or {}
+    out["flags"] = enr.get("flags") or []
+    out["zone"] = enr.get("zone")
+    out["heritage_locked"] = enr.get("heritage_locked")
+    out["spread"] = computed_spread(rec)
+    comm = enr.get("commute") or {}
+    for key, slot in (("work-a", "commute_a"), ("work-b", "commute_b")):
+        c = comm.get(key)
+        out[slot] = {"min": c.get("transit_min"), "km": c.get("km_crow"),
+                     "label": c.get("label")} if c else None
+    return out
 
 
 def works_total(works):
@@ -240,6 +329,25 @@ def load_db():
             at = vc.index("commune") + 1 if "commune" in vc else len(vc)
             vc.insert(at, "mitoyennete")
         db["_mig_mitoyennete_col"] = True
+    # Same one-shot for the key-date columns (visits / offer date).
+    if not db.get("_mig_dates_cols"):
+        vc = settings["columns"]
+        at = vc.index("status") + 1 if "status" in vc else len(vc)
+        for key in ("visits", "offer_date"):
+            if key not in vc:
+                vc.insert(at, key)
+                at += 1
+        db["_mig_dates_cols"] = True
+    # One-shot: surface the enrich.py columns on existing installs (the visible
+    # set is persisted, so DEFAULT_COLUMNS alone only helps a brand-new db).
+    if not db.get("_mig_enrich_cols"):
+        vc = settings["columns"]
+        if "flags" not in vc:
+            vc.insert(vc.index("commune") + 1 if "commune" in vc else len(vc), "flags")
+        if "spread" not in vc:
+            at = vc.index("works_total") if "works_total" in vc else len(vc)
+            vc.insert(at, "spread")
+        db["_mig_enrich_cols"] = True
     # Migrations: "active" status folded into "researching"; new fields defaulted.
     for rec in db.get("listings", {}).values():
         if rec.get("status") == "active":
@@ -253,6 +361,11 @@ def load_db():
         rec.setdefault("overrides", [])
         rec.setdefault("agency", None)
         rec.setdefault("contact", None)
+        rec.setdefault("prev_status", None)
+        rec.setdefault("value_m2_post", None)
+        rec.setdefault("criteria_state", {})
+        rec["visits"] = clean_dates(rec.get("visits"))
+        rec.setdefault("offer_date", None)
         if "mitoyennete" not in rec:  # seed once from the md; user-editable thereafter
             rec["mitoyennete"] = extract_mitoyennete(rec.get("md_body", ""), rec.get("type"))
     return db
@@ -395,13 +508,17 @@ def extract_dpe(*texts):
     for text in texts:
         if not text:
             continue
-        m = re.search(r"\*\*\s*([A-G])\s*/\s*[A-G]\s*\*\*", text)
+        # "**D / D**" and also the usual "**D / GES D**" spelling
+        m = re.search(r"\*\*\s*([A-G])\s*/\s*(?:GES\s*)?[A-G]\s*\*\*", text)
         if m:
             return m.group(1).upper()
     for text in texts:
         if not text:
             continue
-        m = re.search(r"DPE\D{0,20}?([A-G])\b", text)
+        # \W (not \D) between "DPE" and the letter: \D would happily run through
+        # the letters of a word and match its last character — "## DPE / Record
+        # ADEME" was being read as DPE = E, the final E of "ADEME".
+        m = re.search(r"DPE\b\W{0,20}?([A-G])\b", text)
         if m:
             return m.group(1).upper()
     return None
@@ -463,7 +580,9 @@ def extract_status_verdict_seed(body):
     status = "researching"
     if verdict_text:
         low = verdict_text.lower()
-        if "reject" in low or "rejeté" in low:
+        if "archiv" in low:
+            status = "archived"
+        elif "reject" in low or "rejeté" in low:
             status = "rejected"
         elif "offre" in low or "offer" in low:
             status = "offer"
@@ -546,6 +665,8 @@ def import_listings(db):
                 "price_per_m2": parsed["price_per_m2"],
                 "price_min": None,
                 "price_offer": None,
+                "visits": [],
+                "offer_date": None,
                 "works": [],
                 "works_total": None,
                 "links": [],
@@ -600,9 +721,88 @@ def import_listings(db):
 TOWN_ORDER = [
     "jouy-en-josas", "bievres", "igny", "chaville",
     "noisy-le-roi", "bailly", "l-etang-la-ville", "marly-le-roi",
+    "mareil-marly", "louveciennes", "le-pecq", "chatou",
+    "bougival", "croissy-sur-seine", "saint-germain-en-laye", "marnes-la-coquette",
+    "viroflay", "porchefontaine",
     "vaucresson", "ville-d-avray", "la-celle-saint-cloud", "sartrouville",
     "buc", "le-port-marly", "chavenay", "bois-d-arcy",
 ]
+
+
+# --------------------------------------------------------------------------
+# Criteria checklist (tracked criteria.md — generic knowledge, no PII, so it
+# lives outside private/ like towns/). Two H2 parts ("Immuable" / "Modifiable"),
+# H3 groups, and "- **label** — detail `cost`" items.
+# --------------------------------------------------------------------------
+CRITERIA_PATH = os.path.join(REPO_ROOT, "criteria.md")
+_CRIT_ITEM_RE = re.compile(r"^-\s+\*\*(?P<label>.+?)\*\*\s*(?P<rest>.*)$")
+
+
+def _crit_id(part, group, label):
+    """Stable id so ticks survive re-wording of the surrounding prose."""
+    raw = f"{part}/{group}/{label}".lower()
+    raw = "".join(c for c in unicodedata.normalize("NFD", raw)
+                  if unicodedata.category(c) != "Mn")
+    slug = re.sub(r"[^a-z0-9]+", "-", raw).strip("-")
+    return hashlib.sha1(slug.encode("utf-8")).hexdigest()[:10]
+
+
+def parse_criteria():
+    if not os.path.exists(CRITERIA_PATH):
+        return {"intro": "", "parts": []}
+    with open(CRITERIA_PATH, "r", encoding="utf-8") as f:
+        body = f.read()
+    lines = body.splitlines()
+    intro, parts = [], []
+    part = group = None
+    for ln in lines:
+        if ln.startswith("# ") and not ln.startswith("## "):
+            continue
+        if ln.startswith("## "):
+            part = {"title": ln[3:].strip(), "groups": []}
+            parts.append(part)
+            group = None
+            continue
+        if ln.startswith("### ") and part is not None:
+            group = {"title": ln[4:].strip(), "items": []}
+            part["groups"].append(group)
+            continue
+        m = _CRIT_ITEM_RE.match(ln.strip())
+        if m and part is not None:
+            if group is None:  # tolerate items before any H3
+                group = {"title": "", "items": []}
+                part["groups"].append(group)
+            label = m.group("label").strip()
+            rest = m.group("rest").strip()
+            rest = re.sub(r"^[—–-]\s*", "", rest)
+            cost = None
+            cm = re.search(r"`([^`]+)`\s*$", rest)
+            if cm:
+                cost = cm.group(1).strip()
+                rest = rest[: cm.start()].strip()
+            flags = []
+            for tag, key in (("[éliminatoire", "eliminatoire"), ("[visite]", "visite")):
+                if tag in rest or tag in label:
+                    flags.append(key)
+            # the markers become badges in the UI — strip them from the prose so
+            # they don't read twice ("[visite] — lire la table des anomalies…")
+            strip = re.compile(r"\*{0,2}\[(?:éliminatoire|visite)[^\]]*\]\*{0,2}")
+            label = strip.sub("", label).strip(" —-")
+            rest = strip.sub("", rest).strip()
+            rest = re.sub(r"^[—–-]\s*", "", rest).strip()
+            group["items"].append({
+                "id": _crit_id(part["title"], group["title"], label),
+                "label": label,
+                "detail": rest.rstrip(" —-"),
+                "cost": cost,
+                "flags": flags,
+            })
+            continue
+        if part is None and ln.strip():
+            intro.append(ln)
+    for p in parts:
+        p["count"] = sum(len(g["items"]) for g in p["groups"])
+    return {"intro": "\n".join(intro).strip(), "parts": parts}
 
 
 def parse_town_md(path):
@@ -752,7 +952,10 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/listings":
             db = load_db()
             items = sorted(db["listings"].values(), key=lambda r: r.get("updated", ""), reverse=True)
-            self._send_json({"listings": items})
+            self._send_json({"listings": [decorate(r) for r in items]})
+            return
+        if path == "/api/criteria":
+            self._send_json(parse_criteria())
             return
         if path == "/api/towns":
             db = load_db()
@@ -879,6 +1082,17 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(body, dict):
             self._send_json({"error": "invalid body"}, 400)
             return
+        # {"archived": true/false} is a convenience toggle: archiving keeps the
+        # current status in prev_status, un-archiving restores it (falling back
+        # to "researching" for records archived before prev_status existed).
+        if "archived" in body:
+            if not isinstance(body["archived"], bool):
+                self._send_json({"error": "archived must be a boolean"}, 400)
+                return
+            if body.pop("archived"):
+                body["status"] = "archived"
+            else:
+                body["status"] = rec.get("prev_status") or "researching"
         if "status" in body and body["status"] not in STATUS_VALUES:
             self._send_json({"error": "invalid status"}, 400)
             return
@@ -900,6 +1114,15 @@ class Handler(BaseHTTPRequestHandler):
         if "links" in body and not isinstance(body["links"], list):
             self._send_json({"error": "links must be a list"}, 400)
             return
+        if "visits" in body and not isinstance(body["visits"], list):
+            self._send_json({"error": "visits must be a list"}, 400)
+            return
+        for key in USER_DATE_FIELDS:
+            if key in body and body[key] is not None:
+                val = str(body[key]).strip()
+                if val and not clean_dates([val]):
+                    self._send_json({"error": "invalid " + key}, 400)
+                    return
         for key in OVERRIDABLE_FIELDS | USER_NUMERIC_FIELDS:
             if key not in body:
                 continue
@@ -913,6 +1136,15 @@ class Handler(BaseHTTPRequestHandler):
                 if val < 0:
                     self._send_json({"error": "invalid " + key}, 400)
                     return
+        # Remember where a listing came from when it enters the archive, and drop
+        # the memo once it leaves — so prev_status only ever describes an
+        # archived record. Must run before rec["status"] is overwritten below.
+        if "status" in body:
+            was, now = rec.get("status"), body["status"]
+            if now == "archived" and was != "archived":
+                rec["prev_status"] = was
+            elif now != "archived":
+                rec["prev_status"] = None
         for key in USER_OWNED_FIELDS:
             if key in body:
                 rec[key] = body[key]
@@ -920,6 +1152,15 @@ class Handler(BaseHTTPRequestHandler):
         for key in USER_NUMERIC_FIELDS:
             if key in body:
                 rec[key] = None if body[key] is None else float(body[key])
+        # key dates: visits are normalised (valid ISO only, de-duplicated, sorted
+        # so index 0 is the 1st visit); the offer date is a single nullable day
+        if "visits" in body:
+            rec["visits"] = clean_dates(body["visits"])
+        for key in USER_DATE_FIELDS:
+            if key in body:
+                val = body[key]
+                val = str(val).strip() if val is not None else ""
+                rec[key] = val or None
         # renovation line-items: sanitize [{label, cost}], recompute the total
         if "works" in body:
             clean = []
