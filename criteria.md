@@ -1,0 +1,121 @@
+# Critères de recherche et de visite
+
+Check-list de décision, en deux parties. La distinction n'est pas cosmétique : elle décide de ce qui est **négociable** et de ce qui est **éliminatoire**.
+
+- **Immuable** — ce qu'aucun budget ne corrige : la commune, la desserte, la parcelle, le règlement d'urbanisme, le relief, et les parties du bâti qu'on ne peut pas bouger. **Un défaut ici ne se rattrape pas : il se paie en décote à la revente, ou il disqualifie.**
+- **Modifiable** — ce qui se répare avec de l'argent. Un défaut ici n'est pas un motif de rejet, c'est une **ligne de chiffrage** et un **levier de négociation**. Les fourchettes sont des ordres de grandeur marché Île-de-France, posés, TTC.
+
+Les items marqués **[éliminatoire]** correspondent aux filtres acheteur durs. Ceux marqués **[visite]** ne se vérifient que sur place.
+
+## Immuable
+
+### Commune & desserte
+- **Temps de trajet réel porte-à-porte** — chronométré à l'heure de pointe, vers *chaque* lieu de travail, pas le temps théorique de l'annonce. *(Une annonce annonçait « 20 minutes de La Défense » pour un trajet réel de 50-60 min avec correspondance.)*
+- **Distance à pied à la gare** — mesurée, avec le dénivelé. « À 5 minutes de la gare » veut parfois dire 15 minutes et 50 m de côte à remonter le soir.
+- **Fréquence et fiabilité de la ligne** — une branche terminale (Saint-Nom, RER C) n'a pas la fréquence d'un tronc commun. Regarder l'intervalle en heure creuse et le dernier train.
+- **Redondance de desserte** — deux lignes valent bien mieux qu'une : une grève ou un incident ne bloque pas tout.
+- **Écoles** — maternelle, élémentaire, collège de secteur : distance à pied, et surtout **l'IPS** du collège (indice de position sociale), pas seulement sa réputation.
+- **Commerces du quotidien** à pied — boulangerie, supérette, marché. En dessous d'un certain seuil, on devient dépendant de la voiture pour tout.
+- **Part de maisons dans la commune** — un tissu à 80 % d'appartements signifie une offre pavillonnaire rare, chère et disputée.
+- **Prix médian €/m² de la commune** *(DVF, pas les estimateurs en ligne)* et ce que le budget y achète réellement.
+
+### Quartier & environnement immédiat
+- **Nuisance sonore** [visite] — passer sur place **à 8h, 17h et le samedi**. Axe routier, voie ferrée, école (dépose/reprise 4×/jour), cloches, bar.
+- **Couloir aérien / aérodrome** — vérifier les survols réels, pas la carte PEB seule.
+- **Vis-à-vis et intimité** [visite] — depuis chaque pièce de vie et depuis le jardin, pas depuis l'entrée.
+- **Orientation du jardin et de la pièce de vie** — plein sud/ouest change la qualité de vie ; c'est irréversible.
+- **Qualité du voisinage bâti** — l'état des maisons voisines prédit la trajectoire du quartier mieux que n'importe quelle brochure.
+- **Terrains constructibles ou dents creuses alentour** — ce qui peut se construire en face, et en combien de temps.
+- **Sécurité** — taux de cambriolage de la commune rapporté à la moyenne nationale (les villages cossus isolés sont surexposés).
+
+### Terrain & parcelle
+- **Surface cadastrale réelle** (`contenance`) confrontée à l'annonce — un écart > ~5 m² signale une division en cours ou une erreur. *(Un bien annoncé 1 361 m² correspondait au cadastre à une parcelle voisine ; celle du bien faisait 1 147 m².)*
+- **Pente** **[éliminatoire]** — mesurée en % sur la profondeur (IGN RGE ALTI, puis vérifiée sur place). Au-delà de ~8-10 % : surcoût de terrassement, de soutènement, et décote à la revente.
+- **Façade sur voie publique** **[éliminatoire]** — largeur réelle, et **surtout** : la parcelle donne-t-elle sur une voie *publique* ou sur une allée privée d'ASL/copropriété ? *(Deux biens de la sélection n'avaient aucune façade publique.)*
+- **Configuration en drapeau** [visite] — le cadastre ment sur l'accès. Toujours vérifier sur place et au bornage.
+- **Bornage** — existe-t-il ? Sinon, qui le paie, et les limites sont-elles contestées ?
+- **Servitudes de passage** — droit de passage sur ou sous la parcelle, réseaux traversants.
+- **Arbres matures en limite** — magnifiques, mais facteur n°1 de sinistre RGA sur sol argileux, et souvent protégés (EBC) donc non abattables.
+- **Constructibilité résiduelle** — emprise au sol restante, coefficient de pleine terre : peut-on encore agrandir, ou la parcelle est-elle saturée ?
+
+### Cadre réglementaire — le filtre le plus discriminant
+- **Zone PLU et son règlement écrit** **[éliminatoire]** — pas seulement le code de zone. **Télécharger le règlement et y chercher le nom du lotissement** : certains secteurs gèlent le bâti par une clause nominative. *(Un règlement nommait la résidence et plafonnait toute extension à 20 m², référencés au permis de 1972.)*
+- **Abords de Monument Historique (AC1)** **[éliminatoire]** — avis ABF sur toute modification extérieure : façade, menuiseries, toiture, clôture, panneaux solaires. **Rend l'ITE impossible.**
+- **Site inscrit ou classé (AC2)** **[éliminatoire]** — second filtre paysager qui se cumule à l'ABF.
+- **Site patrimonial remarquable (AC4)** **[éliminatoire]** — le régime le plus contraignant.
+- **EBC / EPP** — espace boisé classé ou espace paysager à protéger sur la parcelle : arbres non abattables, constructibilité gelée.
+- **Lisière de massif boisé > 100 ha** — bande de 50 m inconstructible ; en site urbain constitué, extensions plafonnées à ~20 % de l'emprise.
+- **Emplacement réservé / OAP** — le terrain est-il visé par un projet public, ou dans un secteur voué à se densifier (voisinage en chantier pendant des années) ?
+- **Permis de construire existants sur la parcelle et autour** — PC accordé, purgé de tout recours, transférable ? Et que construit-on à côté ?
+- **Conformité du bâti existant** — les combles aménagés, la véranda, l'extension ont-ils été déclarés ? Un mètre carré non déclaré devient un problème au compromis et à la revente.
+
+### Risques naturels & sols
+- **Retrait-gonflement des argiles (RGA)** — exposition, **et** nombre d'arrêtés CatNat sécheresse de la commune. Sur une maison d'avant 1975 (aucune règle de fondation anti-RGA), c'est un risque de fissuration structurelle.
+- **Fissures** [visite] **[éliminatoire si structurelles]** — façades, sous-sol, jonctions, encadrements. Photographier, dater, et faire expertiser au moindre doute.
+- **Carrières / cavités souterraines** **[éliminatoire]** — périmètre PM1, rayon de 1 km.
+- **Inondation, ruissellement, coulée de boue** — arrêtés CatNat, et sur place : où part l'eau sur un terrain en pente en bas de massif boisé ?
+- **Remontée de nappe** — déterminant s'il y a un sous-sol.
+- **Radon, sites pollués (BASIAS/BASOL), canalisations de matières dangereuses**.
+- **ERP (état des risques)** — obligatoire au compromis, seule pièce officielle. **Son absence du dossier est un signal en soi.**
+
+### Bâti — les parties qu'on ne modifiera pas
+- **Surface habitable réelle** **[éliminatoire si l'écart est masqué]** — confronter annonce / DPE / **Carrez**. *(Écarts constatés : −7 %, −14 %, −20 %.)* Le €/m² et donc toute la négociation en dépendent.
+- **Mitoyenneté** — mitoyen, semi-mitoyen ou individuel : structurel et non réversible.
+- **Hauteur sous plafond** et **rampants** [visite] — des combles « aménagés » très mansardés ne comptent pas en Carrez et se vivent mal.
+- **Structure porteuse** — murs porteurs, refends, charpente : ils dictent ce qu'on pourra ouvrir plus tard.
+- **Nombre de niveaux et distribution** — un plain-pied ne se fabrique pas ; un escalier mal placé se subit.
+- **Sous-sol / cave** [visite] — présence, hauteur, et **traces d'humidité, efflorescences, odeur**.
+- **Année de construction** — détermine amiante (< 1997), plomb (< 1949), règles de fondation, qualité d'enveloppe.
+- **Copropriété horizontale / ASL** — le terrain est-il en pleine propriété ou en jouissance ? Charges, règlement, PV d'AG, fonds travaux, état des impayés.
+
+## Modifiable
+
+### Enveloppe thermique
+- **Isolation des murs** — souvent 30-50 % des déperditions. **ITE impossible sous ABF** ⇒ ITI, qui consomme de la surface habitable. `12–35 k€`
+- **Isolation des combles / rampants** — le meilleur rapport gain/coût quand les combles sont perdus et nus. `6–15 k€`
+- **Menuiseries extérieures** — double vitrage récent. Poste très sous-estimé par les audits réglementaires (souvent ~2× trop bas) : compter 900–1 200 € par ouvrant posé. `25–40 k€`
+- **Ventilation** — l'absence de VMC pèse jusqu'à ~27 % des déperditions et entretient l'humidité. `3–6 k€`
+- **Ponts thermiques et étanchéité à l'air** — se traitent avec les postes ci-dessus.
+
+### Chauffage, ECS, confort
+- **Générateur de chauffage** — une chaudière gaz à condensation post-2016 est un poste déjà fait ; des convecteurs électriques sont un coût de fonctionnement, pas seulement d'investissement. Remplacement par une PAC air/eau. `12–22 k€`
+- **Émetteurs** — radiateurs haute température à remplacer si passage en PAC. Robinets thermostatiques : quasi gratuits.
+- **Eau chaude sanitaire** — ballon électrique ancien → chauffe-eau thermodynamique. `3–4 k€`
+- **Confort d'été** — protections solaires, brasseurs ; à regarder avant la clim.
+- **Cheminée / poêle** — vérifier le tubage et le ramonage ; agrément réel, appoint marginal.
+
+### Sécurité & conformité
+- **Installation électrique** [visite] — lire **la table des anomalies ET les « informations complémentaires »** du diagnostic : c'est là qu'apparaît « aucun dispositif différentiel ≤ 30 mA ». Absence de terre, traces d'échauffement, pas de liaison équipotentielle en salle de bains = tableau d'origine. `8–15 k€`
+- **Amiante** — obligatoire si permis < 1997. Le rapport « vente » **ne couvre pas** les travaux : exiger un **repérage avant travaux** si on démolit. `0–12 k€`
+- **Plomb (CREP)** — bâti < 1949.
+- **Gaz** — installation et ventilation.
+- **Assainissement** — collectif ou individuel ; **lire la ligne « Observations »** : elle peut imposer des travaux (création d'une boîte de branchement, mise en conformité). `1,5–5 k€`
+- **Termites / mérule** selon la zone.
+
+### Intérieur
+- **Cuisine** — équipée et fonctionnelle, ou à refaire intégralement. `12–20 k€`
+- **Salles de bains / salles d'eau** — compter par pièce, plomberie comprise. `7–12 k€ / pièce`
+- **Sols** — moquette murale généralisée = dépose + revêtement sur toute la surface. `10–18 k€`
+- **Peintures, papiers peints, lambris, plafonds** — le « rafraîchissement » qui n'en est jamais un. `12–20 k€`
+- **Menuiseries intérieures, placards, rangements**.
+- **Cloisonnement** — abattre ou créer, dans la limite des murs porteurs.
+- **Chantier en cours ou interrompu** [visite] — **compter la finition complète, pas le solde apparent.** Placo non bandé, chapes brutes, gaines volantes : c'est le poste le plus sous-estimé de tous ; compter pour un étage entier. `60–110 k€`
+
+### Extérieur & abords
+- **Ravalement de façade** — sous avis ABF le cas échéant. `10–18 k€`
+- **Toiture** — tuiles, zinguerie, sous-toiture, faîtage : `0–20 k€` en révision, bien plus en réfection complète. `0–20 k€`
+- **Volets, portail, clôtures**. `3–8 k€`
+- **Terrasse, murets, soutènement** — le coût explose sur terrain pentu. `3–20 k€`
+- **Drainage et évacuation des eaux pluviales** [visite] — regards, caniveaux, exutoire en bas de terrain.
+- **Aménagement paysager, piscine** — possible seulement si l'emprise et le règlement le permettent.
+- **Garage / stationnement** — nombre de places réelles, et si la conversion du garage est autorisée (elle réduit souvent le stationnement exigé au PLU).
+
+### Dossier & administratif
+- **DDT complet** — amiante, plomb, électricité, gaz, termites, **ERP**, assainissement, **Carrez**, DPE. **Inventorier ce qui manque** et le réclamer par écrit.
+- **DPE — le record ADEME complet**, pas la lettre de l'annonce : il donne le vecteur énergétique réel, la surface, l'`id_rnb`, la répartition des déperditions et l'âge des équipements.
+- **Taxe foncière** — montant réel de l'année en cours.
+- **Charges de copropriété / ASL** — budget, PV des 3 dernières AG, fonds travaux, impayés, travaux votés non encore appelés.
+- **Honoraires d'agence** — à la charge du vendeur ou de l'acquéreur ? Cela change le net vendeur et l'assiette des frais de notaire.
+- **Motif et urgence de la vente** — succession, divorce, mutation, revente à perte : c'est le principal déterminant de la marge de négociation.
+- **Temps passé sur le marché et historique de prix** — une annonce ancienne ou déjà baissée est une préfiguration de la revente.
+- **Conditions suspensives** — financement, et si possible obtention du PC ou résultat d'une étude technique.
