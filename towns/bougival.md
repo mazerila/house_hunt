@@ -6,8 +6,10 @@ Village impressionniste accroché au coteau de Seine, entre Louveciennes et La C
 - **Population**: ~9 130 hab. (+5 % entre 2017 et 2023)
 - **Densité**: ~3 310 hab/km²
 - **Prix maison (2025)**: ~5 230–5 460 €/m² (DVF)
+- **Prix maison DVF (2023-25)**: **5 456 €/m²** (médiane, n=70)
 - **~700 k€ achète**: ~128 m²
 - **Terrain maison (indicatif)**: ~370–950 m² (médiane DVF **574 m²**)
+- **Terrain médian (DVF)**: 574 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~31 630 €/an
 - **Propriétaires**: 62 %
 - **Part de maisons**: 26 % (74 % d'appartements)
@@ -22,6 +24,9 @@ Village impressionniste accroché au coteau de Seine, entre Louveciennes et La C
 - **Couloir aérien**: faible
 - **Topographie**: **coteau de Seine marqué — vallonné**, la commune monte fortement depuis le fleuve
 - **Logement social**: modéré
+- **Cambriolages (‰ logements)**: 10,30 ‰
+- **Violences (‰ hab.)**: 1,31 ‰
+- **Dégradations (‰ hab.)**: 7,34 ‰
 - **Contraintes patrimoniales**: **ponctuelles** — **AC1 « Église Notre-Dame de l'Assomption »** sur le centre ancien (abords MH, avis ABF dans le périmètre). Pas de SPR détecté.
 - **Quartiers (cibler / éviter)**: cibler les **hauteurs** (secteurs pavillonnaires vers La Celle-Saint-Cloud) ; les bords de Seine sont plus passants (RD113) et sous abords MH.
 - **Caractère**: village impressionniste de coteau, très vert, un peu enclavé

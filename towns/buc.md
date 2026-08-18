@@ -6,8 +6,10 @@ Commune aisée juste au sud de Versailles, à cheval sur la vallée de la Bièvr
 - **Population**: ~5 820 hab. (INSEE 2025)
 - **Densité**: ~740 hab/km² (peu dense)
 - **Prix maison (2025)**: **~5 200 €/m²** (médiane maison ~5 100–5 400)
+- **Prix maison DVF (2023-25)**: **5 271 €/m²** (médiane, n=80)
 - **~700 k€ achète**: ~135 m²
 - **Terrain maison (indicatif)**: ~300–700 m² (coteaux / pavillonnaire)
+- **Terrain médian (DVF)**: 684 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: élevé (~38–45 k€/an — commune de cadres, à confirmer)
 - **Propriétaires**: majorité (~75 %+, à confirmer)
 - **Part de maisons**: majoritaire (pavillonnaire), part d'appartements notable
@@ -22,6 +24,9 @@ Commune aisée juste au sud de Versailles, à cheval sur la vallée de la Bièvr
 - **Couloir aérien**: ⚠ **fort — aérodrome de Toussus-le-Noble (LFPN) accolé** (aviation légère et d'affaires) → survols documentés
 - **Topographie**: **coteaux de la Bièvre → souvent en pente**
 - **Logement social**: modéré (à confirmer — taux SRU)
+- **Cambriolages (‰ logements)**: 7,02 ‰
+- **Violences (‰ hab.)**: 1,20 ‰
+- **Dégradations (‰ hab.)**: 5,33 ‰
 - **Contraintes patrimoniales**: **aqueduc de Buc** et abords possibles → avis ABF localement (à vérifier au point)
 - **Quartiers (cibler / éviter)**: cibler les **hauts résidentiels** hors cône de bruit ; **éviter la proximité de l'aérodrome et le fond de vallée passant (N)**
 - **Caractère**: commune de cadres, verte et scolaire, mais marquée par l'aviation de Toussus

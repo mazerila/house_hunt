@@ -6,8 +6,10 @@ Grande commune populaire et dense des Yvelines, sur la boucle de la Seine. **Ato
 - **Population**: ~52 700 hab. (de loin la plus grande)
 - **Densité**: ~6 200 hab/km² (très dense — urbain)
 - **Prix maison (2025)**: ~4 250–5 100 €/m² — **le moins cher**
+- **Prix maison DVF (2023-25)**: **5 164 €/m²** (médiane, n=539)
 - **~700 k€ achète**: ~150 m²
 - **Terrain maison (indicatif)**: parcelles moyennes (pavillonnaire), ~250–500 m²
+- **Terrain médian (DVF)**: 308 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~25 700 €/an — le plus bas de la sélection
 - **Propriétaires**: 56 %
 - **Part de maisons**: 36 % (64 % d'appartements)
@@ -22,6 +24,9 @@ Grande commune populaire et dense des Yvelines, sur la boucle de la Seine. **Ato
 - **Couloir aérien**: faible à modéré
 - **Topographie**: plaine de Seine — **plat**
 - **Logement social**: **~24 % (élevé)** — au-delà du seuil SRU ; le plus haut de la sélection
+- **Cambriolages (‰ logements)**: 3,96 ‰
+- **Violences (‰ hab.)**: 3,51 ‰
+- **Dégradations (‰ hab.)**: 5,80 ‰
 - **Contraintes patrimoniales**: faibles (ponctuelles Vieux-Pays)
 - **Quartiers (cibler / éviter)**: cibler les poches pavillonnaires **Vieux-Pays**, **La Plaine**, **Les Richebourgs** (bords de Seine) ; **éviter Cité des Indes, Le Plateau, Vauban, La Marinière, ZAC de la Nouée** (grands ensembles / zones sensibles).
 - **Caractère**: grande ville populaire et mixte, bords de Seine, très bien desservie

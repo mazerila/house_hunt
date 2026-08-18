@@ -6,8 +6,10 @@ Village de coteau au-dessus de la Seine, entre la forêt de Marly et Bougival �
 - **Population**: ~7 990 hab. (**+12,6 % entre 2017 et 2023**)
 - **Densité**: **~1 470 hab/km² — la moins dense de la liste**
 - **Prix maison (2025)**: ~5 250–5 480 €/m² (DVF)
+- **Prix maison DVF (2023-25)**: **5 252 €/m²** (médiane, n=58)
 - **~700 k€ achète**: ~133 m²
 - **Terrain maison (indicatif)**: ~370–1 450 m² (médiane DVF **788 m² — le plus grand de la liste**)
+- **Terrain médian (DVF)**: 788 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~36 060 €/an
 - **Propriétaires**: 65 %
 - **Part de maisons**: 26 % (74 % d'appartements)
@@ -22,6 +24,9 @@ Village de coteau au-dessus de la Seine, entre la forêt de Marly et Bougival �
 - **Couloir aérien**: faible
 - **Topographie**: **coteaux de Seine — vallonné**, parfois fortement
 - **Logement social**: faible
+- **Cambriolages (‰ logements)**: 8,21 ‰
+- **Violences (‰ hab.)**: 2,88 ‰
+- **Dégradations (‰ hab.)**: 7,51 ‰
 - **Contraintes patrimoniales**: 🔴 **les plus fortes du groupe** — **AC4 « Site patrimonial remarquable de Louveciennes »** *et* **AC2 site inscrit « Ensemble des propriétés situées au Sud du chemin de fer »**. Double filtre ABF/paysager sur une large partie de la commune.
 - **Quartiers (cibler / éviter)**: à cibler **hors périmètre SPR et au nord du chemin de fer** (le sud est en site inscrit) ; le cœur historique est doublement verrouillé.
 - **Caractère**: village de coteau patrimonial, grandes propriétés, très vert

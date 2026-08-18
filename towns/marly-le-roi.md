@@ -6,8 +6,10 @@ Ville historique et boisée des Yvelines (parc et abreuvoir de Marly, lisière d
 - **Population**: ~16 750 hab.
 - **Densité**: ~2 360 hab/km²
 - **Prix maison (2025)**: ~5 130–5 480 €/m²
+- **Prix maison DVF (2023-25)**: **5 333 €/m²** (médiane, n=101)
 - **~700 k€ achète**: ~130 m²
 - **Terrain maison (indicatif)**: parcelles moyennes (coteaux), ~250–600 m²
+- **Terrain médian (DVF)**: 505 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~31 300 €/an
 - **Propriétaires**: 73 %
 - **Part de maisons**: 20 % (80 % d'appartements) — très peu de maisons
@@ -22,6 +24,9 @@ Ville historique et boisée des Yvelines (parc et abreuvoir de Marly, lisière d
 - **Couloir aérien**: faible
 - **Topographie**: coteaux boisés — **vallonné**
 - **Logement social**: modéré
+- **Cambriolages (‰ logements)**: 9,16 ‰
+- **Violences (‰ hab.)**: 1,19 ‰
+- **Dégradations (‰ hab.)**: 7,28 ‰
 - **Contraintes patrimoniales**: **fortes par secteurs** — Domaine royal de Marly, abords MH → avis ABF sur l'extérieur dans les secteurs historiques
 - **Quartiers (cibler / éviter)**: cibler **Grandes Terres** (résidentiel prisé, parcs), **le Village** et **Montval-Côteaux** (charme, familial) ; l'essentiel du parc reste du collectif.
 - **Caractère**: ville historique boisée, patrimoniale, résidentielle

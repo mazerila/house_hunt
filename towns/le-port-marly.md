@@ -6,8 +6,10 @@ Petite commune chic en bord de Seine, entre Marly-le-Roi, Louveciennes et Saint-
 - **Population**: ~5 560 hab. (INSEE 2025)
 - **Densité**: ~5 600 hab/km² (dense — petite commune)
 - **Prix maison (2025)**: **~4 900 €/m²** (médiane maison ~4 700–5 200)
+- **Prix maison DVF (2023-25)**: **4 617 €/m²** (médiane, n=16)
 - **~700 k€ achète**: ~143 m²
 - **Terrain maison (indicatif)**: petits terrains ~150–400 m² (tissu dense, bord de Seine / coteau)
+- **Terrain médian (DVF)**: 576 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: élevé (~33–38 k€/an, à confirmer)
 - **Propriétaires**: ~55–65 % (part de collectif, à confirmer)
 - **Part de maisons**: mixte (maisons de ville + immeubles)
@@ -22,6 +24,9 @@ Petite commune chic en bord de Seine, entre Marly-le-Roi, Louveciennes et Saint-
 - **Couloir aérien**: **faible** — pas d'aérodrome à proximité (survols généraux de la région seulement)
 - **Topographie**: **bord de Seine (plat) + coteau** vers l'ouest → pente possible selon la parcelle
 - **Logement social**: modéré (à confirmer — taux SRU)
+- **Cambriolages (‰ logements)**: 3,91 ‰
+- **Violences (‰ hab.)**: 1,98 ‰
+- **Dégradations (‰ hab.)**: 8,45 ‰
 - **Contraintes patrimoniales**: **abords / bord de Seine** (sites, covisibilités) possibles → avis ABF localement (à vérifier au point)
 - **Quartiers (cibler / éviter)**: cibler les **rues calmes en retrait de la RN13** et le coteau ; **éviter le front de la RD113** (bruit / trafic)
 - **Caractère**: village de bord de Seine chic et central (La Défense proche), mais petit et longé par un axe passant

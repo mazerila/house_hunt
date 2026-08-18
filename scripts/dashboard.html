@@ -802,7 +802,7 @@
 
 <div id="view-towns" class="view" hidden>
   <main class="towns-main">
-    <p class="towns-intro">Étude comparative des communes ciblées. Données de référence issues des fiches <code>towns/*.md</code> (prix, densité, transport, vélo, couloir aérien, standing, logement social…). Cliquez le nom d'une commune pour aller à sa fiche. La taille de terrain est <em>indicative</em> (estimée d'après la densité et le type de bâti — DVF exact sur demande). Sur mobile, le tableau se transforme en une carte par commune.</p>
+    <p class="towns-intro">Étude comparative des communes ciblées. Données de référence issues des fiches <code>towns/*.md</code> (prix, densité, transport, vélo, couloir aérien, standing, logement social…). Cliquez le nom d'une commune pour aller à sa fiche, ou le libellé d'un critère pour trier. <strong>Les lignes « DVF » et les trois lignes de délinquance sont mesurées</strong>, sur la même base pour toutes les communes, par <code>scripts/enrich_towns.py</code> (geo-DVF 2023-25 · SSMSI 2025) — les lignes « Prix maison (2025) » et « Terrain maison (indicatif) » restent les estimations d'origine, conservées pour comparaison. ⚠️ Les taux ‰ sont volatils sur les petites communes. Sur mobile, le tableau se transforme en une carte par commune.</p>
     <div class="towns-toggle" id="towns-toggle"></div>
     <div class="towns-compare-wrap" id="towns-compare"></div>
     <div class="town-cards" id="town-cards"></div>

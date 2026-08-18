@@ -6,8 +6,10 @@
 - **Population**: ~9 000 hab. (quartier ; Versailles commune : ~84 100 hab.)
 - **Densité**: ~3 220 hab/km² *(Versailles commune)*
 - **Prix maison (2025)**: **~8 940 €/m² (DVF quartier, n=98)** — **le plus cher de toute la liste**
+- **Prix maison DVF (2023-25)**: **8 939 €/m²** (médiane, n=98) *(quartier)*
 - **~700 k€ achète**: **~78 m²** — le plus faible de la liste
 - **Terrain maison (indicatif)**: ~220–440 m² (médiane DVF quartier **274 m²**)
+- **Terrain médian (DVF)**: 274 m² (médiane des ventes) *(quartier)*
 - **Revenu médian (INSEE)**: ~33 780 €/an *(Versailles commune)*
 - **Propriétaires**: 46 % *(Versailles commune)*
 - **Part de maisons**: 10,5 % *(Versailles commune ; nettement plus élevé dans le quartier, tissu pavillonnaire)*
@@ -22,6 +24,9 @@
 - **Couloir aérien**: faible à modéré (Vélizy-Villacoublay à proximité)
 - **Topographie**: **pente douce à marquée** — le quartier remonte vers la forêt de Fausses-Reposes
 - **Logement social**: modéré *(Versailles commune ; « secteur de mixité dans l'habitat » inscrit au PLU sur le quartier)*
+- **Cambriolages (‰ logements)**: 3,57 ‰
+- **Violences (‰ hab.)**: 2,91 ‰
+- **Dégradations (‰ hab.)**: 6,30 ‰
 - **Contraintes patrimoniales**: 🔴 **très fortes** — **8 servitudes relevées** : **AC1 Domaine national de Versailles et de Trianon**, **AC1 Pavillons d'octroi**, **AC1 Pavillon de musique de Madame**, **AC1 Laiterie de Madame**, **AC2 « Quartiers anciens » (site inscrit)**, plus 3 servitudes **i4** (réseaux électriques).
 - **Quartiers (cibler / éviter)**: dans le quartier, cibler les rues pavillonnaires hautes vers la forêt ; les abords de la voie ferrée et de la N286/A86 sont bruyants.
 - **Caractère**: quartier-village pavillonnaire de Versailles, gare RER C au cœur

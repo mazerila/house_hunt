@@ -6,8 +6,10 @@ Le plus petit village des Hauts-de-Seine (~1 750 hab.), enclavé dans les bois d
 - **Population**: **~1 750 hab.** (la plus petite de la liste ; **−3,2 % entre 2017 et 2023**)
 - **Densité**: **~505 hab/km² — la plus faible de la liste**
 - **Prix maison (2025)**: ~6 740–6 930 €/m² (DVF ; **n = 36 ventes seulement sur 3 ans**)
+- **Prix maison DVF (2023-25)**: **6 933 €/m²** (médiane, n=36)
 - **~700 k€ achète**: ~101 m²
 - **Terrain maison (indicatif)**: ~440–780 m² (médiane DVF **519 m²**)
+- **Terrain médian (DVF)**: 519 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: **~41 740 €/an — le plus élevé de la liste, « un des plus hauts de France »**
 - **Propriétaires**: 71 %
 - **Part de maisons**: **58 %** (42 % d'appartements)
@@ -22,6 +24,9 @@ Le plus petit village des Hauts-de-Seine (~1 750 hab.), enclavé dans les bois d
 - **Couloir aérien**: faible
 - **Topographie**: plateau boisé, **légèrement vallonné**
 - **Logement social**: très faible
+- **Cambriolages (‰ logements)**: 17,46 ‰
+- **Violences (‰ hab.)**: 0,00 ‰
+- **Dégradations (‰ hab.)**: 9,13 ‰
 - **Contraintes patrimoniales**: 🔴 **les plus lourdes de toute la sélection** — **5 servitudes AC1** relevées sur le village : **Domaine national de Versailles et de Trianon (×2)**, **Domaine de Saint-Cloud**, **Mairie**, **Église paroissiale Sainte-Eugénie** ; plus **AC2 « Bois de Fausses-Reposes »** et des **espaces boisés classés (EBC)**.
 - **Quartiers (cibler / éviter)**: la commune est trop petite pour distinguer des quartiers ; **l'essentiel du village est couvert par au moins un périmètre ABF**.
 - **Caractère**: hameau résidentiel fortuné enclavé dans les bois

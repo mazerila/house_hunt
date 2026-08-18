@@ -6,8 +6,10 @@ Petit village recherché en bordure de la plaine de Versailles, voisin et jumel�
 - **Population**: ~3 730 hab.
 - **Densité**: ~551 hab/km² (peu dense)
 - **Prix maison (2025)**: ~5 160–5 500 €/m²
+- **Prix maison DVF (2023-25)**: **5 403 €/m²** (médiane, n=50)
 - **~700 k€ achète**: ~130 m²
 - **Terrain maison (indicatif)**: grandes parcelles (village/plaine), ~400–1 000 m²
+- **Terrain médian (DVF)**: 527 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~37 200 €/an
 - **Propriétaires**: 82 % (le plus élevé)
 - **Part de maisons**: 38 % (62 % d'appartements) — peu de maisons
@@ -22,6 +24,9 @@ Petit village recherché en bordure de la plaine de Versailles, voisin et jumel�
 - **Couloir aérien**: **survols aviation légère (aérodrome de Saint-Cyr-l'École)** — nuisances documentées
 - **Topographie**: plaine de Versailles / village — plutôt **plat**
 - **Logement social**: ~10 % (2023), **sous les 25 % SRU** → 300+ logements en cours (densification)
+- **Cambriolages (‰ logements)**: 13,40 ‰
+- **Violences (‰ hab.)**: 0,00 ‰
+- **Dégradations (‰ hab.)**: 3,48 ‰
 - **Contraintes patrimoniales**: ponctuelles (village, plaine de Versailles) — à vérifier par parcelle
 - **Quartiers (cibler / éviter)**: cibler le **vieux village** et le pavillonnaire de la **plaine** ; vigilance sur les abords **voie T13 / couloir Saint-Cyr** (bruit) et les futurs **programmes SRU** (densification). Homogène sinon.
 - **Caractère**: village rural préservé, très résidentiel

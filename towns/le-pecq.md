@@ -6,8 +6,10 @@ Commune de bord de Seine au pied de Saint-Germain-en-Laye, coupée en deux par l
 - **Population**: ~16 060 hab.
 - **Densité**: ~5 570 hab/km²
 - **Prix maison (2025)**: ~4 830–5 870 €/m² (DVF 2023-25 : médiane **5 336 €/m²**)
+- **Prix maison DVF (2023-25)**: **5 336 €/m²** (médiane, n=103)
 - **~700 k€ achète**: ~131 m²
 - **Terrain maison (indicatif)**: ~340–780 m² (médiane DVF **509 m²**)
+- **Terrain médian (DVF)**: 509 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~30 800 €/an
 - **Propriétaires**: 70 %
 - **Part de maisons**: **19,5 %** (80,5 % d'appartements) — très peu de maisons
@@ -22,6 +24,9 @@ Commune de bord de Seine au pied de Saint-Germain-en-Laye, coupée en deux par l
 - **Couloir aérien**: faible
 - **Topographie**: **bord de Seine plat + coteau marqué** vers Saint-Germain — très variable selon le quartier
 - **Logement social**: **~11,5 %** — le plus élevé du groupe
+- **Cambriolages (‰ logements)**: 5,69 ‰
+- **Violences (‰ hab.)**: 1,25 ‰
+- **Dégradations (‰ hab.)**: 5,60 ‰
 - **Contraintes patrimoniales**: 🔴 **fortes au centre** — **AC4 « Site patrimonial remarquable du Pecq »** (régime SPR, avis ABF sur l'extérieur). Périmètre à vérifier parcelle par parcelle.
 - **Quartiers (cibler / éviter)**: cibler **Mexique** et **Vignes-Benettes / Grandes Fontaines** (pavillonnaire, revenus les plus élevés) ; **la Cité** concentre le logement social.
 - **Caractère**: bord de Seine, très bien relié, résidentiel mais urbain

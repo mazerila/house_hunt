@@ -6,8 +6,10 @@ Commune prestigieuse et boisée des Hauts-de-Seine (célèbres étangs de Corot,
 - **Population**: ~11 090 hab.
 - **Densité**: ~3 000 hab/km²
 - **Prix maison (2025)**: ~7 700 €/m² — parmi les plus chers
+- **Prix maison DVF (2023-25)**: **8 363 €/m²** (médiane, n=48)
 - **~700 k€ achète**: ~91 m²
 - **Terrain maison (indicatif)**: parcelles moyennes (coteaux boisés), ~300–700 m²
+- **Terrain médian (DVF)**: 434 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~38 500 €/an
 - **Propriétaires**: majorité (n.d. précis)
 - **Part de maisons**: 15 % (85 % d'appartements) — le moins de maisons
@@ -22,6 +24,9 @@ Commune prestigieuse et boisée des Hauts-de-Seine (célèbres étangs de Corot,
 - **Couloir aérien**: faible — éloigné des aérodromes
 - **Topographie**: coteaux boisés — **vallonné**
 - **Logement social**: faible à modéré
+- **Cambriolages (‰ logements)**: 8,97 ‰
+- **Violences (‰ hab.)**: 0,00 ‰
+- **Dégradations (‰ hab.)**: 7,21 ‰
 - **Contraintes patrimoniales**: ponctuelles (étangs de Corot classés, forêt) — à vérifier par parcelle
 - **Quartiers (cibler / éviter)**: cibler les **abords des étangs de Corot** et de la **forêt de Fausses-Reposes** (maisons rares, sur coteaux). Commune homogène et huppée.
 - **Caractère**: village-résidentiel prestigieux et boisé (étangs de Corot)

@@ -6,8 +6,10 @@ Ville-charnière entre Versailles, Chaville et Vélizy, adossée aux forêts de 
 - **Population**: ~17 240 hab. (+6,9 % entre 2017 et 2023)
 - **Densité**: ~4 960 hab/km²
 - **Prix maison (2025)**: **~7 680 €/m²** (DVF) — très cher
+- **Prix maison DVF (2023-25)**: **7 681 €/m²** (médiane, n=133)
 - **~700 k€ achète**: ~91 m²
 - **Terrain maison (indicatif)**: ~220–430 m² (médiane DVF **304 m² — le plus petit de la liste**)
+- **Terrain médian (DVF)**: 304 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~36 100 €/an
 - **Propriétaires**: 65 %
 - **Part de maisons**: 32 % (68 % d'appartements)
@@ -22,6 +24,9 @@ Ville-charnière entre Versailles, Chaville et Vélizy, adossée aux forêts de 
 - **Couloir aérien**: modéré — proximité de Vélizy-Villacoublay (aviation d'affaires et militaire)
 - **Topographie**: **vallonnée** — versant entre la vallée et le plateau de Vélizy
 - **Logement social**: modéré
+- **Cambriolages (‰ logements)**: 7,10 ‰
+- **Violences (‰ hab.)**: 1,10 ‰
+- **Dégradations (‰ hab.)**: 3,77 ‰
 - **Contraintes patrimoniales**: **présentes** — **3 servitudes AC1** relevées au centre : **Domaine national de Versailles et de Trianon**, **Pavillon Saint-Vigor**, et un « Immeuble » protégé. Avis ABF dans ces périmètres ; à vérifier parcelle par parcelle.
 - **Quartiers (cibler / éviter)**: cibler les secteurs pavillonnaires hauts (côté forêt de Fausses-Reposes) ; éviter les abords immédiats de la N118/A86 (bruit).
 - **Caractère**: ville résidentielle très bien reliée, entre deux forêts
