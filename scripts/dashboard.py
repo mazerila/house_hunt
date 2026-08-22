@@ -19,7 +19,9 @@ import re
 import socket
 import subprocess
 import tempfile
+import threading
 import unicodedata
+import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import quote, unquote, urlparse
@@ -94,9 +96,9 @@ DEFAULT_COLUMNS = [
     "dpe", "rating", "status", "visits", "offer_date", "updated",
 ]
 
-# Round-trip transaction costs, from CLAUDE.md: ~45 k€ notaire on a ~700 k€ buy
-# (~6.5-7.5%). Used for the all-in figure behind the spread column.
-NOTAIRE_RATE = 0.075
+# Frais de notaire, à la charge de l'acheteur: 8% du prix du bien (les travaux
+# n'y sont pas soumis). Used for the all-in figure behind the spread column.
+NOTAIRE_RATE = 0.08
 
 
 def computed_spread(rec):
@@ -105,12 +107,17 @@ def computed_spread(rec):
     all-in  = prix + frais de notaire + travaux estimés
     valeur  = surface habitable x DVF p75 €/m² of the commune (p75 = the
               renovated top-of-range, not the median of everything sold)
-    Returns None unless price, surface and the DVF read are all available, so
+    The price side is the buyer's own offer (`price_offer`) whenever one is
+    set — that is the number the decision actually turns on — and falls back
+    to the asking price until an offer exists.
+    Returns None unless a price, surface and the DVF read are all available, so
     the column stays empty rather than showing a made-up number.
     """
     enr = rec.get("enrichment") or {}
     dvf = enr.get("dvf") or {}
-    price, surface = rec.get("price"), rec.get("surface")
+    price = rec.get("price_offer") or rec.get("price")
+    price_basis = "offre" if rec.get("price_offer") else "prix demandé"
+    surface = rec.get("surface")
     p75 = rec.get("value_m2_post") or dvf.get("p75_m2")
     if not (price and surface and p75):
         return None
@@ -121,6 +128,8 @@ def computed_spread(rec):
         # misleading. Report the gap as unresolved instead of guessing.
         return {"spread": None, "blocked": "works", "value_m2": p75,
                 "value_post": round(surface * p75),
+                "notaire_rate": NOTAIRE_RATE,
+                "price_used": price, "price_basis": price_basis,
                 "all_in_ex_works": round(price * (1 + NOTAIRE_RATE))}
     all_in = price * (1 + NOTAIRE_RATE) + works
     value = surface * p75
@@ -130,6 +139,9 @@ def computed_spread(rec):
         "spread": round(value - all_in),
         "value_m2": p75,
         "value_m2_source": "manuel" if rec.get("value_m2_post") else "DVF p75 commune",
+        "notaire_rate": NOTAIRE_RATE,
+        "price_used": price,
+        "price_basis": price_basis,
         "works_used": works,
         "works_known": True,
     }
@@ -230,7 +242,22 @@ SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 
 def photo_dirs(listing_id):
     base = os.path.join(LISTINGS_DIR, listing_id)
-    return [base, os.path.join(base, "photos")]
+    return [base, os.path.join(base, "photos"), os.path.join(base, "plans")]
+
+
+# Floor plans, plan de masse, cadastral extracts: they answer different
+# questions from the photos, so the drawer shows them in their own section.
+# Two ways in, and the folder is the reliable one: anything under
+# <slug>/plans/ is a plan by placement, anything elsewhere by its filename.
+# The name hints stay narrow on purpose — "façade" would swallow real photos.
+PLAN_HINTS = ("plan", "cadastr", "croquis", "implantation", "masse")
+
+
+def is_plan(rel):
+    parts = rel.replace("\\", "/").lower().split("/")
+    if "plans" in parts[:-1]:
+        return True
+    return any(h in _deaccent(parts[-1]) for h in PLAN_HINTS)
 
 
 def doc_dirs(listing_id):
@@ -274,9 +301,12 @@ def list_photos(listing_id):
                 continue
             full = os.path.join(d, name)
             if os.path.isfile(full):
-                out.append({"rel": os.path.relpath(full, base),
-                            "kind": "video" if ext in VIDEO_EXTS else "image"})
-    return sorted(out, key=lambda m: m["rel"])
+                rel = os.path.relpath(full, base)
+                out.append({"rel": rel,
+                            "kind": "video" if ext in VIDEO_EXTS else "image",
+                            "plan": is_plan(rel)})
+    # plans last, so the combined lightbox order matches the two sections
+    return sorted(out, key=lambda m: (m["plan"], m["rel"]))
 
 
 def heic_to_jpeg(src):
@@ -301,15 +331,174 @@ def now_iso():
 
 
 # --------------------------------------------------------------------------
+# Brouillons — the shortlist-before-the-shortlist
+# --------------------------------------------------------------------------
+# Ads the user wants to look at later. Unlike a listing, a draft has no md file
+# and no research behind it: it is typed straight into the grid and lives only
+# in the db. Keep the field set small on purpose — the moment a draft deserves
+# more, it should graduate into a real private/listings/<slug>.md dossier.
+
+# The server is threaded, so two quick clicks on "Nouvelle annonce" ran
+# load_db → new_draft → save_db concurrently and both handed out the same
+# B-code (and the second save dropped the first row). Every draft mutation
+# takes this lock for its whole read-modify-write.
+DRAFT_LOCK = threading.Lock()
+
+DRAFT_STATUSES = ["attente", "verifie", "ecarte", "promu"]
+DRAFT_TEXT_FIELDS = {"url", "city", "agency", "contact", "note"}
+DRAFT_NUM_FIELDS = {"price", "surface", "land_surface"}
+# visit_at holds what an <input type="datetime-local"> produces: "YYYY-MM-DDTHH:MM"
+# (local wall-clock, no timezone — a viewing is an appointment, not an instant).
+# The date alone is accepted too, for a slot whose hour is not fixed yet.
+DRAFT_WHEN_FORMATS = ("%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d")
+
+# Ads are read in thousands ("749" for 749 000 €) and that is how the price gets
+# typed. No house in this search costs under 10 000 €, so a value below that is
+# unambiguously k€ — scale it up, and the grid immediately shows the full number
+# back so the correction is visible rather than silent.
+DRAFT_PRICE_K_CEILING = 10000
+
+
+def clean_visit_at(val):
+    """Normalise a viewing slot, or None if it is not a real date/time.
+
+    Shape-checking with a regex let "2026-13-45T99:99" through, so parse it.
+    """
+    val = str(val).strip().replace(" ", "T")
+    for fmt in DRAFT_WHEN_FORMATS:
+        try:
+            parsed = datetime.strptime(val, fmt)
+        except ValueError:
+            continue
+        return parsed.strftime("%Y-%m-%d" if fmt == "%Y-%m-%d" else "%Y-%m-%dT%H:%M")
+    return None
+
+
+def draft_cities(db):
+    """Commune names to suggest in the Brouillons grid.
+
+    Three sources, in this order of usefulness: the target towns of the Villes
+    ciblées tab, the communes of listings already researched, and whatever the
+    user has typed into other drafts. It is a suggestion list, never a
+    constraint — the field stays free text, because a lead can turn up anywhere.
+    """
+    # Keyed by a loose form of the name so "Saint Germain en Laye" typed in a
+    # listing doesn't sit next to the town sheet's "Saint-Germain-en-Laye";
+    # first source wins, which is why the towns are read first.
+    def key(name):
+        return re.sub(r"[^a-z0-9]+", "", _deaccent(name).lower())
+
+    seen = {}
+
+    def offer(name):
+        name = (name or "").strip()
+        k = key(name)
+        if name and k and k not in seen:
+            seen[k] = name
+
+    for town in list_towns():
+        title = (town.get("title") or "").strip()
+        offer(re.sub(r"\s*\([^)]*\)\s*$", "", title))   # drop the "(78230)" suffix
+    for rec in db.get("listings", {}).values():
+        offer(rec.get("commune"))
+    for d in db.get("drafts", {}).values():
+        offer(d.get("city"))
+    return sorted(seen.values(), key=lambda n: _deaccent(n).lower())
+
+
+def draft_price_m2(rec):
+    """€/m² of a draft, or None while price or surface is missing."""
+    price, surface = rec.get("price"), rec.get("surface")
+    if not price or not surface:
+        return None
+    return round(price / surface)
+
+
+def with_derived(rec):
+    out = dict(rec)
+    out["price_per_m2"] = draft_price_m2(rec)
+    return out
+
+
+def draft_code(n):
+    return "B%02d" % n
+
+
+def new_draft(db):
+    """Blank row, with the next free B-code. Codes are never reused."""
+    used = set()
+    for d in db.get("drafts", {}).values():
+        c = str(d.get("code") or "")
+        if c.startswith("B") and c[1:].isdigit():
+            used.add(int(c[1:]))
+    n = 1
+    while n in used:
+        n += 1
+    rec = {
+        "id": uuid.uuid4().hex[:12],
+        "code": draft_code(n),
+        "url": "", "price": None, "city": "", "surface": None,
+        "land_surface": None, "contact": "", "agency": "", "note": "",
+        "visit_at": "", "status": "attente",
+        "created": now_iso(), "updated": now_iso(),
+    }
+    db["drafts"][rec["id"]] = rec
+    return rec
+
+
+def apply_draft_patch(rec, body):
+    """Copy the writable fields of `body` onto `rec`. Returns an error string,
+    or None when the patch applied cleanly."""
+    for key in DRAFT_TEXT_FIELDS:
+        if key in body:
+            val = body[key]
+            cap = 4000 if key == "note" else 500   # note holds free prose, the rest are labels
+            rec[key] = "" if val is None else str(val).strip()[:cap]
+    for key in DRAFT_NUM_FIELDS:
+        if key in body:
+            val = body[key]
+            if val in (None, ""):
+                rec[key] = None
+                continue
+            try:
+                num = float(str(val).replace(" ", "").replace("\u202f", "").replace(",", "."))
+            except (TypeError, ValueError):
+                return "invalid " + key
+            if num < 0:
+                return "invalid " + key
+            if key == "price" and 0 < num < DRAFT_PRICE_K_CEILING:
+                num *= 1000
+            rec[key] = num
+    if "visit_at" in body:
+        raw = "" if body["visit_at"] is None else str(body["visit_at"]).strip()
+        if not raw:
+            rec["visit_at"] = ""
+        else:
+            when = clean_visit_at(raw)
+            if when is None:
+                return "invalid visit_at"
+            rec["visit_at"] = when
+    if "status" in body:
+        if body["status"] not in DRAFT_STATUSES:
+            return "invalid status"
+        rec["status"] = body["status"]
+    rec["updated"] = now_iso()
+    return None
+
+
+# --------------------------------------------------------------------------
 # DB persistence
 # --------------------------------------------------------------------------
 
 def load_db():
     if not os.path.exists(DB_PATH):
-        return {"version": 1, "listings": {}, "ignored": []}
+        return {"version": 1, "listings": {}, "ignored": [], "drafts": {}}
     with open(DB_PATH, "r", encoding="utf-8") as f:
         db = json.load(f)
     db.setdefault("ignored", [])  # ids the user removed; import skips them (md stays on disk)
+    db.setdefault("drafts", {})   # Brouillons tab: ads to look at later, typed straight into the grid
+    for d in db["drafts"].values():
+        d.setdefault("visit_at", "")
     settings = db.setdefault("settings", {})
     to = settings.get("town_order")  # user's drag-reordered town list (shared)
     if not isinstance(to, list):
@@ -508,8 +697,10 @@ def extract_dpe(*texts):
     for text in texts:
         if not text:
             continue
-        # "**D / D**" and also the usual "**D / GES D**" spelling
-        m = re.search(r"\*\*\s*([A-G])\s*/\s*(?:GES\s*)?[A-G]\s*\*\*", text)
+        # "**D / D**" and also the usual "**D / GES D**" spelling, with an
+        # optional "Étiquette " / "DPE " lead-in inside the bold ("**Étiquette
+        # E / GES D**" — how the H11 note spells it).
+        m = re.search(r"\*\*\s*(?:[EÉ]tiquette|DPE)?\s*([A-G])\s*/\s*(?:GES\s*)?[A-G]\s*\*\*", text)
         if m:
             return m.group(1).upper()
     for text in texts:
@@ -954,6 +1145,12 @@ class Handler(BaseHTTPRequestHandler):
             items = sorted(db["listings"].values(), key=lambda r: r.get("updated", ""), reverse=True)
             self._send_json({"listings": [decorate(r) for r in items]})
             return
+        if path == "/api/drafts":
+            db = load_db()
+            items = sorted(db["drafts"].values(), key=lambda d: d.get("code", ""))
+            self._send_json({"drafts": [with_derived(d) for d in items],
+                             "cities": draft_cities(db)})
+            return
         if path == "/api/criteria":
             self._send_json(parse_criteria())
             return
@@ -973,8 +1170,9 @@ class Handler(BaseHTTPRequestHandler):
         if m:
             listing_id = m.group(1)
             media = list_photos(listing_id)
-            photos = [{"name": item["rel"], "kind": item["kind"],
-                       "url": "/photos/" + listing_id + "/" + item["rel"]} for item in media]
+            photos = [{"name": item["rel"], "kind": item["kind"], "plan": item["plan"],
+                       "url": "/photos/" + listing_id + "/" + quote(item["rel"])}
+                      for item in media]
             self._send_json({"photos": photos})
             return
         m = re.match(r"^/photos/([^/]+)/(.+)$", path)
@@ -1061,7 +1259,39 @@ class Handler(BaseHTTPRequestHandler):
             return
         self.send_error(404)
 
+    def _read_json(self):
+        """Request body as a dict, or None after having already sent the error."""
+        length = int(self.headers.get("Content-Length", 0) or 0)
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            body = json.loads(raw or b"{}")
+        except json.JSONDecodeError:
+            self._send_json({"error": "invalid json"}, 400)
+            return None
+        if not isinstance(body, dict):
+            self._send_json({"error": "invalid body"}, 400)
+            return None
+        return body
+
     def do_PATCH(self):
+        m = re.match(r"^/api/drafts/([^/]+)$", urlparse(self.path).path)
+        if m:
+            body = self._read_json()
+            if body is None:
+                return
+            with DRAFT_LOCK:
+                db = load_db()
+                rec = db["drafts"].get(m.group(1))
+                if rec is None:
+                    self._send_json({"error": "not found"}, 404)
+                    return
+                err = apply_draft_patch(rec, body)
+                if err:
+                    self._send_json({"error": err}, 400)
+                    return
+                save_db(db)
+            self._send_json(with_derived(rec))
+            return
         m = re.match(r"^/api/listings/([^/]+)$", urlparse(self.path).path)
         if not m:
             self.send_error(404)
@@ -1072,15 +1302,8 @@ class Handler(BaseHTTPRequestHandler):
         if rec is None:
             self._send_json({"error": "not found"}, 404)
             return
-        length = int(self.headers.get("Content-Length", 0) or 0)
-        raw = self.rfile.read(length) if length else b"{}"
-        try:
-            body = json.loads(raw or b"{}")
-        except json.JSONDecodeError:
-            self._send_json({"error": "invalid json"}, 400)
-            return
-        if not isinstance(body, dict):
-            self._send_json({"error": "invalid body"}, 400)
+        body = self._read_json()
+        if body is None:
             return
         # {"archived": true/false} is a convenience toggle: archiving keeps the
         # current status in prev_status, un-archiving restores it (falling back
@@ -1217,6 +1440,18 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(rec)
 
     def do_DELETE(self):
+        m = re.match(r"^/api/drafts/([^/]+)$", urlparse(self.path).path)
+        if m:
+            with DRAFT_LOCK:
+                db = load_db()
+                gone = db["drafts"].pop(m.group(1), None)
+                if gone is None:
+                    self.send_error(404)
+                    return
+                save_db(db)
+                left = len(db["drafts"])
+            self._send_json({"deleted": m.group(1), "total": left})
+            return
         m = re.match(r"^/api/listings/([^/]+)$", urlparse(self.path).path)
         if not m:
             self.send_error(404)
@@ -1286,6 +1521,20 @@ class Handler(BaseHTTPRequestHandler):
         })
 
     def do_POST(self):
+        if urlparse(self.path).path == "/api/drafts":
+            body = self._read_json()
+            if body is None:
+                return
+            with DRAFT_LOCK:
+                db = load_db()
+                rec = new_draft(db)
+                err = apply_draft_patch(rec, body) if body else None
+                if err:
+                    self._send_json({"error": err}, 400)
+                    return
+                save_db(db)
+            self._send_json(with_derived(rec))
+            return
         if urlparse(self.path).path == "/api/reimport":
             db = load_db()
             db, added, updated = import_listings(db)
