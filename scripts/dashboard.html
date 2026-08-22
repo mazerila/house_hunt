@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recherche maison — Île-de-France</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%2334d399%27%2F%3E%3Cstop%20offset%3D%27.55%27%20stop-color%3D%27%2310b981%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23047857%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2726%27%20fill%3D%27url%28%23g%29%27%2F%3E%3Crect%20x%3D%2757%27%20y%3D%2757%27%20width%3D%2734%27%20height%3D%2716%27%20rx%3D%278%27%20transform%3D%27rotate%2845%2074%2065%29%27%20fill%3D%27%23fff%27%2F%3E%3Ccircle%20cx%3D%2742%27%20cy%3D%2742%27%20r%3D%2729%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M42%2024%20L64%2044%20H57%20V63%20H27%20V44%20H20%20Z%27%20fill%3D%27url%28%23g%29%27%2F%3E%3Crect%20x%3D%2737%27%20y%3D%2751%27%20width%3D%2710%27%20height%3D%2712%27%20rx%3D%271.5%27%20fill%3D%27%23fff%27%2F%3E%3C%2Fsvg%3E">
 <style>
@@ -857,6 +857,76 @@
     .drafts-empty { padding: 16px 2px; }
     .drafts-foot #draft-add { width: 100%; }
 
+    /* ---- "vue tableau" : undo the card stacking, keep the type readable ----
+       Everything above turns tables into cards; this hands them back their
+       desktop layout inside the same narrow screen, so the grid scrolls
+       sideways at full size instead of the whole page being zoomed out. */
+    html[data-wide-tables] .grid-wrap {
+      overflow: auto; max-height: calc(100vh - var(--topbar-h, 96px) - 16px);
+      border: 1px solid var(--border); border-radius: 8px; background: var(--panel);
+    }
+    html[data-wide-tables] table { display: table; width: 100%; }
+    html[data-wide-tables] thead { display: table-header-group; }
+    /* the card rule blocks every `tr`, including the header's — leaving it
+       blocked split the head from the body into two layout boxes, so the
+       columns negotiated their widths twice and never lined up */
+    html[data-wide-tables] thead tr { display: table-row; width: auto; }
+    html[data-wide-tables] thead th { display: table-cell; }
+    html[data-wide-tables] tbody { display: table-row-group; }
+    html[data-wide-tables] tbody tr {
+      display: table-row; background: transparent; border: none; border-radius: 0;
+      margin: 0; padding: 0; box-shadow: none;
+    }
+    html[data-wide-tables] tbody td {
+      display: table-cell; width: auto; text-align: left; padding: 10px 12px;
+      border: none; border-bottom: 1px solid var(--border); min-height: 0;
+    }
+    html[data-wide-tables] tbody td.num { text-align: right; }
+    html[data-wide-tables] tbody td::before { content: none; }
+    html[data-wide-tables] .towns-compare-wrap { display: block; }
+    html[data-wide-tables] .town-cards { display: none; }
+
+    /* the drafts grid keeps its own column widths and inline inputs */
+    html[data-wide-tables] .mobile-only { display: none; }
+    html[data-wide-tables] .drafts-table-wrap { overflow-x: auto; }
+    /* `auto` layout inside a 374 px scrollport hands the whole surplus to the
+       first column (Code ended up 716 px wide). Fixed layout plus the explicit
+       widths below make the grid resolve the same way it does on a desktop. */
+    /* Fixed layout reads the column widths off the header row, and shares only
+       what is left over — so EVERY column needs one here, or the undeclared
+       ones collapse to zero. The min-width is their exact sum. */
+    html[data-wide-tables] .drafts-table { min-width: 1238px; table-layout: fixed; }
+    html[data-wide-tables] .drafts-table .c-code { width: 54px; }
+    html[data-wide-tables] .drafts-table .c-url { width: 140px; }
+    html[data-wide-tables] .drafts-table .c-price { width: 100px; }
+    html[data-wide-tables] .drafts-table .c-city { width: 116px; }
+    html[data-wide-tables] .drafts-table .c-m2 { width: 62px; }
+    html[data-wide-tables] .drafts-table .c-contact { width: 118px; }
+    html[data-wide-tables] .drafts-table .c-agency { width: 110px; }
+    html[data-wide-tables] .drafts-table .c-visit { width: 172px; }
+    html[data-wide-tables] .drafts-table .c-act { width: 62px; }
+    html[data-wide-tables] .drafts-table td { padding: 1px 3px; }
+    html[data-wide-tables] .drafts-table .c-num { text-align: right; }
+    html[data-wide-tables] .drafts-table .dcell { text-align: left; padding: 6px 6px; min-width: 60px; }
+    html[data-wide-tables] .drafts-table .dcell.num { text-align: right; }
+    html[data-wide-tables] .drafts-table .dcell-ro { text-align: right; padding-left: 0; }
+    html[data-wide-tables] .drafts-table .c-area { width: 76px; }
+    html[data-wide-tables] .drafts-table .c-area .dcell { min-width: 0; }
+    html[data-wide-tables] .drafts-table .c-status { width: 152px; }
+    html[data-wide-tables] .drafts-table .c-visit .dcell { min-width: 158px; }
+    html[data-wide-tables] .drafts-table td.c-code {
+      display: table-cell; font-weight: 400; font-size: 13px;
+      color: var(--text-dim); padding: 1px 3px 1px 8px;
+    }
+    html[data-wide-tables] .drafts-table td.c-act { display: table-cell; padding: 1px 3px; }
+    html[data-wide-tables] .drafts-table tr.note-row { display: table-row; margin: 0; padding: 0; }
+    /* must outrank the rule above: an unselected comment stays collapsed */
+    html[data-wide-tables] .drafts-table tr.note-row[hidden] { display: none; }
+    html[data-wide-tables] .drafts-table tr.note-row > td { display: table-cell; padding: 0 3px 8px 8px; }
+    html[data-wide-tables] .drafts-table tr.sel > td { background: var(--panel); }
+    html[data-wide-tables] .drafts-table tr.sel > td.c-code { box-shadow: inset 2px 0 0 var(--accent); }
+    html[data-wide-tables] .drafts-foot #draft-add { width: auto; }
+
     /* drawer: full width, price/surface inputs stack instead of cramming 3 across */
     #drawer { width: 100vw; }
     #drawer .drawer-body { padding: 14px 14px 64px; }
@@ -878,7 +948,7 @@
   <h1><svg class="brand-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13V10.5"/><path d="M10 20v-6h4v6"/></svg> Recherche maison — Île-de-France</h1>
   <span class="count" id="listing-count"></span>
   <div class="spacer"></div>
-  <button class="secondary" id="desktop-btn" hidden title="Basculer entre vue mobile et vue bureau">&#9707;</button>
+  <button class="secondary" id="desktop-btn" hidden title="Voir le tableau complet">&#9707;</button>
   <button class="secondary" id="theme-btn" title="Basculer clair/sombre">&#9680;</button>
   <button class="secondary" id="reimport-btn"><span class="ico">&#8635;</span> Réimporter</button>
 </header>
@@ -983,11 +1053,11 @@
           <tr>
             <th class="c-code" data-sort="code">Code</th>
             <th class="c-url" data-sort="url">Annonce</th>
-            <th class="c-num" data-sort="price">Prix</th>
+            <th class="c-num c-price" data-sort="price">Prix</th>
             <th class="c-city" data-sort="city">Ville</th>
             <th class="c-num c-area" data-sort="surface">Surface</th>
             <th class="c-num c-area" data-sort="land_surface">Terrain</th>
-            <th class="c-num" data-sort="price_per_m2">€/m²</th>
+            <th class="c-num c-m2" data-sort="price_per_m2">€/m²</th>
             <th class="c-contact" data-sort="contact">Téléphone</th>
             <th class="c-agency" data-sort="agency">Agence</th>
             <th class="c-visit" data-sort="visit_at">Visite</th>
@@ -2705,21 +2775,18 @@
     b.addEventListener("click", function () { switchView(b.getAttribute("data-view")); });
   });
 
-  // ---- "vue bureau" on a phone -------------------------------------------
-  // Not a CSS switch: the mobile rules live in @media (max-width: 640px), and a
-  // class cannot turn a media query off. This does what a browser's "Request
-  // desktop site" does — widen the viewport so the query stops matching and the
-  // real table comes back, zoomed out and pannable.
-  var DESKTOP_WIDTH = 1280;
+  // ---- "vue tableau" on a phone -------------------------------------------
+  // Widening the viewport (what a browser's "Request desktop site" does) brings
+  // the table back but shrinks every glyph to fit 1280 px into a 390 px screen,
+  // which is unreadable. This instead marks the root and lets the mobile block
+  // hand the tables their desktop layout back: full-size text, swipe sideways.
   var desktopKey = "hh-force-desktop";
 
   function applyViewMode(on) {
-    var meta = $("#viewport-meta");
-    meta.setAttribute("content", on ? "width=" + DESKTOP_WIDTH
-                                    : "width=device-width, initial-scale=1");
+    document.documentElement.toggleAttribute("data-wide-tables", on);
     var btn = $("#desktop-btn");
     btn.classList.toggle("on", on);
-    btn.title = on ? "Revenir à la vue mobile" : "Voir la vue bureau";
+    btn.title = on ? "Revenir aux fiches" : "Voir le tableau complet";
     try { localStorage.setItem(desktopKey, on ? "1" : "0"); } catch (e) {}
   }
 
@@ -2977,7 +3044,7 @@
     tr.appendChild(tdUrl);
 
     var cells = [
-      ["c-num", "Prix", draftCell(rec, "price", { num: true, placeholder: "€" })],
+      ["c-num c-price", "Prix", draftCell(rec, "price", { num: true, placeholder: "€" })],
       ["c-city", "Ville", draftCell(rec, "city", { placeholder: "Ville", list: "draft-cities" })],
       ["c-num c-area", "Surface", draftCell(rec, "surface", { num: true, placeholder: "m²", title: "Surface habitable" })],
       ["c-num c-area", "Terrain", draftCell(rec, "land_surface", { num: true, placeholder: "m²", title: "Surface du terrain" })],
