@@ -1175,6 +1175,15 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/criteria":
             self._send_json(parse_criteria())
             return
+        if path == "/api/price-history":
+            # written by scripts/enrich_towns.py; tracked, public-record data
+            hp = os.path.join(TOWNS_DIR, "price_history.json")
+            if not os.path.exists(hp):
+                self._send_json({"years": [], "communes": {}})
+                return
+            with open(hp, "r", encoding="utf-8") as f:
+                self._send_json(json.load(f))
+            return
         if path == "/api/towns":
             db = load_db()
             self._send_json({"towns": list_towns(db["settings"].get("town_order"))})

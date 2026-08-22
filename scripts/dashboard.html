@@ -674,6 +674,42 @@
   /* transposed mobile-only layout in each town card (hidden on desktop) */
   .tn-reperes, .town-card .tn-card-map { display: none; }
 
+  /* ---- price history chart (Villes ciblées) ---- */
+  .ph { margin: 4px 0 26px; }
+  .ph-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 0 0 10px; }
+  .ph-head h3 { margin: 0; font-size: 15px; }
+  .ph-sub { font-weight: 400; color: var(--text-dim); font-size: 12.5px; margin-left: 6px; }
+  .ph-head button { margin-left: auto; }
+  .ph-plot { position: relative; }
+  .ph-plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .ph-grid { stroke: var(--border); stroke-width: 1; }
+  .ph-axis { fill: var(--text-dim); font-size: 11px; }
+  .ph-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ph-dot { stroke: var(--panel); stroke-width: 2; }      /* 2px surface ring on overlapping marks */
+  .ph-endlabel { font-size: 11.5px; fill: var(--text); }
+  .ph-hit { fill: transparent; cursor: crosshair; }
+  .ph-cross { stroke: var(--text-dim); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+  .ph-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 0; font-size: 12.5px; }
+  .ph-leg { display: inline-flex; align-items: center; gap: 6px; color: var(--text); }
+  .ph-swatch { width: 22px; height: 3px; border-radius: 2px; flex: 0 0 auto; }
+  .ph-tip {
+    position: absolute; pointer-events: none; z-index: 5; min-width: 160px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 6px 20px var(--shadow); padding: 8px 10px; font-size: 12.5px;
+  }
+  .ph-tip h4 { margin: 0 0 6px; font-size: 12px; color: var(--text-dim); font-weight: 600; }
+  .ph-tip .r { display: flex; align-items: center; gap: 7px; padding: 2px 0; white-space: nowrap; }
+  .ph-tip .r b { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .ph-tip .r .n { color: var(--text-dim); font-size: 11px; }
+  .ph-tablewrap { margin-top: 12px; overflow-x: auto; }
+  .ph-table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
+  .ph-table th, .ph-table td { padding: 5px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+  .ph-table th:first-child, .ph-table td:first-child { text-align: left; }
+  .ph-table thead th { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+  .ph-table .thin { color: var(--text-dim); }
+  .ph-note { color: var(--text-dim); font-size: 12px; margin: 10px 0 0; line-height: 1.5; }
+  @media (max-width: 640px) { .ph-head button { margin-left: 0; } }
+
   /* ---- target-towns study ---- */
   .towns-main { padding: 16px 20px 60px; }
   .towns-intro { color: var(--text-dim); margin: 0 0 18px; max-width: 900px; line-height: 1.55; }
@@ -1018,6 +1054,16 @@
   <main class="towns-main">
     <p class="towns-intro">Étude comparative des communes ciblées. Données de référence issues des fiches <code>towns/*.md</code> (prix, densité, transport, vélo, couloir aérien, standing, logement social…). Cliquez le nom d'une commune pour aller à sa fiche, ou le libellé d'un critère pour trier. <strong>Les lignes « DVF » et les trois lignes de délinquance sont mesurées</strong>, sur la même base pour toutes les communes, par <code>scripts/enrich_towns.py</code> (geo-DVF 2023-25 · SSMSI 2025) — les lignes « Prix maison (2025) » et « Terrain maison (indicatif) » restent les estimations d'origine, conservées pour comparaison. ⚠️ Les taux ‰ sont volatils sur les petites communes. Sur mobile, le tableau se transforme en une carte par commune.</p>
     <div class="towns-toggle" id="towns-toggle"></div>
+    <section class="ph" id="ph" hidden>
+      <div class="ph-head">
+        <h3>Évolution du prix des maisons <span class="ph-sub">médiane DVF des ventes closes, €/m²</span></h3>
+        <button class="secondary" id="ph-table-btn" aria-expanded="false">Voir les chiffres</button>
+      </div>
+      <div class="ph-plot" id="ph-plot"></div>
+      <div class="ph-legend" id="ph-legend"></div>
+      <div class="ph-tablewrap" id="ph-tablewrap" hidden></div>
+      <p class="ph-note" id="ph-note"></p>
+    </section>
     <div class="towns-compare-wrap" id="towns-compare"></div>
     <div class="town-cards" id="town-cards"></div>
   </main>
@@ -1310,6 +1356,9 @@
   applyTheme(savedTheme || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
   document.getElementById("theme-btn").addEventListener("click", function () {
     applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    // the chart's hues are steps chosen for each surface, not an automatic
+    // flip — repaint it so dark mode gets its own validated set
+    if (typeof phData !== "undefined" && phData) renderPriceHistory();
   });
 
   var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", sortKey2: null, sortDir2: "asc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], visits: [], townsAll: [], townHidden: null, townSort: null, showArchived: false, critPart: 0 };
@@ -2835,6 +2884,202 @@
     applyViewMode(saved === "1");
   })();
 
+  // ---- price history: median €/m² per commune per year ------------------
+  // Form: change over time, several entities -> multi-series line. The hues are
+  // the validated categorical order (adjacent-pair CVD >= 8 in both modes on
+  // this dashboard's own surfaces); three of the light steps sit under 3:1
+  // contrast, so the relief rule applies and the chart ships a legend in ink
+  // plus a table view. Colour follows the commune, never its rank, so hiding
+  // one never repaints the others.
+  var PH_SERIES_LIGHT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"];
+  var PH_SERIES_DARK  = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
+  var PH_MAX_SERIES = 8;
+  var phData = null;
+  var phSlots = {};   // commune id -> palette slot, held across renders
+
+  function phColors() {
+    var dark = document.documentElement.getAttribute("data-theme") === "dark";
+    return dark ? PH_SERIES_DARK : PH_SERIES_LIGHT;
+  }
+
+  function loadPriceHistory() {
+    return fetchJSON("/api/price-history").then(function (res) {
+      phData = res.data && res.data.communes ? res.data : null;
+      renderPriceHistory();
+    });
+  }
+
+  // the communes on screen, in the user's own order, capped at the palette
+  function phSeries() {
+    if (!phData || !state.townsAll.length) return [];
+    var cols = phColors();
+    var out = [];
+    state.townsAll.forEach(function (t) {
+      if (state.townHidden && state.townHidden.has(t.id)) return;
+      var c = phData.communes[t.id];
+      if (!c) return;
+      var pts = phData.years.map(function (y) {
+        var v = c.years[String(y)];
+        return v ? { year: y, med: v.med, n: v.n } : null;
+      }).filter(Boolean);
+      if (pts.length < 2) return;   // a single dot is not an evolution
+      out.push({ id: t.id, name: (t.title || t.id).split("(")[0].trim(), pts: pts });
+    });
+    var shown = out.slice(0, PH_MAX_SERIES);
+    // Colour follows the commune, not its rank: slots are held across renders
+    // and only freed when a commune leaves the chart, so hiding one never
+    // repaints the ones that stay.
+    var live = {};
+    shown.forEach(function (s) { live[s.id] = true; });
+    Object.keys(phSlots).forEach(function (id) { if (!live[id]) delete phSlots[id]; });
+    var taken = {};
+    Object.keys(phSlots).forEach(function (id) { taken[phSlots[id]] = true; });
+    shown.forEach(function (s) {
+      if (phSlots[s.id] === undefined) {
+        for (var k = 0; k < PH_MAX_SERIES; k++) {
+          if (!taken[k]) { phSlots[s.id] = k; taken[k] = true; break; }
+        }
+      }
+      s.color = cols[phSlots[s.id] || 0];
+    });
+    return { shown: shown, total: out.length };
+  }
+
+  function renderPriceHistory() {
+    var section = $("#ph");
+    if (!phData) { section.hidden = true; return; }
+    var res = phSeries();
+    var series = res.shown || [];
+    if (series.length < 1) { section.hidden = true; return; }
+    section.hidden = false;
+
+    var years = phData.years;
+    var vals = [];
+    series.forEach(function (s) { s.pts.forEach(function (p) { vals.push(p.med); }); });
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var step = Math.max(250, Math.ceil((hi - lo) / 4 / 250) * 250);
+    var y0 = Math.floor(lo / step) * step - (lo === hi ? step : 0);
+    var y1 = Math.ceil(hi / step) * step;
+    if (y1 === y0) y1 = y0 + step;
+
+    var W = 900, H = 300, ml = 56, mr = series.length <= 4 ? 130 : 16, mt = 10, mb = 26;
+    var pw = W - ml - mr, ph = H - mt - mb;
+    var X = function (y) { return ml + (years.indexOf(y) / (years.length - 1)) * pw; };
+    var Y = function (v) { return mt + ph - ((v - y0) / (y1 - y0)) * ph; };
+
+    var svg = ['<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Évolution du prix médian au m² par commune">'];
+    for (var g = y0; g <= y1 + 1; g += step) {
+      svg.push('<line class="ph-grid" x1="' + ml + '" y1="' + Y(g) + '" x2="' + (ml + pw) + '" y2="' + Y(g) + '"/>');
+      svg.push('<text class="ph-axis" x="' + (ml - 9) + '" y="' + (Y(g) + 4) + '" text-anchor="end">' + fmtNum(g) + '</text>');
+    }
+    years.forEach(function (y) {
+      svg.push('<text class="ph-axis" x="' + X(y) + '" y="' + (H - 6) + '" text-anchor="middle">' + y + '</text>');
+    });
+    series.forEach(function (s) {
+      // segments only between consecutive years: a gap stays a gap
+      var d = "", prev = null;
+      s.pts.forEach(function (p) {
+        var gap = prev && years.indexOf(p.year) !== years.indexOf(prev.year) + 1;
+        d += (!prev || gap ? "M" : "L") + X(p.year).toFixed(1) + " " + Y(p.med).toFixed(1) + " ";
+        prev = p;
+      });
+      svg.push('<path class="ph-line" d="' + d.trim() + '" stroke="' + s.color + '"/>');
+      s.pts.forEach(function (p) {
+        svg.push('<circle class="ph-dot" cx="' + X(p.year).toFixed(1) + '" cy="' + Y(p.med).toFixed(1)
+                 + '" r="4" fill="' + s.color + '"/>');
+      });
+      if (mr > 100) {
+        var last = s.pts[s.pts.length - 1];
+        svg.push('<text class="ph-endlabel" x="' + (X(last.year) + 10) + '" y="' + (Y(last.med) + 4) + '">'
+                 + escapeHtml(s.name) + '</text>');
+      }
+    });
+    svg.push('<line class="ph-cross" id="ph-cross" x1="0" y1="' + mt + '" x2="0" y2="' + (mt + ph) + '" style="display:none"/>');
+    years.forEach(function (y, i) {
+      var w = pw / (years.length - 1);
+      svg.push('<rect class="ph-hit" data-year="' + y + '" x="' + (X(y) - w / 2) + '" y="' + mt
+               + '" width="' + w + '" height="' + ph + '"/>');
+    });
+    svg.push('</svg>');
+    var plot = $("#ph-plot");
+    plot.innerHTML = svg.join("");
+
+    var legend = $("#ph-legend");
+    legend.innerHTML = series.map(function (s) {
+      return '<span class="ph-leg"><span class="ph-swatch" style="background:' + s.color + '"></span>'
+        + escapeHtml(s.name) + '</span>';
+    }).join("");
+
+    var note = [];
+    if (res.total > series.length) {
+      note.push('<strong>' + series.length + ' communes sur ' + res.total + ' affichées</strong> — masquez-en dans la liste ci-dessus pour en tracer d\'autres (au-delà de huit lignes, les couleurs ne se distinguent plus de façon fiable).');
+    }
+    note.push('Médiane des maisons vendues chaque année (geo-DVF, agrégé par mutation). ⚠️ Sur les petites communes une année peut reposer sur une poignée de ventes : la médiane bouge alors pour des raisons de composition, pas de marché — le nombre de ventes est dans l\'infobulle et dans le tableau.');
+    $("#ph-note").innerHTML = note.join(" ");
+
+    phBuildTable(series, years);
+    phWireHover(plot, series, years, X, Y, mt, ph);
+  }
+
+  function phBuildTable(series, years) {
+    var thin = (phData && phData.thin_below) || 12;
+    var h = '<table class="ph-table"><thead><tr><th>Commune</th>'
+      + years.map(function (y) { return '<th>' + y + '</th>'; }).join("") + '</tr></thead><tbody>';
+    series.forEach(function (s) {
+      h += '<tr><td>' + escapeHtml(s.name) + '</td>';
+      years.forEach(function (y) {
+        var p = s.pts.filter(function (q) { return q.year === y; })[0];
+        h += p ? '<td' + (p.n < thin ? ' class="thin"' : '') + '>' + fmtNum(p.med) + ' <span class="n">(n=' + p.n + ')</span></td>'
+               : '<td class="thin">—</td>';
+      });
+      h += '</tr>';
+    });
+    $("#ph-tablewrap").innerHTML = h + '</tbody></table>';
+  }
+
+  function phWireHover(plot, series, years, X, Y, mt, ph) {
+    var tip = el("div", "ph-tip");
+    tip.style.display = "none";
+    plot.appendChild(tip);
+    var cross = plot.querySelector("#ph-cross");
+    var thin = (phData && phData.thin_below) || 12;
+    function show(year, clientX) {
+      var rows = series.map(function (s) {
+        var p = s.pts.filter(function (q) { return q.year === year; })[0];
+        return p ? { s: s, p: p } : null;
+      }).filter(Boolean).sort(function (a, b) { return b.p.med - a.p.med; });
+      if (!rows.length) return;
+      tip.innerHTML = '<h4>' + year + '</h4>' + rows.map(function (r) {
+        return '<div class="r"><span class="ph-swatch" style="background:' + r.s.color + '"></span>'
+          + escapeHtml(r.s.name) + ' <b>' + fmtNum(r.p.med) + ' €/m²</b>'
+          + '<span class="n">n=' + r.p.n + (r.p.n < thin ? ' ⚠' : '') + '</span></div>';
+      }).join("");
+      var box = plot.getBoundingClientRect();
+      var px = X(year) / 900 * box.width;
+      cross.setAttribute("x1", X(year)); cross.setAttribute("x2", X(year));
+      cross.style.display = "";
+      tip.style.display = "";
+      var tw = tip.offsetWidth;
+      tip.style.left = Math.max(0, Math.min(box.width - tw, px - tw / 2)) + "px";
+      tip.style.top = "0px";
+    }
+    plot.querySelectorAll(".ph-hit").forEach(function (r) {
+      r.addEventListener("mouseenter", function () { show(+r.getAttribute("data-year")); });
+      r.addEventListener("touchstart", function () { show(+r.getAttribute("data-year")); }, { passive: true });
+    });
+    plot.addEventListener("mouseleave", function () {
+      tip.style.display = "none";
+      cross.style.display = "none";
+    });
+  }
+
+  $("#ph-table-btn").addEventListener("click", function () {
+    var w = $("#ph-tablewrap"), b = $("#ph-table-btn");
+    w.hidden = !w.hidden;
+    b.setAttribute("aria-expanded", String(!w.hidden));
+    b.textContent = w.hidden ? "Voir les chiffres" : "Masquer les chiffres";
+  });
+
   // ---- Brouillons : ads to look at later, edited straight in the grid ----
   // No md file, no research — just a row the user types into. Each cell PATCHes
   // on blur (not on keystroke) so a half-typed price never reaches the server,
@@ -3719,6 +3964,7 @@
   }
 
   function renderTownViews() {
+    renderPriceHistory();   // follows the same show/hide and order as the tables
     var wrap = $("#towns-compare"), cards = $("#town-cards");
     cards.innerHTML = "";
     if (!state.townsAll.length) {
@@ -3811,6 +4057,7 @@
   function loadTowns() {
     fetchJSON("/api/towns").then(function (res) {
       renderTowns((res.data && res.data.towns) || []);
+      loadPriceHistory();
     }, function () {
       $("#towns-compare").innerHTML = '<div class="empty" style="display:flex">Chargement des villes impossible.</div>';
     });

@@ -39,6 +39,7 @@ import urllib.request
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOWNS_DIR = os.path.join(REPO_ROOT, "towns")
 CACHE_DIR = os.path.join(REPO_ROOT, ".cache", "towns")
+HISTORY_PATH = os.path.join(TOWNS_DIR, "price_history.json")
 UA = {"User-Agent": "house-hunt/0.1"}
 
 GEO = "https://geo.api.gouv.fr/communes"
@@ -46,6 +47,12 @@ DVF = "https://geo-dvf.s3.sbg.io.cloud.ovh.net/latest/csv/{y}/communes/{d}/{c}.c
 CRIME_RID = "44ef4323-1097-48d5-8719-3c544b55d294"   # SSMSI base communale, data.gouv
 CRIME = "https://tabular-api.data.gouv.fr/api/resources/" + CRIME_RID + "/data/"
 YEARS = (2023, 2024, 2025)
+# geo-DVF publishes 2021 onwards; earlier years 404. The comparison rows average
+# the last three, the price history plots each one on its own.
+HISTORY_YEARS = (2021, 2022, 2023, 2024, 2025)
+# Below this many closed sales a yearly median says more about which houses
+# happened to sell than about the market — plotted, but flagged as thin.
+THIN_YEAR = 12
 CRIME_YEAR = 2025
 
 # Sheets that are not a whole commune: restrict DVF to the quartier's footprint.
@@ -153,6 +160,47 @@ def dvf_stats(insee, box=None, force=False):
     return cached(f"dvf_{insee}_{'q' if box else 'c'}", _fetch, force=force)
 
 
+def dvf_year_medians(insee, box=None, force=False):
+    """Median €/m² of closed house sales, year by year — the price history.
+
+    Same basis as dvf_stats (aggregate by id_mutation, drop tiny or symbolic
+    sales) so the chart and the "Prix maison DVF" row can never disagree.
+    """
+    def _fetch():
+        out = {}
+        for y in HISTORY_YEARS:
+            url = DVF.format(y=y, d=insee[:2], c=insee)
+            try:
+                with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=90) as r:
+                    txt = r.read().decode("utf-8", "replace")
+            except Exception:
+                continue
+            agg = {}
+            for row in csv.DictReader(io.StringIO(txt)):
+                if not row.get("id_parcelle") or row.get("type_local") != "Maison":
+                    continue
+                if box:
+                    try:
+                        lon, lat = float(row["longitude"]), float(row["latitude"])
+                    except (ValueError, KeyError, TypeError):
+                        continue
+                    if not (box[0] <= lon <= box[1] and box[2] <= lat <= box[3]):
+                        continue
+                a = agg.setdefault(row["id_mutation"], {"bati": 0.0, "val": None})
+                try:
+                    a["bati"] += float(row["surface_reelle_bati"] or 0)
+                    a["val"] = float(row["valeur_fonciere"] or 0)
+                except ValueError:
+                    pass
+            pm = [a["val"] / a["bati"] for a in agg.values()
+                  if a["val"] and a["bati"] >= 60 and a["val"] > 150000]
+            if pm:
+                out[str(y)] = {"med": round(median(pm)), "n": len(pm)}
+        return out or None
+
+    return cached(f"dvfhist_{insee}_{'q' if box else 'c'}", _fetch, force=force)
+
+
 def crime_stats(insee, force=False):
     def _fetch():
         q = urllib.parse.urlencode({"CODGEO_2026__exact": insee,
@@ -228,6 +276,7 @@ def main():
         sys.exit("no town sheets matched")
 
     changed = 0
+    history = {}
     for path in paths:
         tid = os.path.splitext(os.path.basename(path))[0]
         with open(path, encoding="utf-8") as f:
@@ -239,6 +288,10 @@ def main():
             continue
         d = dvf_stats(geo["insee"], BBOX.get(tid), args.force)
         c = crime_stats(geo["insee"], args.force)
+        hist = dvf_year_medians(geo["insee"], BBOX.get(tid), args.force)
+        if hist:
+            history[tid] = {"title": title, "insee": geo["insee"],
+                            "quartier": tid in BBOX, "years": hist}
 
         vals = {}
         if d:
@@ -268,6 +321,25 @@ def main():
               f"{(fr(d['terr'])+' m²') if d and d['terr'] else '—':>9} "
               f"camb {fr(c['camb'],2) if c and c['camb'] is not None else '—':>6} "
               f"viol {fr(c['viol'],2) if c else '—':>5}{flag}")
+
+    # The per-year series is a chart input, not a Repères row: it goes to a
+    # tracked JSON the dashboard reads. Merged, so `--id` refreshes one commune
+    # without dropping the others.
+    if history and not args.dry_run:
+        prev = {}
+        if os.path.exists(HISTORY_PATH):
+            try:
+                with open(HISTORY_PATH, encoding="utf-8") as f:
+                    prev = json.load(f).get("communes", {})
+            except (json.JSONDecodeError, OSError):
+                prev = {}
+        prev.update(history)
+        with open(HISTORY_PATH, "w", encoding="utf-8") as f:
+            json.dump({"years": list(HISTORY_YEARS), "thin_below": THIN_YEAR,
+                       "generated": time.strftime("%Y-%m-%d"),
+                       "communes": dict(sorted(prev.items()))}, f,
+                      ensure_ascii=False, indent=1)
+        print(f"série de prix écrite pour {len(history)} commune(s) -> {os.path.relpath(HISTORY_PATH, REPO_ROOT)}")
 
     print(f"\n{changed}/{len(paths)} fiches mises à jour" + (" (--dry-run)" if args.dry_run else ""))
 
