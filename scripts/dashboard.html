@@ -198,6 +198,11 @@
   .drafts-table .c-num { text-align: right; }
   .drafts-table .c-act { width: 62px; white-space: nowrap; }
   .drafts-table .c-visit .dcell { min-width: 158px; }
+  .drafts-table .c-area { width: 76px; }
+  .drafts-table .c-area .dcell { min-width: 0; }
+  /* wide enough for the longest label ("Promu en dossier") plus the chevron */
+  .drafts-table .c-status { width: 152px; }
+  .drafts-table .c-status .dcell { min-width: 0; }
   .drafts-table .c-m2 { color: var(--text-dim); font-variant-numeric: tabular-nums; padding-right: 9px; }
   /* the native picker icon is dim until the row is hovered, so an empty slot
      reads as empty rather than as a control */
@@ -910,6 +915,7 @@
       <select id="draft-filter">
         <option value="">Tous les statuts</option>
         <option value="attente">◷ À vérifier</option>
+        <option value="visite">◉ Visite prévue</option>
         <option value="verifie">✓ Vérifié</option>
         <option value="ecarte">✗ Écarté</option>
         <option value="promu">→ Promu en dossier</option>
@@ -925,8 +931,8 @@
             <th class="c-url">Annonce</th>
             <th class="c-num">Prix</th>
             <th class="c-city">Ville</th>
-            <th class="c-num">Surface</th>
-            <th class="c-num">Terrain</th>
+            <th class="c-num c-area">Surface</th>
+            <th class="c-num c-area">Terrain</th>
             <th class="c-num">€/m²</th>
             <th class="c-contact">Téléphone</th>
             <th class="c-agency">Agence</th>
@@ -2676,6 +2682,7 @@
 
   var DRAFT_STATUS_LABELS = {
     attente: "\u25F7 À vérifier",
+    visite: "\u25C9 Visite prévue",
     verifie: "\u2713 Vérifié",
     ecarte: "\u2717 Écarté",
     promu: "\u2192 Promu en dossier"
@@ -2824,8 +2831,8 @@
     var cells = [
       ["c-num", draftCell(rec, "price", { num: true, placeholder: "€" })],
       ["c-city", draftCell(rec, "city", { placeholder: "Ville", list: "draft-cities" })],
-      ["c-num", draftCell(rec, "surface", { num: true, placeholder: "m² hab.", title: "Surface habitable" })],
-      ["c-num", draftCell(rec, "land_surface", { num: true, placeholder: "m² terrain", title: "Surface du terrain" })],
+      ["c-num c-area", draftCell(rec, "surface", { num: true, placeholder: "m²", title: "Surface habitable" })],
+      ["c-num c-area", draftCell(rec, "land_surface", { num: true, placeholder: "m²", title: "Surface du terrain" })],
       ["c-num c-m2", draftPriceM2(rec)],
       ["c-contact", draftCell(rec, "contact", { placeholder: "06…" })],
       ["c-agency", draftCell(rec, "agency", { placeholder: "Agence" })],

@@ -344,7 +344,7 @@ def now_iso():
 # takes this lock for its whole read-modify-write.
 DRAFT_LOCK = threading.Lock()
 
-DRAFT_STATUSES = ["attente", "verifie", "ecarte", "promu"]
+DRAFT_STATUSES = ["attente", "visite", "verifie", "ecarte", "promu"]
 DRAFT_TEXT_FIELDS = {"url", "city", "agency", "contact", "note"}
 DRAFT_NUM_FIELDS = {"price", "surface", "land_surface"}
 # visit_at holds what an <input type="datetime-local"> produces: "YYYY-MM-DDTHH:MM"
