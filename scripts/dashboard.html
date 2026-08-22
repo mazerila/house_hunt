@@ -155,6 +155,7 @@
   tbody tr:hover { background: var(--row-hover); cursor: pointer; }
   tbody tr:active { filter: brightness(.96); }
   .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .sort-2nd { opacity: .45; font-size: 9px; }
   /* red-flag screen badges (computed by scripts/enrich.py) */
   .flag-pill {
     display: inline-block; min-width: 20px; padding: 1px 6px; margin-right: 3px;
@@ -240,6 +241,7 @@
   .drafts-table th[data-sort] { cursor: pointer; user-select: none; }
   .drafts-table th[data-sort]:hover { color: var(--text); }
   .drafts-table th.sorted { color: var(--accent); }
+  .drafts-table th.sorted-2nd { color: var(--text); }
   .drafts-table th .caret { font-size: 9px; margin-left: 3px; vertical-align: 1px; }
   .dnote {
     width: 100%; box-sizing: border-box; resize: vertical; min-height: 46px;
@@ -1310,7 +1312,7 @@
     applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
   });
 
-  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], visits: [], townsAll: [], townHidden: null, townSort: null, showArchived: false, critPart: 0 };
+  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", sortKey2: null, sortDir2: "asc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], visits: [], townsAll: [], townHidden: null, townSort: null, showArchived: false, critPart: 0 };
 
   var STATUS_LABELS = {
     "researching": "⚲ Recherche",
@@ -1440,10 +1442,12 @@
     render();
   }
 
-  function sortFiltered() {
-    var key = state.sortKey, dir = state.sortDir === "asc" ? 1 : -1;
-    var numeric = !!NUMERIC_KEYS[key];
-    state.filtered.sort(function (a, b) {
+  // Two-level sort, on both grids: clicking a new column pushes the one you
+  // were sorting by down to second criterion, so ties in the new column keep
+  // the order you had just built rather than falling back to nothing.
+  function cmpListingBy(a, b, key, dirWord) {
+      var dir = dirWord === "asc" ? 1 : -1;
+      var numeric = !!NUMERIC_KEYS[key];
       var av = a[key], bv = b[key];
       // "visits" is a list — sort on the most recent visit so empties fall last
       if (key === "visits") {
@@ -1476,6 +1480,13 @@
       if (av < bv) return -1 * dir;
       if (av > bv) return 1 * dir;
       return 0;
+  }
+
+  function sortFiltered() {
+    state.filtered.sort(function (a, b) {
+      var d = cmpListingBy(a, b, state.sortKey, state.sortDir);
+      if (d || !state.sortKey2 || state.sortKey2 === state.sortKey) return d;
+      return cmpListingBy(a, b, state.sortKey2, state.sortDir2);
     });
   }
 
@@ -1662,10 +1673,24 @@
       th.setAttribute("data-key", key);
       if (col.num) th.className = "num";
       if (col.cls) th.classList.add(col.cls);
-      th.textContent = col.label + (key === state.sortKey ? " " + (state.sortDir === "asc" ? "▲" : "▼") : "");
+      th.textContent = col.label;
+      if (key === state.sortKey) {
+        th.appendChild(document.createTextNode(" " + (state.sortDir === "asc" ? "▲" : "▼")));
+      } else if (key === state.sortKey2) {
+        // second criterion: same arrow, dimmed, so the rule is visible not magic
+        var c2 = el("span", "sort-2nd", " " + (state.sortDir2 === "asc" ? "▲" : "▼"));
+        c2.title = "2ᵉ critère de tri";
+        th.appendChild(c2);
+      }
       th.addEventListener("click", function () {
-        if (state.sortKey === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-        else { state.sortKey = key; state.sortDir = NUMERIC_KEYS[key] ? "desc" : "asc"; }
+        if (state.sortKey === key) {
+          state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+        } else {
+          state.sortKey2 = state.sortKey;      // demoted, not discarded
+          state.sortDir2 = state.sortDir;
+          state.sortKey = key;
+          state.sortDir = NUMERIC_KEYS[key] ? "desc" : "asc";
+        }
         sortFiltered();
         render();
       });
@@ -2825,6 +2850,7 @@
   // Transient, like the sort on the Villes ciblées tab: never saved, so a
   // reload comes back to the natural B-code order.
   var draftSort = { key: "code", dir: "asc" };
+  var draftSort2 = null;   // the column you were sorting by, kept as tie-breaker
   var DRAFT_NUM_SORT = { price: 1, surface: 1, land_surface: 1, price_per_m2: 1 };
   // Statut sorts along the workflow, not the alphabet.
   var DRAFT_STATUS_RANK = { attente: 0, visite: 1, verifie: 2, ecarte: 3, promu: 4 };
@@ -2835,20 +2861,35 @@
     return rec[key];
   }
 
+  function cmpDraftBy(a, b, s) {
+    var av = draftSortValue(a, s.key), bv = draftSortValue(b, s.key);
+    // Empty cells always land at the bottom, whichever way the column is
+    // pointing: half this grid is blank, and blanks bubbling to the top would
+    // bury the rows you sorted for. Two blanks are a tie, so the next
+    // criterion gets to decide.
+    var ae = av === null || av === undefined || av === "";
+    var be = bv === null || bv === undefined || bv === "";
+    if (ae || be) return ae && be ? 0 : (ae ? 1 : -1);
+    var numeric = !!DRAFT_NUM_SORT[s.key] || s.key === "status";
+    var d = numeric ? av - bv : String(av).localeCompare(String(bv), "fr", { numeric: true });
+    return d ? d * (s.dir === "asc" ? 1 : -1) : 0;
+  }
+
   function sortedDrafts() {
-    var key = draftSort.key, dir = draftSort.dir === "asc" ? 1 : -1;
-    var numeric = !!DRAFT_NUM_SORT[key] || key === "status";
     return drafts.slice().sort(function (a, b) {
-      var av = draftSortValue(a, key), bv = draftSortValue(b, key);
-      // Empty cells always land at the bottom, whichever way the column is
-      // pointing: half this grid is blank, and blanks bubbling to the top
-      // would bury the rows you sorted for.
-      var ae = av === null || av === undefined || av === "";
-      var be = bv === null || bv === undefined || bv === "";
-      if (ae || be) return ae && be ? cmpCode(a, b) : (ae ? 1 : -1);
-      var d = numeric ? av - bv : String(av).localeCompare(String(bv), "fr", { numeric: true });
-      return d ? d * dir : cmpCode(a, b);
+      return cmpDraftBy(a, b, draftSort)
+        || (draftSort2 && draftSort2.key !== draftSort.key ? cmpDraftBy(a, b, draftSort2) : 0)
+        || cmpCode(a, b);
     });
+  }
+
+  function setDraftSort(key) {
+    if (draftSort.key === key) {
+      draftSort = { key: key, dir: draftSort.dir === "asc" ? "desc" : "asc" };
+      return;
+    }
+    draftSort2 = draftSort;                 // demoted, not discarded
+    draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
   }
 
   function cmpCode(a, b) { return (a.code || "").localeCompare(b.code || ""); }
@@ -2856,13 +2897,22 @@
   function renderSortCarets() {
     var mob = $("#draft-sort");
     if (mob && mob.value !== draftSort.key) mob.value = draftSort.key;
+    var second = draftSort2 && draftSort2.key !== draftSort.key ? draftSort2 : null;
     document.querySelectorAll("#drafts-table th[data-sort]").forEach(function (th) {
-      var on = th.getAttribute("data-sort") === draftSort.key;
+      var key = th.getAttribute("data-sort");
+      var on = key === draftSort.key;
+      var isSecond = !on && second && key === second.key;
       th.classList.toggle("sorted", on);
+      th.classList.toggle("sorted-2nd", !!isSecond);
       var caret = th.querySelector(".caret");
-      if (on && !caret) { caret = el("span", "caret"); th.appendChild(caret); }
-      if (caret) caret.textContent = on ? (draftSort.dir === "asc" ? "▲" : "▼") : "";
-      if (!on && caret) caret.remove();
+      if ((on || isSecond) && !caret) { caret = el("span", "caret"); th.appendChild(caret); }
+      if (caret) {
+        caret.textContent = on ? (draftSort.dir === "asc" ? "▲" : "▼")
+                               : (second.dir === "asc" ? "▲" : "▼");
+        caret.classList.toggle("sort-2nd", !!isSecond);
+        caret.title = isSecond ? "2ᵉ critère de tri" : "";
+      }
+      if (!on && !isSecond && caret) caret.remove();
     });
   }
 
@@ -3199,16 +3249,13 @@
 
   document.querySelectorAll("#drafts-table th[data-sort]").forEach(function (th) {
     th.addEventListener("click", function () {
-      var key = th.getAttribute("data-sort");
-      if (draftSort.key === key) draftSort.dir = draftSort.dir === "asc" ? "desc" : "asc";
-      else draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
+      setDraftSort(th.getAttribute("data-sort"));
       renderDrafts();
     });
   });
 
   $("#draft-sort").addEventListener("change", function () {
-    var key = $("#draft-sort").value;
-    draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
+    setDraftSort($("#draft-sort").value);
     renderDrafts();
   });
 
