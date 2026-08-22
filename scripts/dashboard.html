@@ -290,6 +290,9 @@
   }
   .crit-part-tab.active { color: #fff; border-color: transparent; }
   .crit-part-tab.active .n { background: rgba(255,255,255,.22); color: #fff; }
+  .crit-part-tab.rouge { color: #b91c1c; border-color: rgba(185,28,28,.45); font-weight: 700; }
+  .crit-part-tab.rouge:hover { border-color: #b91c1c; color: #b91c1c; }
+  .crit-part-tab.rouge.active { background: #7f1d1d; color: #fff; }
   .crit-part-tab.immuable.active { background: #b91c1c; }
   .crit-part-tab.modifiable.active { background: #15803d; }
   .crit-progress { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
@@ -298,6 +301,7 @@
     display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
     padding: 10px 14px; border-radius: 8px 8px 0 0; border: 1px solid var(--border); border-bottom: none;
   }
+  .crit-part.rouge .crit-part-head { background: rgba(127,29,29,.16); }
   .crit-part.immuable .crit-part-head { background: rgba(185,28,28,.09); }
   .crit-part.modifiable .crit-part-head { background: rgba(21,128,61,.09); }
   .crit-part-head h2 { margin: 0; font-size: 16px; }
@@ -3245,6 +3249,20 @@
   var critLoaded = false;
   var critData = null;
 
+  // The three halves of the check-list are told apart by their heading, so a new
+  // part in criteria.md only needs a title the regex recognises.
+  var CRIT_PART_HINT = {
+    rouge: "Ce qui fait annuler et repartir chercher — un seul suffit",
+    immuable: "Ce qu'aucun budget ne corrige — un défaut ici disqualifie ou se paie en décote",
+    modifiable: "Ce qui se répare avec de l'argent — un défaut ici est une ligne de chiffrage"
+  };
+
+  function critPartKind(title) {
+    if (/drapeau|rouge/i.test(title)) return "rouge";
+    if (/immuable/i.test(title)) return "immuable";
+    return "modifiable";
+  }
+
   function loadCriteria() {
     fetchJSON("/api/criteria").then(function (res) {
       critData = res.data || { parts: [] };
@@ -3307,7 +3325,7 @@
     tabsBox.innerHTML = "";
     if (state.critPart >= critData.parts.length) state.critPart = 0;
     critData.parts.forEach(function (part, idx) {
-      var isImm = /immuable/i.test(part.title);
+      var kind = critPartKind(part.title);
       // how many of this part's items survive the current filter
       var shown = 0;
       part.groups.forEach(function (g) {
@@ -3321,13 +3339,11 @@
           shown++;
         });
       });
-      var tab = el("div", "crit-part-tab " + (isImm ? "immuable" : "modifiable")
+      var tab = el("div", "crit-part-tab " + kind
                     + (idx === state.critPart ? " active" : ""));
       tab.appendChild(document.createTextNode(part.title));
       tab.appendChild(el("span", "n", String(shown)));
-      tab.title = isImm
-        ? "Ce qu'aucun budget ne corrige — un défaut ici disqualifie ou se paie en décote"
-        : "Ce qui se répare avec de l'argent — un défaut ici est une ligne de chiffrage";
+      tab.title = CRIT_PART_HINT[kind];
       tab.addEventListener("click", function () {
         state.critPart = idx;
         renderCriteria();
@@ -3346,8 +3362,7 @@
         });
       });
       if (partIdx !== state.critPart) return;   // the other half lives on its own tab
-      var isImm = /immuable/i.test(part.title);
-      var partEl = el("div", "crit-part " + (isImm ? "immuable" : "modifiable"));
+      var partEl = el("div", "crit-part " + critPartKind(part.title));
       var body = el("div", "crit-part-body");
       var shownInPart = 0;
 
