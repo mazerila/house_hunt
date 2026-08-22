@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1">
 <title>Recherche maison — Île-de-France</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%2334d399%27%2F%3E%3Cstop%20offset%3D%27.55%27%20stop-color%3D%27%2310b981%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23047857%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2726%27%20fill%3D%27url%28%23g%29%27%2F%3E%3Crect%20x%3D%2757%27%20y%3D%2757%27%20width%3D%2734%27%20height%3D%2716%27%20rx%3D%278%27%20transform%3D%27rotate%2845%2074%2065%29%27%20fill%3D%27%23fff%27%2F%3E%3Ccircle%20cx%3D%2742%27%20cy%3D%2742%27%20r%3D%2729%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M42%2024%20L64%2044%20H57%20V63%20H27%20V44%20H20%20Z%27%20fill%3D%27url%28%23g%29%27%2F%3E%3Crect%20x%3D%2737%27%20y%3D%2751%27%20width%3D%2710%27%20height%3D%2712%27%20rx%3D%271.5%27%20fill%3D%27%23fff%27%2F%3E%3C%2Fsvg%3E">
 <style>
@@ -99,6 +99,8 @@
   button.secondary.toggle-on { background: var(--accent); color: #fff; border-color: var(--accent); }
   .danger-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   #theme-btn { font-size: 16px; padding: 6px 10px; line-height: 1; }
+  #desktop-btn { font-size: 15px; padding: 6px 10px; line-height: 1; }
+  #desktop-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
   .filters {
     display: flex; gap: 10px; padding: 12px 20px; flex-wrap: wrap;
     background: var(--panel); border-bottom: 1px solid var(--border);
@@ -254,6 +256,7 @@
   .note-btn.on { color: var(--accent); }
   .drafts-empty { color: var(--text-dim); padding: 22px 8px; }
   .drafts-foot { padding: 12px 0 0; }
+  .mobile-only { display: none; }
   /* the selected line and its comment read as one block */
   .drafts-table tr.sel > td { background: var(--panel); }
   .drafts-table tr.sel > td.c-code { box-shadow: inset 2px 0 0 var(--accent); }
@@ -819,6 +822,41 @@
     td.col-clip { max-width: none; white-space: normal; overflow: visible; text-overflow: clip; }
     select.status-select { max-width: 60%; }
 
+    /* ---- Brouillons on a phone ----
+       The generic card rule above already stacks the cells; what it cannot know
+       is that every cell here is an input. Left-align them under their label,
+       let them fill the card, and keep the code + actions on one header line. */
+    .mobile-only { display: block; }
+    .drafts-main { padding: 12px 12px 64px; }
+    .drafts-bar { gap: 8px; }
+    .drafts-bar select { flex: 1 1 100%; min-width: 0; }
+    .drafts-table-wrap { overflow: visible; }
+    .drafts-table { min-width: 0; }
+    .drafts-table td { text-align: left; }
+    .drafts-table .dcell { text-align: left; flex: 1 1 auto; min-width: 0; padding: 4px 6px; }
+    .drafts-table .dcell.num { text-align: left; }
+    /* the derived €/m² is a span, not an input — keep it under its label too */
+    .drafts-table .dcell-ro { flex: 1 1 auto; text-align: left; padding-left: 7px; }
+    .drafts-table .c-area, .drafts-table .c-status { width: auto; }
+    .drafts-table .c-visit .dcell { min-width: 0; }
+    .drafts-table .dcell-url { flex: 1 1 auto; min-width: 0; }
+    /* code and the row actions share the card's title line */
+    .drafts-table td.c-code {
+      justify-content: flex-start; gap: 8px; font-weight: 700; color: var(--text);
+      font-size: 15px; padding-top: 10px;
+    }
+    .drafts-table td.c-code::before { content: none; }
+    .drafts-table td.c-act { justify-content: flex-end; gap: 4px; padding: 6px 0 2px; border-bottom: none; }
+    .drafts-table td.c-act::before { content: none; }
+    .drafts-table .row-del, .drafts-table .note-btn { font-size: 18px; padding: 6px 10px; }
+    /* the comment is its own card, tied to the one above it */
+    .drafts-table tr.note-row { margin: -8px 0 10px; padding: 0 12px 10px; border-radius: 0 0 10px 10px; }
+    .drafts-table tr.note-row > td { padding: 0; border: none; }
+    .drafts-table tr.sel > td.c-code { box-shadow: none; }
+    .drafts-table tr.sel { border-color: var(--accent); }
+    .drafts-empty { padding: 16px 2px; }
+    .drafts-foot #draft-add { width: 100%; }
+
     /* drawer: full width, price/surface inputs stack instead of cramming 3 across */
     #drawer { width: 100vw; }
     #drawer .drawer-body { padding: 14px 14px 64px; }
@@ -840,6 +878,7 @@
   <h1><svg class="brand-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13V10.5"/><path d="M10 20v-6h4v6"/></svg> Recherche maison — Île-de-France</h1>
   <span class="count" id="listing-count"></span>
   <div class="spacer"></div>
+  <button class="secondary" id="desktop-btn" hidden title="Basculer entre vue mobile et vue bureau">&#9707;</button>
   <button class="secondary" id="theme-btn" title="Basculer clair/sombre">&#9680;</button>
   <button class="secondary" id="reimport-btn"><span class="ico">&#8635;</span> Réimporter</button>
 </header>
@@ -916,6 +955,17 @@
       passez-le en <em>promu</em> et écrivez sa note dans <code>private/listings/</code>.
     </p>
     <div class="drafts-bar">
+      <select id="draft-sort" class="mobile-only" aria-label="Trier les brouillons">
+        <option value="code">Trier : code</option>
+        <option value="price">Trier : prix</option>
+        <option value="price_per_m2">Trier : €/m²</option>
+        <option value="city">Trier : ville</option>
+        <option value="surface">Trier : surface</option>
+        <option value="land_surface">Trier : terrain</option>
+        <option value="visit_at">Trier : visite</option>
+        <option value="agency">Trier : agence</option>
+        <option value="status">Trier : statut</option>
+      </select>
       <select id="draft-filter">
         <option value="">Tous les statuts</option>
         <option value="attente">◷ À vérifier</option>
@@ -2655,6 +2705,40 @@
     b.addEventListener("click", function () { switchView(b.getAttribute("data-view")); });
   });
 
+  // ---- "vue bureau" on a phone -------------------------------------------
+  // Not a CSS switch: the mobile rules live in @media (max-width: 640px), and a
+  // class cannot turn a media query off. This does what a browser's "Request
+  // desktop site" does — widen the viewport so the query stops matching and the
+  // real table comes back, zoomed out and pannable.
+  var DESKTOP_WIDTH = 1280;
+  var desktopKey = "hh-force-desktop";
+
+  function applyViewMode(on) {
+    var meta = $("#viewport-meta");
+    meta.setAttribute("content", on ? "width=" + DESKTOP_WIDTH
+                                    : "width=device-width, initial-scale=1");
+    var btn = $("#desktop-btn");
+    btn.classList.toggle("on", on);
+    btn.title = on ? "Revenir à la vue mobile" : "Voir la vue bureau";
+    try { localStorage.setItem(desktopKey, on ? "1" : "0"); } catch (e) {}
+  }
+
+  (function initViewMode() {
+    var btn = $("#desktop-btn");
+    // The behaviour is always wired; only whether the button is offered depends
+    // on the device — keeps the toggle testable, and the two concerns apart.
+    btn.addEventListener("click", function () { applyViewMode(!btn.classList.contains("on")); });
+    // screen.width, not the CSS width: once desktop mode widens the viewport a
+    // CSS-width test would hide the button and strand the user in it.
+    var handheld = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches)
+                   || (window.screen && window.screen.width <= 820);
+    if (!handheld) return;
+    btn.hidden = false;
+    var saved = "0";
+    try { saved = localStorage.getItem(desktopKey) || "0"; } catch (e) {}
+    applyViewMode(saved === "1");
+  })();
+
   // ---- Brouillons : ads to look at later, edited straight in the grid ----
   // No md file, no research — just a row the user types into. Each cell PATCHes
   // on blur (not on keystroke) so a half-typed price never reaches the server,
@@ -2699,6 +2783,8 @@
   function cmpCode(a, b) { return (a.code || "").localeCompare(b.code || ""); }
 
   function renderSortCarets() {
+    var mob = $("#draft-sort");
+    if (mob && mob.value !== draftSort.key) mob.value = draftSort.key;
     document.querySelectorAll("#drafts-table th[data-sort]").forEach(function (th) {
       var on = th.getAttribute("data-sort") === draftSort.key;
       th.classList.toggle("sorted", on);
@@ -2866,10 +2952,13 @@
     tr.addEventListener("mousedown", function () { selectDraft(rec.id); });
     tr.addEventListener("focusin", function () { selectDraft(rec.id); });
 
-    tr.appendChild(el("td", "c-code", rec.code));
+    var tdCode = el("td", "c-code", rec.code);
+    tdCode.setAttribute("data-label", "Code");
+    tr.appendChild(tdCode);
 
     // annonce: the link opens in a new tab, the field next to it stays editable
     var tdUrl = el("td", "c-url");
+    tdUrl.setAttribute("data-label", "Annonce");
     var wrap = el("div", "dcell-url");
     var a = el("a", null, "\u2197");
     a.target = "_blank";
@@ -2888,22 +2977,24 @@
     tr.appendChild(tdUrl);
 
     var cells = [
-      ["c-num", draftCell(rec, "price", { num: true, placeholder: "€" })],
-      ["c-city", draftCell(rec, "city", { placeholder: "Ville", list: "draft-cities" })],
-      ["c-num c-area", draftCell(rec, "surface", { num: true, placeholder: "m²", title: "Surface habitable" })],
-      ["c-num c-area", draftCell(rec, "land_surface", { num: true, placeholder: "m²", title: "Surface du terrain" })],
-      ["c-num c-m2", draftPriceM2(rec)],
-      ["c-contact", draftCell(rec, "contact", { placeholder: "06…" })],
-      ["c-agency", draftCell(rec, "agency", { placeholder: "Agence", list: "draft-agencies" })],
-      ["c-visit", draftCell(rec, "visit_at", { when: true, title: "Date et heure de visite" })]
+      ["c-num", "Prix", draftCell(rec, "price", { num: true, placeholder: "€" })],
+      ["c-city", "Ville", draftCell(rec, "city", { placeholder: "Ville", list: "draft-cities" })],
+      ["c-num c-area", "Surface", draftCell(rec, "surface", { num: true, placeholder: "m²", title: "Surface habitable" })],
+      ["c-num c-area", "Terrain", draftCell(rec, "land_surface", { num: true, placeholder: "m²", title: "Surface du terrain" })],
+      ["c-num c-m2", "€/m²", draftPriceM2(rec)],
+      ["c-contact", "Téléphone", draftCell(rec, "contact", { placeholder: "06…" })],
+      ["c-agency", "Agence", draftCell(rec, "agency", { placeholder: "Agence", list: "draft-agencies" })],
+      ["c-visit", "Visite", draftCell(rec, "visit_at", { when: true, title: "Date et heure de visite" })]
     ];
     cells.forEach(function (c) {
       var td = el("td", c[0]);
-      td.appendChild(c[1]);
+      td.setAttribute("data-label", c[1]);   // becomes the field label in mobile card view
+      td.appendChild(c[2]);
       tr.appendChild(td);
     });
 
     var tdStatus = el("td", "c-status");
+    tdStatus.setAttribute("data-label", "Statut");
     var sel = el("select", "dcell");
     Object.keys(DRAFT_STATUS_LABELS).forEach(function (k) {
       var o = el("option", null, DRAFT_STATUS_LABELS[k]);
@@ -2921,6 +3012,7 @@
     tr.appendChild(tdStatus);
 
     var tdAct = el("td", "c-act");
+    tdAct.setAttribute("data-label", "");
     var note = el("button", "note-btn", "\u2709");
     note.dataset.role = "note";
     tdAct.appendChild(note);
@@ -3041,6 +3133,12 @@
       else draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
       renderDrafts();
     });
+  });
+
+  $("#draft-sort").addEventListener("change", function () {
+    var key = $("#draft-sort").value;
+    draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
+    renderDrafts();
   });
 
   $("#draft-filter").addEventListener("change", applyDraftFilter);
