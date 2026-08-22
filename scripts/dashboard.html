@@ -235,6 +235,10 @@
      holds something so notes are readable without clicking every row */
   .drafts-table tr.note-row > td { padding: 0 3px 8px 8px; border-bottom: 1px solid var(--border); }
   .drafts-table tr.note-row[hidden] { display: none; }
+  .drafts-table th[data-sort] { cursor: pointer; user-select: none; }
+  .drafts-table th[data-sort]:hover { color: var(--text); }
+  .drafts-table th.sorted { color: var(--accent); }
+  .drafts-table th .caret { font-size: 9px; margin-left: 3px; vertical-align: 1px; }
   .dnote {
     width: 100%; box-sizing: border-box; resize: vertical; min-height: 46px;
     background: var(--input-bg); color: var(--text); font: inherit; line-height: 1.5;
@@ -927,23 +931,24 @@
       <table class="drafts-table" id="drafts-table">
         <thead>
           <tr>
-            <th class="c-code">Code</th>
-            <th class="c-url">Annonce</th>
-            <th class="c-num">Prix</th>
-            <th class="c-city">Ville</th>
-            <th class="c-num c-area">Surface</th>
-            <th class="c-num c-area">Terrain</th>
-            <th class="c-num">€/m²</th>
-            <th class="c-contact">Téléphone</th>
-            <th class="c-agency">Agence</th>
-            <th class="c-visit">Visite</th>
-            <th class="c-status">Statut</th>
+            <th class="c-code" data-sort="code">Code</th>
+            <th class="c-url" data-sort="url">Annonce</th>
+            <th class="c-num" data-sort="price">Prix</th>
+            <th class="c-city" data-sort="city">Ville</th>
+            <th class="c-num c-area" data-sort="surface">Surface</th>
+            <th class="c-num c-area" data-sort="land_surface">Terrain</th>
+            <th class="c-num" data-sort="price_per_m2">€/m²</th>
+            <th class="c-contact" data-sort="contact">Téléphone</th>
+            <th class="c-agency" data-sort="agency">Agence</th>
+            <th class="c-visit" data-sort="visit_at">Visite</th>
+            <th class="c-status" data-sort="status">Statut</th>
             <th class="c-act"></th>
           </tr>
         </thead>
         <tbody id="drafts-body"></tbody>
       </table>
       <datalist id="draft-cities"></datalist>
+      <datalist id="draft-agencies"></datalist>
       <p class="drafts-empty" id="drafts-empty" hidden>Aucun brouillon. « Nouvelle annonce » ajoute une ligne vide.</p>
     </div>
     <div class="drafts-foot">
@@ -2657,10 +2662,52 @@
   var draftsLoaded = false;
   var drafts = [];
   var draftCities = [];
+  var draftAgencies = [];
   // The comment box belongs to the selected line only: showing every note at
   // once turned a 5-row list into a wall of text. A row selects itself when it
   // is clicked or when any of its cells takes focus.
   var selectedDraft = null;
+  // Transient, like the sort on the Villes ciblées tab: never saved, so a
+  // reload comes back to the natural B-code order.
+  var draftSort = { key: "code", dir: "asc" };
+  var DRAFT_NUM_SORT = { price: 1, surface: 1, land_surface: 1, price_per_m2: 1 };
+  // Statut sorts along the workflow, not the alphabet.
+  var DRAFT_STATUS_RANK = { attente: 0, visite: 1, verifie: 2, ecarte: 3, promu: 4 };
+
+  function draftSortValue(rec, key) {
+    if (key === "status") return DRAFT_STATUS_RANK[rec.status];
+    if (key === "url") return draftHost(rec.url || "") || rec.url || "";
+    return rec[key];
+  }
+
+  function sortedDrafts() {
+    var key = draftSort.key, dir = draftSort.dir === "asc" ? 1 : -1;
+    var numeric = !!DRAFT_NUM_SORT[key] || key === "status";
+    return drafts.slice().sort(function (a, b) {
+      var av = draftSortValue(a, key), bv = draftSortValue(b, key);
+      // Empty cells always land at the bottom, whichever way the column is
+      // pointing: half this grid is blank, and blanks bubbling to the top
+      // would bury the rows you sorted for.
+      var ae = av === null || av === undefined || av === "";
+      var be = bv === null || bv === undefined || bv === "";
+      if (ae || be) return ae && be ? cmpCode(a, b) : (ae ? 1 : -1);
+      var d = numeric ? av - bv : String(av).localeCompare(String(bv), "fr", { numeric: true });
+      return d ? d * dir : cmpCode(a, b);
+    });
+  }
+
+  function cmpCode(a, b) { return (a.code || "").localeCompare(b.code || ""); }
+
+  function renderSortCarets() {
+    document.querySelectorAll("#drafts-table th[data-sort]").forEach(function (th) {
+      var on = th.getAttribute("data-sort") === draftSort.key;
+      th.classList.toggle("sorted", on);
+      var caret = th.querySelector(".caret");
+      if (on && !caret) { caret = el("span", "caret"); th.appendChild(caret); }
+      if (caret) caret.textContent = on ? (draftSort.dir === "asc" ? "▲" : "▼") : "";
+      if (!on && caret) caret.remove();
+    });
+  }
 
   function selectDraft(id) {
     if (selectedDraft === id) return;
@@ -2692,21 +2739,36 @@
     return fetchJSON("/api/drafts").then(function (res) {
       drafts = (res.data && res.data.drafts) || [];
       draftCities = (res.data && res.data.cities) || [];
+      draftAgencies = (res.data && res.data.agencies) || [];
       renderDrafts();
     });
   }
 
-  // Suggestions only: a <datalist> proposes the towns already in the file but
-  // never blocks a name that is not in it — leads turn up outside the target list.
-  function renderCityOptions() {
-    var dl = $("#draft-cities");
+  // Suggestions only: a <datalist> proposes what the file already knows but
+  // never blocks a name that is not in it — leads turn up outside the target
+  // list, and an agency can be one nobody has dealt with yet.
+  function fillDatalist(id, values) {
+    var dl = $("#" + id);
     if (!dl) return;
     dl.innerHTML = "";
-    draftCities.forEach(function (name) {
+    values.forEach(function (name) {
       var o = document.createElement("option");
       o.value = name;
       dl.appendChild(o);
     });
+  }
+
+  function renderSuggestions() {
+    fillDatalist("draft-cities", draftCities);
+    fillDatalist("draft-agencies", draftAgencies);
+  }
+
+  // a name typed once is offered on the next row, without a reload
+  function rememberSuggestion(list, value, id) {
+    if (!value || list.indexOf(value) !== -1) return;
+    list.push(value);
+    list.sort(function (a, b) { return a.localeCompare(b, "fr"); });
+    fillDatalist(id, list);
   }
 
   function draftHost(url) {
@@ -2730,11 +2792,8 @@
           cell.textContent = rec.price_per_m2 ? fmtNum(rec.price_per_m2) : "—";
         }
       }
-      if (patch.city && draftCities.indexOf(rec.city) === -1 && rec.city) {
-        draftCities.push(rec.city);          // a name typed once is offered next time
-        draftCities.sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
-        renderCityOptions();
-      }
+      if (patch.city !== undefined) rememberSuggestion(draftCities, rec.city, "draft-cities");
+      if (patch.agency !== undefined) rememberSuggestion(draftAgencies, rec.agency, "draft-agencies");
     });
   }
 
@@ -2835,7 +2894,7 @@
       ["c-num c-area", draftCell(rec, "land_surface", { num: true, placeholder: "m²", title: "Surface du terrain" })],
       ["c-num c-m2", draftPriceM2(rec)],
       ["c-contact", draftCell(rec, "contact", { placeholder: "06…" })],
-      ["c-agency", draftCell(rec, "agency", { placeholder: "Agence" })],
+      ["c-agency", draftCell(rec, "agency", { placeholder: "Agence", list: "draft-agencies" })],
       ["c-visit", draftCell(rec, "visit_at", { when: true, title: "Date et heure de visite" })]
     ];
     cells.forEach(function (c) {
@@ -2919,14 +2978,15 @@
   }
 
   function renderDrafts() {
-    renderCityOptions();
+    renderSuggestions();
     var body = $("#drafts-body");
     body.innerHTML = "";
-    drafts.forEach(function (rec) {
+    sortedDrafts().forEach(function (rec) {
       var tr = renderDraftRow(rec);
       body.appendChild(tr);
       body.appendChild(renderDraftNoteRow(rec, tr.querySelector('[data-role="note"]')));
     });
+    renderSortCarets();
     $("#drafts-empty").hidden = drafts.length > 0;
     if (selectedDraft && !drafts.some(function (d) { return d.id === selectedDraft; })) selectedDraft = null;
     applyDraftFilter();
@@ -2974,6 +3034,15 @@
     syncDraftSelection();
   });
 
+  document.querySelectorAll("#drafts-table th[data-sort]").forEach(function (th) {
+    th.addEventListener("click", function () {
+      var key = th.getAttribute("data-sort");
+      if (draftSort.key === key) draftSort.dir = draftSort.dir === "asc" ? "desc" : "asc";
+      else draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
+      renderDrafts();
+    });
+  });
+
   $("#draft-filter").addEventListener("change", applyDraftFilter);
   $("#draft-add").addEventListener("click", function () {
     fetchJSON("/api/drafts", {
@@ -2985,7 +3054,7 @@
       drafts.push(res.data);
       selectedDraft = res.data.id;
       renderDrafts();
-      var tr = $("#drafts-body").lastElementChild;
+      var tr = $('#drafts-body tr[data-id="' + res.data.id + '"]');
       if (tr) {
         tr.scrollIntoView({ block: "nearest" });
         var first = tr.querySelector("input.dcell");
@@ -2999,6 +3068,7 @@
     if (!res.ok) return;
     drafts = (res.data && res.data.drafts) || [];
     draftCities = (res.data && res.data.cities) || [];
+    draftAgencies = (res.data && res.data.agencies) || [];
     draftsLoaded = true;
     renderDrafts();
   });

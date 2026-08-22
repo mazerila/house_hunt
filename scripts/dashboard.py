@@ -374,36 +374,56 @@ def clean_visit_at(val):
     return None
 
 
-def draft_cities(db):
-    """Commune names to suggest in the Brouillons grid.
+def dedupe_suggestions(values):
+    """Suggestion list from `values`, first spelling of each name winning.
 
-    Three sources, in this order of usefulness: the target towns of the Villes
-    ciblées tab, the communes of listings already researched, and whatever the
-    user has typed into other drafts. It is a suggestion list, never a
-    constraint — the field stays free text, because a lead can turn up anywhere.
+    Keyed on a loose form so "Saint Germain en Laye" typed into a listing does
+    not sit next to the town sheet's "Saint-Germain-en-Laye" — which is why
+    callers pass their most canonical source first.
     """
-    # Keyed by a loose form of the name so "Saint Germain en Laye" typed in a
-    # listing doesn't sit next to the town sheet's "Saint-Germain-en-Laye";
-    # first source wins, which is why the towns are read first.
-    def key(name):
-        return re.sub(r"[^a-z0-9]+", "", _deaccent(name).lower())
-
     seen = {}
-
-    def offer(name):
+    for name in values:
         name = (name or "").strip()
-        k = key(name)
-        if name and k and k not in seen:
-            seen[k] = name
-
-    for town in list_towns():
-        title = (town.get("title") or "").strip()
-        offer(re.sub(r"\s*\([^)]*\)\s*$", "", title))   # drop the "(78230)" suffix
-    for rec in db.get("listings", {}).values():
-        offer(rec.get("commune"))
-    for d in db.get("drafts", {}).values():
-        offer(d.get("city"))
+        key = re.sub(r"[^a-z0-9]+", "", _deaccent(name).lower())
+        if name and key and key not in seen:
+            seen[key] = name
     return sorted(seen.values(), key=lambda n: _deaccent(n).lower())
+
+
+def draft_cities(db):
+    """Commune names to suggest in the Brouillons grid: the target towns of the
+    Villes ciblées tab first, then the communes of researched listings, then
+    whatever was typed into other drafts. A suggestion, never a constraint —
+    the field stays free text, because a lead can turn up anywhere."""
+    towns = [re.sub(r"\s*\([^)]*\)\s*$", "", (t.get("title") or "").strip())
+             for t in list_towns()]                                  # drop the "(78230)" suffix
+    listings = [r.get("commune") for r in db.get("listings", {}).values()]
+    typed = [d.get("city") for d in db.get("drafts", {}).values()]
+    return dedupe_suggestions(towns + listings + typed)
+
+
+def short_agency(name):
+    """Trade name only, for the suggestion list.
+
+    A listing's `agency` is written for the dossier and carries the legal tail
+    ("Foncia Transaction Marly-le-Roi (FONCIA TRANSACTION FRANCE, RCS 503698664,
+    …)"). Whole, it is unusable in a grid cell — and it hid that this agency is
+    the same "iad France" already typed two rows up.
+    """
+    name = (name or "").strip()
+    for sep in (" — ", " – ", " - ", " ("):
+        cut = name.find(sep)
+        if cut > 0:
+            name = name[:cut]
+    return name.strip(" ,;·").strip()[:60]
+
+
+def draft_agencies(db):
+    """Agency names to suggest: the ones on researched listings (read off the ad,
+    so properly spelled) before the ones typed here."""
+    listings = [short_agency(r.get("agency")) for r in db.get("listings", {}).values()]
+    typed = [d.get("agency") for d in db.get("drafts", {}).values()]
+    return dedupe_suggestions(listings + typed)
 
 
 def draft_price_m2(rec):
@@ -1149,7 +1169,8 @@ class Handler(BaseHTTPRequestHandler):
             db = load_db()
             items = sorted(db["drafts"].values(), key=lambda d: d.get("code", ""))
             self._send_json({"drafts": [with_derived(d) for d in items],
-                             "cities": draft_cities(db)})
+                             "cities": draft_cities(db),
+                             "agencies": draft_agencies(db)})
             return
         if path == "/api/criteria":
             self._send_json(parse_criteria())
