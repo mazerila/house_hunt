@@ -6,8 +6,10 @@ Village préservé au cœur de la vallée de la Bièvre, à ~15 km au sud-ouest 
 - **Population**: ~7 980 hab.
 - **Densité**: ~774 hab/km² (peu dense)
 - **Prix maison (2025)**: ~5 500 €/m² (médiane ; pic 2022 ~7 060)
+- **Prix maison DVF (2023-25)**: **5 337 €/m²** (médiane, n=68)
 - **~700 k€ achète**: ~125 m²
 - **Terrain maison (indicatif)**: grandes parcelles, souvent ~400–1 200 m² (vallée boisée)
+- **Terrain médian (DVF)**: 440 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~35 700 €/an
 - **Propriétaires**: 69 % (le plus bas — locatif étudiant/campus)
 - **Part de maisons**: 46 % (54 % d'appartements)
@@ -22,6 +24,9 @@ Village préservé au cœur de la vallée de la Bièvre, à ~15 km au sud-ouest 
 - **Couloir aérien**: aérodrome de **Toussus-le-Noble** à proximité (aviation légère) — survols possibles ; hors PEB commercial
 - **Topographie**: vallée de la Bièvre → souvent **en pente** (parcelle du listing ~9 %)
 - **Logement social**: faible (réservataire ; historiquement déficitaire SRU)
+- **Cambriolages (‰ logements)**: 11,63 ‰
+- **Violences (‰ hab.)**: 0,75 ‰
+- **Dégradations (‰ hab.)**: 5,51 ‰
 - **Contraintes patrimoniales**: **fortes** — site inscrit Vallée de la Bièvre + abords MH (ABF)
 - **Quartiers (cibler / éviter)**: cibler **Centre-ville (village)**, **Les Metz**, **Parc de Diane** (résidentiel calme) ; **Petit-Jouy** = le long de la RN (villas mais axe passant). Pas de secteur "à éviter".
 - **Caractère**: village boisé, prestige ; pôles HEC / INRAE / Thalès

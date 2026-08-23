@@ -1,11 +1,36 @@
 # Critères de recherche et de visite
 
-Check-list de décision, en deux parties. La distinction n'est pas cosmétique : elle décide de ce qui est **négociable** et de ce qui est **éliminatoire**.
+Check-list de décision, en trois parties. La distinction n'est pas cosmétique : elle décide de ce qui **arrête la visite**, de ce qui est **éliminatoire**, et de ce qui est **négociable**.
 
+- **Drapeaux rouges** — la liste courte des signaux qui font annuler et repartir chercher. **On la parcourt en premier, sur place : un seul suffit à arrêter les frais.**
 - **Immuable** — ce qu'aucun budget ne corrige : la commune, la desserte, la parcelle, le règlement d'urbanisme, le relief, et les parties du bâti qu'on ne peut pas bouger. **Un défaut ici ne se rattrape pas : il se paie en décote à la revente, ou il disqualifie.**
 - **Modifiable** — ce qui se répare avec de l'argent. Un défaut ici n'est pas un motif de rejet, c'est une **ligne de chiffrage** et un **levier de négociation**. Les fourchettes sont des ordres de grandeur marché Île-de-France, posés, TTC.
 
 Les items marqués **[éliminatoire]** correspondent aux filtres acheteur durs. Ceux marqués **[visite]** ne se vérifient que sur place.
+
+## Drapeaux rouges
+
+**La liste courte : ce qui fait annuler et repartir chercher.** Ce ne sont pas des lignes de chiffrage, ce sont des signaux — le plus souvent visibles en visite — qui trahissent un problème lourd, mal réparable, et qui se paiera deux fois : au chantier, puis à la revente. Un seul suffit à arrêter les frais.
+
+### Le bâti — l'apparence qui trahit la structure
+- **Fissure en escalier suivant les joints, ou traversante, ou > 2 mm** [visite] **[éliminatoire]** — sur maison d'avant 1975 en sol argileux, c'est la signature d'un tassement de fondation. Reprise en sous-œuvre par micropieux `40-90 k€`, et le sinistre peut se rouvrir. *Le seul cas où l'on continue : fissure fine, ancienne, avec un témoin posé et intact depuis des années, et un rapport d'expert au dossier.*
+- **Portes ou fenêtres qui ne ferment plus, plancher qui n'est plus de niveau** [visite] **[éliminatoire]** — le tassement n'est pas terminé, il est en cours. Poser une bille au sol dans chaque pièce.
+- **Mérule** [visite] **[éliminatoire]** — ouate blanche, filaments, plaques brun-orangé sur bois ou plâtre, odeur de sous-bois en cave. Déclaration obligatoire en mairie, dépose de tous les bois contaminés `20-60 k€`, et un stigmate durable à la revente.
+- **Charpente vermoulue ou déformée** [visite] — trous de 3-4 mm et sciure (capricorne, vrillette), faîtage qui « fait le ventre », pannes fléchies. Réfection charpente + couverture `35-70 k€`.
+- **Humidité ascensionnelle** [visite] — salpêtre, plinthes gonflées, peinture cloquée en bas de mur, odeur de cave qui ne part pas. Sans coupure de capillarité d'origine, on atténue, on ne guérit pas.
+- **Toit-terrasse ancien jamais repris** [visite] — cloques, flaques persistantes, relevés d'étanchéité fendus. `150-250 €/m²` et des désordres en chaîne à l'intérieur.
+- **Amiante liste B dégradée ou flocage** (bâti < 1997) — désamiantage sous confinement, et surtout : il bloque et renchérit tout autre chantier tant qu'il n'est pas traité.
+
+### Le terrain et l'eau
+- **Eau qui arrive sur la parcelle** [visite] **[éliminatoire]** — terrain en contrebas d'un versant ou d'un massif, traces de ruissellement, regards pleins, sous-sol humide après une pluie. Rien de ce qu'on construit ne corrige une position en point bas.
+- **Arbres matures à moins de ~10 m de la maison sur sol argileux** [visite] — facteur n°1 de sinistre RGA, et souvent protégés donc non abattables : le risque est là et on ne peut même pas le supprimer.
+- **Fond de lot, accès par servitude, ou bâti à cheval sur la limite** **[éliminatoire]** — le cadastre ne le dit pas toujours ; la décote à la revente, elle, est permanente. *(Un bien lu « façade ~10 m » au cadastre était un fond de lot sur le terrain.)*
+
+### Ce qui se voit dans le dossier ou dans l'annonce
+- **Prix nettement sous la médiane de la rue sans raison affichée** **[éliminatoire tant que la cause n'est pas trouvée]** — un écart de 20-25 % n'est jamais un cadeau. Tant que la cause n'est pas identifiée, la traiter comme un défaut non découvert, pas comme une opportunité.
+- **Bien très longtemps sur le marché** — le marché a déjà voté avant nous, et c'est l'aperçu de notre propre revente.
+- **Dossier incomplet ou vendeur qui esquive** — ERP absent, PV d'AG ou règlement d'ASL non communiqués, refus d'une contre-visite avec un artisan. Ce qu'on ne montre pas avant le compromis ne s'améliore jamais après.
+- **Écart de surface masqué entre l'annonce, le DPE et le Carrez** — pas le fait qu'il existe, mais le fait qu'il ne soit pas assumé : c'est un indicateur de méthode sur tout le reste du dossier.
 
 ## Immuable
 

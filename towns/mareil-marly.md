@@ -6,8 +6,10 @@ Petit village résidentiel des Yvelines coincé entre la forêt de Marly, Saint-
 - **Population**: ~4 140 hab. (**+20 % entre 2017 et 2023**)
 - **Densité**: ~2 330 hab/km²
 - **Prix maison (2025)**: ~5 290–5 370 €/m² (DVF)
+- **Prix maison DVF (2023-25)**: **5 369 €/m²** (médiane, n=81)
 - **~700 k€ achète**: ~130 m²
 - **Terrain maison (indicatif)**: ~370–930 m² (médiane DVF **600 m²**)
+- **Terrain médian (DVF)**: 600 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: **~40 010 €/an — le plus élevé de la liste**
 - **Propriétaires**: **80 %** (le plus élevé de la liste)
 - **Part de maisons**: **64 %** (36 % d'appartements) — **le plus élevé de la liste**
@@ -22,6 +24,9 @@ Petit village résidentiel des Yvelines coincé entre la forêt de Marly, Saint-
 - **Couloir aérien**: faible
 - **Topographie**: coteau en lisière de forêt de Marly — **vallonné**
 - **Logement social**: faible
+- **Cambriolages (‰ logements)**: 20,70 ‰
+- **Violences (‰ hab.)**: 0,00 ‰
+- **Dégradations (‰ hab.)**: 3,62 ‰
 - **Contraintes patrimoniales**: **ponctuelles** — **AC1 « Église Saint-Étienne et ses abords »** sur le centre-village (avis ABF dans le périmètre) ; le reste de la commune paraît libre. **À vérifier parcelle par parcelle.**
 - **Quartiers (cibler / éviter)**: cibler les **lotissements pavillonnaires récents** hors périmètre de l'église ; le **cœur de village** est sous ABF.
 - **Caractère**: village pavillonnaire familial, aisé et calme

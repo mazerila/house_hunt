@@ -6,8 +6,10 @@ Ville résidentielle boisée des Hauts-de-Seine, entre les forêts de Meudon et 
 - **Population**: ~20 600 hab.
 - **Densité**: ~5 500 hab/km² (dense)
 - **Prix maison (2025)**: ~6 500–7 600 €/m²
+- **Prix maison DVF (2023-25)**: **7 155 €/m²** (médiane, n=135)
 - **~700 k€ achète**: ~100 m²
 - **Terrain maison (indicatif)**: petites à moyennes parcelles (dense/coteaux), ~200–500 m²
+- **Terrain médian (DVF)**: 360 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~32 300 €/an
 - **Propriétaires**: 53 %
 - **Part de maisons**: 23 % (77 % d'appartements) — peu de maisons
@@ -22,6 +24,9 @@ Ville résidentielle boisée des Hauts-de-Seine, entre les forêts de Meudon et 
 - **Couloir aérien**: faible à modéré (Vélizy/Villacoublay au sud)
 - **Topographie**: coteaux boisés — **vallonné**
 - **Logement social**: modéré (tissu plus collectif)
+- **Cambriolages (‰ logements)**: 7,30 ‰
+- **Violences (‰ hab.)**: 1,75 ‰
+- **Dégradations (‰ hab.)**: 6,65 ‰
 - **Contraintes patrimoniales**: ponctuelles (forêts classées, abords) — à vérifier par parcelle
 - **Quartiers (cibler / éviter)**: cibler **Ursine** (quartier familial de maisons, prisé) et les abords forêt ; **Doisu** est surtout du collectif (~90 % d'appartements). Pas de secteur "à éviter".
 - **Caractère**: ville résidentielle boisée, très bien connectée, plus urbaine

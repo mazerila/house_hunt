@@ -6,8 +6,10 @@ Commune résidentielle aisée en lisière de la forêt de Marly et du golf de Sa
 - **Population**: ~7 710 hab.
 - **Densité**: ~1 365 hab/km²
 - **Prix maison (2025)**: ~4 550–4 830 €/m² (en baisse) — **le moins cher des Yvelines-ouest**
+- **Prix maison DVF (2023-25)**: **5 067 €/m²** (médiane, n=113)
 - **~700 k€ achète**: ~150 m²
 - **Terrain maison (indicatif)**: parcelles moyennes à grandes, ~300–800 m²
+- **Terrain médian (DVF)**: 578 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~37 700 €/an
 - **Propriétaires**: 75 %
 - **Part de maisons**: 47 % (53 % d'appartements)
@@ -22,6 +24,9 @@ Commune résidentielle aisée en lisière de la forêt de Marly et du golf de Sa
 - **Couloir aérien**: **survols aviation légère (aérodrome de Saint-Cyr-l'École)** — nuisances documentées
 - **Topographie**: plateau / lisière forêt — globalement **plus plat** que Jouy
 - **Logement social**: faible (sous le seuil SRU)
+- **Cambriolages (‰ logements)**: 6,01 ‰
+- **Violences (‰ hab.)**: 0,65 ‰
+- **Dégradations (‰ hab.)**: 7,65 ‰
 - **Contraintes patrimoniales**: ponctuelles (cœur ancien) — **pas** de site inscrit couvrant ; à vérifier par parcelle
 - **Quartiers (cibler / éviter)**: cibler le **pavillonnaire côté golf / forêt de Marly** et le **Vieux Noisy** ; éviter les **maisons le long de la voie du T13** (bruit riverains signalé). Commune globalement homogène.
 - **Caractère**: pavillonnaire aisé, golf, forêt de Marly ; calme et verdoyant

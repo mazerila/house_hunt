@@ -6,8 +6,10 @@ Grande ville de la boucle de Seine, entre Rueil-Malmaison et Le Vésinet — la 
 - **Population**: ~30 600 hab.
 - **Densité**: ~6 040 hab/km² (la plus dense de la liste)
 - **Prix maison (2025)**: ~6 460–6 730 €/m² (DVF ; **le plus cher de la liste**)
+- **Prix maison DVF (2023-25)**: **6 726 €/m²** (médiane, n=282)
 - **~700 k€ achète**: ~104 m²
 - **Terrain maison (indicatif)**: ~300–630 m² (médiane DVF **443 m²**)
+- **Terrain médian (DVF)**: 443 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~33 670 €/an
 - **Propriétaires**: 62 %
 - **Part de maisons**: 28 % (72 % d'appartements)
@@ -22,6 +24,9 @@ Grande ville de la boucle de Seine, entre Rueil-Malmaison et Le Vésinet — la 
 - **Couloir aérien**: faible
 - **Topographie**: **plate** (boucle de Seine) — conforme au filtre « terrain plat »
 - **Logement social**: modéré (commune soumise à l'objectif SRU de 20 %)
+- **Cambriolages (‰ logements)**: 5,86 ‰
+- **Violences (‰ hab.)**: 1,50 ‰
+- **Dégradations (‰ hab.)**: 4,54 ‰
 - **Contraintes patrimoniales**: **légères** — **aucune servitude relevée au centre-ville** (sondage GPU `assiette-sup-s` = 0). Vigilance ponctuelle près des bords de Seine / Maison Fournaise.
 - **Quartiers (cibler / éviter)**: cibler le **Sud** (le plus aisé, ~55 600 €/ménage) et l'**Ouest** pavillonnaire ; le **Nord** est plus dense et plus collectif.
 - **Caractère**: ville de bord de Seine, impressionniste, très bien reliée

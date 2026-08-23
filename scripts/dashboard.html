@@ -99,11 +99,13 @@
   button.secondary.toggle-on { background: var(--accent); color: #fff; border-color: var(--accent); }
   .danger-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   #theme-btn { font-size: 16px; padding: 6px 10px; line-height: 1; }
+  #desktop-btn { font-size: 15px; padding: 6px 10px; line-height: 1; }
+  #desktop-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
   .filters {
     display: flex; gap: 10px; padding: 12px 20px; flex-wrap: wrap;
     background: var(--panel); border-bottom: 1px solid var(--border);
   }
-  .filters input[type=text], .filters select {
+  .filters input[type=text], .filters select, .drafts-bar select {
     font: inherit; padding: 6px 10px; border: 1px solid var(--border);
     border-radius: 6px; background: var(--input-bg); color: var(--text);
   }
@@ -153,6 +155,7 @@
   tbody tr:hover { background: var(--row-hover); cursor: pointer; }
   tbody tr:active { filter: brightness(.96); }
   .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .sort-2nd { opacity: .45; font-size: 9px; }
   /* red-flag screen badges (computed by scripts/enrich.py) */
   .flag-pill {
     display: inline-block; min-width: 20px; padding: 1px 6px; margin-right: 3px;
@@ -173,6 +176,99 @@
   /* dashed underline = works cost not captured yet, so the figure is optimistic */
   .spread.partial { text-decoration: underline dashed 1px; text-underline-offset: 3px; opacity: .75; }
   .muted { color: var(--text-dim); }
+
+  /* ---- Brouillons tab ----
+     A spreadsheet, not a form: every cell is a bare input that only shows its
+     frame on hover/focus, so a full row reads as text until you touch it. */
+  .drafts-main { padding: 16px 20px 60px; }
+  .drafts-bar { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; flex-wrap: wrap; }
+  .drafts-bar .spacer { flex: 1; }
+  .drafts-progress { color: var(--text-dim); font-size: 12.5px; }
+  .drafts-table-wrap { overflow-x: auto; }
+  .drafts-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+  /* Not sticky: the wrap is an overflow-x scroll container, and a sticky header
+     inside it slides down over the first rows instead of pinning. The page
+     scrolls as one here, like the Critères tab. */
+  .drafts-table th {
+    text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--text-dim); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .drafts-table td { padding: 1px 3px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .drafts-table tr.st-ecarte { opacity: .5; }
+  .drafts-table tr.st-promu td.c-code { font-weight: 700; }
+  .drafts-table .c-code { color: var(--text-dim); font-variant-numeric: tabular-nums; padding-left: 8px; white-space: nowrap; }
+  .drafts-table .c-num { text-align: right; }
+  .drafts-table .c-act { width: 62px; white-space: nowrap; }
+  .drafts-table .c-visit .dcell { min-width: 158px; }
+  .drafts-table .c-area { width: 76px; }
+  .drafts-table .c-area .dcell { min-width: 0; }
+  /* wide enough for the longest label ("Promu en dossier") plus the chevron */
+  .drafts-table .c-status { width: 152px; }
+  .drafts-table .c-status .dcell { min-width: 0; }
+  .drafts-table .c-m2 { color: var(--text-dim); font-variant-numeric: tabular-nums; padding-right: 9px; }
+  /* the native picker icon is dim until the row is hovered, so an empty slot
+     reads as empty rather than as a control */
+  .dcell[type="datetime-local"]::-webkit-calendar-picker-indicator { opacity: .35; cursor: pointer; }
+  .drafts-table tr:hover .dcell[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  .dcell[type="datetime-local"]:focus::-webkit-calendar-picker-indicator { opacity: .8; }
+  .dcell[type="datetime-local"].empty:not(:focus) { color: var(--text-dim); opacity: .45; }
+  .dcell {
+    width: 100%; background: transparent; border: 1px solid transparent; border-radius: 5px;
+    color: var(--text); font: inherit; padding: 6px 6px; min-width: 60px;
+  }
+  .dcell:hover { border-color: var(--border); }
+  .dcell:focus { outline: none; border-color: var(--accent); background: var(--panel); }
+  .dcell.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .dcell::placeholder { color: var(--text-dim); opacity: .55; }
+  .dcell-url { display: flex; align-items: center; gap: 4px; }
+  .dcell-url .dcell { min-width: 120px; }
+  .dcell-url a {
+    flex: 0 0 auto; color: var(--text-dim); text-decoration: none; padding: 3px 5px; border-radius: 5px;
+  }
+  .dcell-url a:hover { color: var(--accent); background: var(--panel); }
+  .dcell-url a[aria-disabled="true"] { opacity: .25; pointer-events: none; }
+  select.dcell { padding: 5px 4px; }
+  .drafts-table .row-del {
+    background: transparent; border: none; color: var(--text-dim); padding: 4px 6px; border-radius: 5px;
+    line-height: 1; font-size: 15px;
+  }
+  .drafts-table .row-del:hover { color: #b91c1c; background: var(--panel); filter: none; box-shadow: none; }
+  /* comment sub-row: full-width prose under its line, open by default when it
+     holds something so notes are readable without clicking every row */
+  .drafts-table tr.note-row > td { padding: 0 3px 8px 8px; border-bottom: 1px solid var(--border); }
+  .drafts-table tr.note-row[hidden] { display: none; }
+  .drafts-table th[data-sort] { cursor: pointer; user-select: none; }
+  .drafts-table th[data-sort]:hover { color: var(--text); }
+  .drafts-table th.sorted { color: var(--accent); }
+  .drafts-table th.sorted-2nd { color: var(--text); }
+  .drafts-table th .caret { font-size: 9px; margin-left: 3px; vertical-align: 1px; }
+  .dnote {
+    width: 100%; box-sizing: border-box; resize: vertical; min-height: 46px;
+    background: var(--input-bg); color: var(--text); font: inherit; line-height: 1.5;
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px;
+  }
+  .dnote:focus { outline: none; border-color: var(--accent); }
+  .dnote::placeholder { color: var(--text-dim); opacity: .6; }
+  .note-btn {
+    background: transparent; border: none; color: var(--text-dim); padding: 4px 5px;
+    border-radius: 5px; line-height: 1; font-size: 14px;
+  }
+  .note-btn:hover { color: var(--accent); background: var(--panel); filter: none; box-shadow: none; }
+  .note-btn.on { color: var(--accent); }
+  .drafts-empty { color: var(--text-dim); padding: 22px 8px; }
+  .drafts-foot { padding: 12px 0 0; }
+  .mobile-only { display: none; }
+  /* the selected line and its comment read as one block */
+  .drafts-table tr.sel > td { background: var(--panel); }
+  .drafts-table tr.sel > td.c-code { box-shadow: inset 2px 0 0 var(--accent); }
+  .drafts-table tr.note-row.sel > td { background: var(--panel); }
+  .tab-count {
+    display: inline-block; min-width: 17px; padding: 0 5px; margin-left: 3px; border-radius: 9px;
+    background: var(--border); color: var(--text-dim); font-size: 11px; font-weight: 700; line-height: 17px;
+    text-align: center; vertical-align: 1px;
+  }
+  .tab.active .tab-count { background: var(--accent); color: #fff; }
 
   /* ---- Critères tab ---- */
   .crit-main { padding: 0 20px 60px; }
@@ -196,6 +292,9 @@
   }
   .crit-part-tab.active { color: #fff; border-color: transparent; }
   .crit-part-tab.active .n { background: rgba(255,255,255,.22); color: #fff; }
+  .crit-part-tab.rouge { color: #b91c1c; border-color: rgba(185,28,28,.45); font-weight: 700; }
+  .crit-part-tab.rouge:hover { border-color: #b91c1c; color: #b91c1c; }
+  .crit-part-tab.rouge.active { background: #7f1d1d; color: #fff; }
   .crit-part-tab.immuable.active { background: #b91c1c; }
   .crit-part-tab.modifiable.active { background: #15803d; }
   .crit-progress { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
@@ -204,6 +303,7 @@
     display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
     padding: 10px 14px; border-radius: 8px 8px 0 0; border: 1px solid var(--border); border-bottom: none;
   }
+  .crit-part.rouge .crit-part-head { background: rgba(127,29,29,.16); }
   .crit-part.immuable .crit-part-head { background: rgba(185,28,28,.09); }
   .crit-part.modifiable .crit-part-head { background: rgba(21,128,61,.09); }
   .crit-part-head h2 { margin: 0; font-size: 16px; }
@@ -426,6 +526,13 @@
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     color: #fff; font-size: 26px; text-shadow: 0 1px 6px rgba(0,0,0,.8); pointer-events: none;
   }
+  /* Plans need to be readable, not thumbnail-pretty: wider cells, `contain`
+     so nothing is cropped, and a light backing so a white drawing keeps its
+     edges in dark mode. */
+  .gallery-plans { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .gallery-plans img {
+    object-fit: contain; background: #f6f7f9; padding: 4px; height: 130px;
+  }
   /* document (PDF) list in the drawer, under the photos */
   .doclist { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
   .doc-item {
@@ -566,6 +673,42 @@
   .view[hidden] { display: none; }
   /* transposed mobile-only layout in each town card (hidden on desktop) */
   .tn-reperes, .town-card .tn-card-map { display: none; }
+
+  /* ---- price history chart (Villes ciblées) ---- */
+  .ph { margin: 4px 0 26px; }
+  .ph-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 0 0 10px; }
+  .ph-head h3 { margin: 0; font-size: 15px; }
+  .ph-sub { font-weight: 400; color: var(--text-dim); font-size: 12.5px; margin-left: 6px; }
+  .ph-head button { margin-left: auto; }
+  .ph-plot { position: relative; }
+  .ph-plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .ph-grid { stroke: var(--border); stroke-width: 1; }
+  .ph-axis { fill: var(--text-dim); font-size: 11px; }
+  .ph-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ph-dot { stroke: var(--panel); stroke-width: 2; }      /* 2px surface ring on overlapping marks */
+  .ph-endlabel { font-size: 11.5px; fill: var(--text); }
+  .ph-hit { fill: transparent; cursor: crosshair; }
+  .ph-cross { stroke: var(--text-dim); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+  .ph-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 0; font-size: 12.5px; }
+  .ph-leg { display: inline-flex; align-items: center; gap: 6px; color: var(--text); }
+  .ph-swatch { width: 22px; height: 3px; border-radius: 2px; flex: 0 0 auto; }
+  .ph-tip {
+    position: absolute; pointer-events: none; z-index: 5; min-width: 160px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 6px 20px var(--shadow); padding: 8px 10px; font-size: 12.5px;
+  }
+  .ph-tip h4 { margin: 0 0 6px; font-size: 12px; color: var(--text-dim); font-weight: 600; }
+  .ph-tip .r { display: flex; align-items: center; gap: 7px; padding: 2px 0; white-space: nowrap; }
+  .ph-tip .r b { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .ph-tip .r .n { color: var(--text-dim); font-size: 11px; }
+  .ph-tablewrap { margin-top: 12px; overflow-x: auto; }
+  .ph-table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
+  .ph-table th, .ph-table td { padding: 5px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+  .ph-table th:first-child, .ph-table td:first-child { text-align: left; }
+  .ph-table thead th { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+  .ph-table .thin { color: var(--text-dim); }
+  .ph-note { color: var(--text-dim); font-size: 12px; margin: 10px 0 0; line-height: 1.5; }
+  @media (max-width: 640px) { .ph-head button { margin-left: 0; } }
 
   /* ---- target-towns study ---- */
   .towns-main { padding: 16px 20px 60px; }
@@ -721,6 +864,111 @@
     td.col-clip { max-width: none; white-space: normal; overflow: visible; text-overflow: clip; }
     select.status-select { max-width: 60%; }
 
+    /* ---- Brouillons on a phone ----
+       The generic card rule above already stacks the cells; what it cannot know
+       is that every cell here is an input. Left-align them under their label,
+       let them fill the card, and keep the code + actions on one header line. */
+    .mobile-only { display: block; }
+    .drafts-main { padding: 12px 12px 64px; }
+    .drafts-bar { gap: 8px; }
+    .drafts-bar select { flex: 1 1 100%; min-width: 0; }
+    .drafts-table-wrap { overflow: visible; }
+    .drafts-table { min-width: 0; }
+    .drafts-table td { text-align: left; }
+    .drafts-table .dcell { text-align: left; flex: 1 1 auto; min-width: 0; padding: 4px 6px; }
+    .drafts-table .dcell.num { text-align: left; }
+    /* the derived €/m² is a span, not an input — keep it under its label too */
+    .drafts-table .dcell-ro { flex: 1 1 auto; text-align: left; padding-left: 7px; }
+    .drafts-table .c-area, .drafts-table .c-status { width: auto; }
+    .drafts-table .c-visit .dcell { min-width: 0; }
+    .drafts-table .dcell-url { flex: 1 1 auto; min-width: 0; }
+    /* code and the row actions share the card's title line */
+    .drafts-table td.c-code {
+      justify-content: flex-start; gap: 8px; font-weight: 700; color: var(--text);
+      font-size: 15px; padding-top: 10px;
+    }
+    .drafts-table td.c-code::before { content: none; }
+    .drafts-table td.c-act { justify-content: flex-end; gap: 4px; padding: 6px 0 2px; border-bottom: none; }
+    .drafts-table td.c-act::before { content: none; }
+    .drafts-table .row-del, .drafts-table .note-btn { font-size: 18px; padding: 6px 10px; }
+    /* the comment is its own card, tied to the one above it */
+    .drafts-table tr.note-row { margin: -8px 0 10px; padding: 0 12px 10px; border-radius: 0 0 10px 10px; }
+    .drafts-table tr.note-row > td { padding: 0; border: none; }
+    .drafts-table tr.sel > td.c-code { box-shadow: none; }
+    .drafts-table tr.sel { border-color: var(--accent); }
+    .drafts-empty { padding: 16px 2px; }
+    .drafts-foot #draft-add { width: 100%; }
+
+    /* ---- "vue tableau" : undo the card stacking, keep the type readable ----
+       Everything above turns tables into cards; this hands them back their
+       desktop layout inside the same narrow screen, so the grid scrolls
+       sideways at full size instead of the whole page being zoomed out. */
+    html[data-wide-tables] .grid-wrap {
+      overflow: auto; max-height: calc(100vh - var(--topbar-h, 96px) - 16px);
+      border: 1px solid var(--border); border-radius: 8px; background: var(--panel);
+    }
+    html[data-wide-tables] table { display: table; width: 100%; }
+    html[data-wide-tables] thead { display: table-header-group; }
+    /* the card rule blocks every `tr`, including the header's — leaving it
+       blocked split the head from the body into two layout boxes, so the
+       columns negotiated their widths twice and never lined up */
+    html[data-wide-tables] thead tr { display: table-row; width: auto; }
+    html[data-wide-tables] thead th { display: table-cell; }
+    html[data-wide-tables] tbody { display: table-row-group; }
+    html[data-wide-tables] tbody tr {
+      display: table-row; background: transparent; border: none; border-radius: 0;
+      margin: 0; padding: 0; box-shadow: none;
+    }
+    html[data-wide-tables] tbody td {
+      display: table-cell; width: auto; text-align: left; padding: 10px 12px;
+      border: none; border-bottom: 1px solid var(--border); min-height: 0;
+    }
+    html[data-wide-tables] tbody td.num { text-align: right; }
+    html[data-wide-tables] tbody td::before { content: none; }
+    html[data-wide-tables] .towns-compare-wrap { display: block; }
+    html[data-wide-tables] .town-cards { display: none; }
+
+    /* the drafts grid keeps its own column widths and inline inputs */
+    html[data-wide-tables] .mobile-only { display: none; }
+    html[data-wide-tables] .drafts-table-wrap { overflow-x: auto; }
+    /* `auto` layout inside a 374 px scrollport hands the whole surplus to the
+       first column (Code ended up 716 px wide). Fixed layout plus the explicit
+       widths below make the grid resolve the same way it does on a desktop. */
+    /* Fixed layout reads the column widths off the header row, and shares only
+       what is left over — so EVERY column needs one here, or the undeclared
+       ones collapse to zero. The min-width is their exact sum. */
+    html[data-wide-tables] .drafts-table { min-width: 1238px; table-layout: fixed; }
+    html[data-wide-tables] .drafts-table .c-code { width: 54px; }
+    html[data-wide-tables] .drafts-table .c-url { width: 140px; }
+    html[data-wide-tables] .drafts-table .c-price { width: 100px; }
+    html[data-wide-tables] .drafts-table .c-city { width: 116px; }
+    html[data-wide-tables] .drafts-table .c-m2 { width: 62px; }
+    html[data-wide-tables] .drafts-table .c-contact { width: 118px; }
+    html[data-wide-tables] .drafts-table .c-agency { width: 110px; }
+    html[data-wide-tables] .drafts-table .c-visit { width: 172px; }
+    html[data-wide-tables] .drafts-table .c-act { width: 62px; }
+    html[data-wide-tables] .drafts-table td { padding: 1px 3px; }
+    html[data-wide-tables] .drafts-table .c-num { text-align: right; }
+    html[data-wide-tables] .drafts-table .dcell { text-align: left; padding: 6px 6px; min-width: 60px; }
+    html[data-wide-tables] .drafts-table .dcell.num { text-align: right; }
+    html[data-wide-tables] .drafts-table .dcell-ro { text-align: right; padding-left: 0; }
+    html[data-wide-tables] .drafts-table .c-area { width: 76px; }
+    html[data-wide-tables] .drafts-table .c-area .dcell { min-width: 0; }
+    html[data-wide-tables] .drafts-table .c-status { width: 152px; }
+    html[data-wide-tables] .drafts-table .c-visit .dcell { min-width: 158px; }
+    html[data-wide-tables] .drafts-table td.c-code {
+      display: table-cell; font-weight: 400; font-size: 13px;
+      color: var(--text-dim); padding: 1px 3px 1px 8px;
+    }
+    html[data-wide-tables] .drafts-table td.c-act { display: table-cell; padding: 1px 3px; }
+    html[data-wide-tables] .drafts-table tr.note-row { display: table-row; margin: 0; padding: 0; }
+    /* must outrank the rule above: an unselected comment stays collapsed */
+    html[data-wide-tables] .drafts-table tr.note-row[hidden] { display: none; }
+    html[data-wide-tables] .drafts-table tr.note-row > td { display: table-cell; padding: 0 3px 8px 8px; }
+    html[data-wide-tables] .drafts-table tr.sel > td { background: var(--panel); }
+    html[data-wide-tables] .drafts-table tr.sel > td.c-code { box-shadow: inset 2px 0 0 var(--accent); }
+    html[data-wide-tables] .drafts-foot #draft-add { width: auto; }
+
     /* drawer: full width, price/surface inputs stack instead of cramming 3 across */
     #drawer { width: 100vw; }
     #drawer .drawer-body { padding: 14px 14px 64px; }
@@ -742,12 +990,14 @@
   <h1><svg class="brand-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13V10.5"/><path d="M10 20v-6h4v6"/></svg> Recherche maison — Île-de-France</h1>
   <span class="count" id="listing-count"></span>
   <div class="spacer"></div>
+  <button class="secondary" id="desktop-btn" hidden title="Voir le tableau complet">&#9707;</button>
   <button class="secondary" id="theme-btn" title="Basculer clair/sombre">&#9680;</button>
   <button class="secondary" id="reimport-btn"><span class="ico">&#8635;</span> Réimporter</button>
 </header>
 
 <nav class="tabs">
   <button class="tab active" data-view="listings"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg> Annonces</button>
+  <button class="tab" data-view="drafts"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h10"/><path d="M4 10h7"/><path d="M4 15h5"/><path d="M14.5 18.5l5-5 2.5 2.5-5 5-3 .5z"/></svg> Brouillons <span class="tab-count" id="drafts-count"></span></button>
   <button class="tab" data-view="towns"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 0 1 12 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg> Villes ciblées</button>
   <button class="tab" data-view="criteria"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Critères</button>
 </nav>
@@ -802,10 +1052,80 @@
 
 <div id="view-towns" class="view" hidden>
   <main class="towns-main">
-    <p class="towns-intro">Étude comparative des communes ciblées. Données de référence issues des fiches <code>towns/*.md</code> (prix, densité, transport, vélo, couloir aérien, standing, logement social…). Cliquez le nom d'une commune pour aller à sa fiche. La taille de terrain est <em>indicative</em> (estimée d'après la densité et le type de bâti — DVF exact sur demande). Sur mobile, le tableau se transforme en une carte par commune.</p>
+    <p class="towns-intro">Étude comparative des communes ciblées. Données de référence issues des fiches <code>towns/*.md</code> (prix, densité, transport, vélo, couloir aérien, standing, logement social…). Cliquez le nom d'une commune pour aller à sa fiche, ou le libellé d'un critère pour trier. <strong>Les lignes « DVF » et les trois lignes de délinquance sont mesurées</strong>, sur la même base pour toutes les communes, par <code>scripts/enrich_towns.py</code> (geo-DVF 2023-25 · SSMSI 2025) — les lignes « Prix maison (2025) » et « Terrain maison (indicatif) » restent les estimations d'origine, conservées pour comparaison. ⚠️ Les taux ‰ sont volatils sur les petites communes. Sur mobile, le tableau se transforme en une carte par commune.</p>
     <div class="towns-toggle" id="towns-toggle"></div>
+    <section class="ph" id="ph" hidden>
+      <div class="ph-head">
+        <h3>Évolution du prix des maisons <span class="ph-sub">médiane DVF des ventes closes, €/m²</span></h3>
+        <button class="secondary" id="ph-table-btn" aria-expanded="false">Voir les chiffres</button>
+      </div>
+      <div class="ph-plot" id="ph-plot"></div>
+      <div class="ph-legend" id="ph-legend"></div>
+      <div class="ph-tablewrap" id="ph-tablewrap" hidden></div>
+      <p class="ph-note" id="ph-note"></p>
+    </section>
     <div class="towns-compare-wrap" id="towns-compare"></div>
     <div class="town-cards" id="town-cards"></div>
+  </main>
+</div>
+
+<div id="view-drafts" class="view" hidden>
+  <main class="drafts-main">
+    <p class="towns-intro">
+      Les annonces repérées mais pas encore instruites. Tout se tape directement dans le tableau&nbsp;;
+      chaque cellule s'enregistre en la quittant. Quand un brouillon mérite un vrai dossier,
+      passez-le en <em>promu</em> et écrivez sa note dans <code>private/listings/</code>.
+    </p>
+    <div class="drafts-bar">
+      <select id="draft-sort" class="mobile-only" aria-label="Trier les brouillons">
+        <option value="code">Trier : code</option>
+        <option value="price">Trier : prix</option>
+        <option value="price_per_m2">Trier : €/m²</option>
+        <option value="city">Trier : ville</option>
+        <option value="surface">Trier : surface</option>
+        <option value="land_surface">Trier : terrain</option>
+        <option value="visit_at">Trier : visite</option>
+        <option value="agency">Trier : agence</option>
+        <option value="status">Trier : statut</option>
+      </select>
+      <select id="draft-filter">
+        <option value="">Tous les statuts</option>
+        <option value="attente">◷ À vérifier</option>
+        <option value="visite">◉ Visite prévue</option>
+        <option value="verifie">✓ Vérifié</option>
+        <option value="ecarte">✗ Écarté</option>
+        <option value="promu">→ Promu en dossier</option>
+      </select>
+      <div class="spacer"></div>
+      <span class="drafts-progress" id="drafts-progress"></span>
+    </div>
+    <div class="drafts-table-wrap">
+      <table class="drafts-table" id="drafts-table">
+        <thead>
+          <tr>
+            <th class="c-code" data-sort="code">Code</th>
+            <th class="c-url" data-sort="url">Annonce</th>
+            <th class="c-num c-price" data-sort="price">Prix</th>
+            <th class="c-city" data-sort="city">Ville</th>
+            <th class="c-num c-area" data-sort="surface">Surface</th>
+            <th class="c-num c-area" data-sort="land_surface">Terrain</th>
+            <th class="c-num c-m2" data-sort="price_per_m2">€/m²</th>
+            <th class="c-contact" data-sort="contact">Téléphone</th>
+            <th class="c-agency" data-sort="agency">Agence</th>
+            <th class="c-visit" data-sort="visit_at">Visite</th>
+            <th class="c-status" data-sort="status">Statut</th>
+            <th class="c-act"></th>
+          </tr>
+        </thead>
+        <tbody id="drafts-body"></tbody>
+      </table>
+      <datalist id="draft-cities"></datalist>
+      <datalist id="draft-agencies"></datalist>
+      <p class="drafts-empty" id="drafts-empty" hidden>Aucun brouillon. « Nouvelle annonce » ajoute une ligne vide.</p>
+    </div>
+    <div class="drafts-foot">
+      <button id="draft-add"><span class="ico">+</span> Nouvelle annonce</button>
+    </div>
   </main>
 </div>
 
@@ -858,6 +1178,10 @@
     <div class="drawer-section" id="d-photos-section" hidden>
       <label class="section-label">Photos</label>
       <div class="gallery" id="d-gallery"></div>
+    </div>
+    <div class="drawer-section" id="d-plans-section" hidden>
+      <label class="section-label">Plans</label>
+      <div class="gallery gallery-plans" id="d-plans-gallery"></div>
     </div>
     <div class="drawer-section" id="d-docs-section" hidden>
       <label class="section-label">Documents</label>
@@ -1032,9 +1356,35 @@
   applyTheme(savedTheme || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
   document.getElementById("theme-btn").addEventListener("click", function () {
     applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    // the chart's hues are steps chosen for each surface, not an automatic
+    // flip — repaint it so dark mode gets its own validated set
+    if (typeof phData !== "undefined" && phData) renderPriceHistory();
   });
 
-  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], visits: [], townsAll: [], townHidden: null, townSort: null, showArchived: false, critPart: 0 };
+  // ---- remembered view state --------------------------------------------
+  // Filters and sorts survive a reload: re-picking them on every visit was the
+  // single most repeated gesture in the app. Kept in localStorage (per browser,
+  // never on the server) and defensive on read — a stale or hand-edited value
+  // must never be able to leave a list stuck showing nothing.
+  function prefsGet(key, fallback) {
+    var empty = fallback === undefined ? {} : fallback;
+    try {
+      var raw = localStorage.getItem(key);
+      return raw === null ? empty : (JSON.parse(raw) || empty);
+    } catch (e) { return empty; }
+  }
+  function prefsSet(key, obj) {
+    try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {}
+  }
+  // assign to a <select> only if the option exists, so a renamed option or a
+  // commune that no longer has listings silently falls back to "all"
+  function setSelectIfValid(sel, value) {
+    if (!sel || !value) return;
+    var ok = Array.prototype.some.call(sel.options, function (o) { return o.value === value; });
+    if (ok) sel.value = value;
+  }
+
+  var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", sortKey2: null, sortDir2: "asc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], visits: [], townsAll: [], townHidden: null, townSort: null, showArchived: false, critPart: 0 };
 
   var STATUS_LABELS = {
     "researching": "⚲ Recherche",
@@ -1078,6 +1428,7 @@
     return fetchJSON("/api/listings").then(function (res) {
       state.listings = res.data.listings || [];
       populateCommuneFilter();
+      if (!state.viewRestored) { state.viewRestored = true; restoreListingsView(); }
       applyFilters();
     });
   }
@@ -1133,7 +1484,37 @@
     applyFilters();
   }
 
+  var LISTINGS_PREFS = "hh-listings-view";
+
+  function saveListingsView() {
+    prefsSet(LISTINGS_PREFS, {
+      q: $("#f-search").value, status: $("#f-status").value, commune: $("#f-commune").value,
+      flags: $("#f-flags").value, rating: $("#f-rating").value,
+      sortKey: state.sortKey, sortDir: state.sortDir,
+      sortKey2: state.sortKey2, sortDir2: state.sortDir2
+    });
+  }
+
+  // Called after the listings (and so the commune options) exist.
+  function restoreListingsView() {
+    var p = prefsGet(LISTINGS_PREFS);
+    if (p.q) $("#f-search").value = p.q;
+    setSelectIfValid($("#f-status"), p.status);
+    setSelectIfValid($("#f-commune"), p.commune);
+    setSelectIfValid($("#f-flags"), p.flags);
+    setSelectIfValid($("#f-rating"), p.rating);
+    if (p.sortKey && CATALOG_BY_KEY[p.sortKey]) {
+      state.sortKey = p.sortKey;
+      state.sortDir = p.sortDir === "asc" ? "asc" : "desc";
+    }
+    if (p.sortKey2 && CATALOG_BY_KEY[p.sortKey2]) {
+      state.sortKey2 = p.sortKey2;
+      state.sortDir2 = p.sortDir2 === "desc" ? "desc" : "asc";
+    }
+  }
+
   function applyFilters() {
+    saveListingsView();
     var q = $("#f-search").value.trim().toLowerCase();
     var status = $("#f-status").value;
     var commune = $("#f-commune").value;
@@ -1164,10 +1545,12 @@
     render();
   }
 
-  function sortFiltered() {
-    var key = state.sortKey, dir = state.sortDir === "asc" ? 1 : -1;
-    var numeric = !!NUMERIC_KEYS[key];
-    state.filtered.sort(function (a, b) {
+  // Two-level sort, on both grids: clicking a new column pushes the one you
+  // were sorting by down to second criterion, so ties in the new column keep
+  // the order you had just built rather than falling back to nothing.
+  function cmpListingBy(a, b, key, dirWord) {
+      var dir = dirWord === "asc" ? 1 : -1;
+      var numeric = !!NUMERIC_KEYS[key];
       var av = a[key], bv = b[key];
       // "visits" is a list — sort on the most recent visit so empties fall last
       if (key === "visits") {
@@ -1200,12 +1583,23 @@
       if (av < bv) return -1 * dir;
       if (av > bv) return 1 * dir;
       return 0;
+  }
+
+  function sortFiltered() {
+    state.filtered.sort(function (a, b) {
+      var d = cmpListingBy(a, b, state.sortKey, state.sortDir);
+      if (d || !state.sortKey2 || state.sortKey2 === state.sortKey) return d;
+      return cmpListingBy(a, b, state.sortKey2, state.sortDir2);
     });
   }
 
   function fmtMoney(v) {
     if (v === null || v === undefined) return "—";
     return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
+  }
+  function fmtPct(v) {
+    if (v === null || v === undefined) return "—";
+    return new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 2 }).format(v);
   }
   function fmtNum(v) {
     if (v === null || v === undefined) return "—";
@@ -1330,7 +1724,8 @@
         td.title = "Écart non calculable : aucun chiffrage de travaux saisi.\n\n"
           + "Valeur post-travaux estimée " + fmtMoney(s.value_post)
           + " (" + fmtMoney(s.value_m2) + "/m² = p75 DVF de la commune)\n"
-          + "Prix + notaire " + fmtMoney(s.all_in_ex_works) + "\n\n"
+          + s.price_basis.charAt(0).toUpperCase() + s.price_basis.slice(1) + " " + fmtMoney(s.price_used)
+          + " + notaire = " + fmtMoney(s.all_in_ex_works) + "\n\n"
           + "→ Renseignez les travaux dans le tiroir pour obtenir l'écart réel.";
         return;
       }
@@ -1338,7 +1733,8 @@
       td.appendChild(el("span", "spread " + (s.spread >= 0 ? "pos" : "neg"),
                         sign + fmtMoney(Math.abs(s.spread))));
       td.title = "Valeur post-travaux " + fmtMoney(s.value_post) + " (" + fmtMoney(s.value_m2) + "/m² = p75 DVF commune)"
-        + "\n− Tout compris " + fmtMoney(s.all_in) + " (prix + 7,5% notaire + " + fmtMoney(s.works_used) + " travaux)"
+        + "\n− Tout compris " + fmtMoney(s.all_in) + " (" + s.price_basis + " " + fmtMoney(s.price_used)
+        + " + " + fmtPct(s.notaire_rate) + " notaire + " + fmtMoney(s.works_used) + " travaux)"
         + "\n= " + sign + fmtMoney(Math.abs(s.spread));
     } },
     { key: "commute_a", label: "Trajet A", num: true, cls: "col-nowrap", cell: function (td, l) { td.innerHTML = commuteHtml(l.commute_a); } },
@@ -1380,10 +1776,25 @@
       th.setAttribute("data-key", key);
       if (col.num) th.className = "num";
       if (col.cls) th.classList.add(col.cls);
-      th.textContent = col.label + (key === state.sortKey ? " " + (state.sortDir === "asc" ? "▲" : "▼") : "");
+      th.textContent = col.label;
+      if (key === state.sortKey) {
+        th.appendChild(document.createTextNode(" " + (state.sortDir === "asc" ? "▲" : "▼")));
+      } else if (key === state.sortKey2) {
+        // second criterion: same arrow, dimmed, so the rule is visible not magic
+        var c2 = el("span", "sort-2nd", " " + (state.sortDir2 === "asc" ? "▲" : "▼"));
+        c2.title = "2ᵉ critère de tri";
+        th.appendChild(c2);
+      }
       th.addEventListener("click", function () {
-        if (state.sortKey === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-        else { state.sortKey = key; state.sortDir = NUMERIC_KEYS[key] ? "desc" : "asc"; }
+        if (state.sortKey === key) {
+          state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+        } else {
+          state.sortKey2 = state.sortKey;      // demoted, not discarded
+          state.sortDir2 = state.sortDir;
+          state.sortKey = key;
+          state.sortDir = NUMERIC_KEYS[key] ? "desc" : "asc";
+        }
+        saveListingsView();
         sortFiltered();
         render();
       });
@@ -1765,31 +2176,45 @@
   var lb = { photos: [], index: 0 };
   var resetLbZoom = function () {};  // assigned by the zoom controller below
 
+  function galleryCell(p, i) {
+    var cell;
+    if (p.kind === "video") {
+      cell = el("div", "gallery-cell");
+      var v = document.createElement("video");
+      v.src = p.url; v.muted = true; v.preload = "metadata"; v.className = "gallery-vid";
+      cell.appendChild(v);
+      cell.appendChild(el("span", "play-badge", "▶"));
+    } else {
+      cell = document.createElement("img");
+      cell.src = p.url; cell.alt = p.name; cell.loading = "lazy";
+      cell.title = p.name;
+    }
+    cell.addEventListener("click", function () { openLightbox(i); });
+    return cell;
+  }
+
+  // Photos and plans render as two sections but share ONE lightbox array, so
+  // the arrows still walk the whole set. The server sorts plans last, which is
+  // what keeps each cell's index in step with its position on screen.
   function loadGallery(id) {
     var g = $("#d-gallery"), section = $("#d-photos-section");
+    var gp = $("#d-plans-gallery"), planSection = $("#d-plans-section");
     g.innerHTML = "";
+    gp.innerHTML = "";
     section.hidden = true;
+    planSection.hidden = true;
     fetchJSON("/api/listings/" + encodeURIComponent(id) + "/photos").then(function (res) {
       var photos = (res.data && res.data.photos) || [];
       if (id !== state.currentId) return;  // drawer changed while loading
       lb.photos = photos;
-      if (!photos.length) { section.hidden = true; return; }
-      section.hidden = false;
+      if (!photos.length) return;
+      var nPlans = 0;
       photos.forEach(function (p, i) {
-        var cell;
-        if (p.kind === "video") {
-          cell = el("div", "gallery-cell");
-          var v = document.createElement("video");
-          v.src = p.url; v.muted = true; v.preload = "metadata"; v.className = "gallery-vid";
-          cell.appendChild(v);
-          cell.appendChild(el("span", "play-badge", "▶"));
-        } else {
-          cell = document.createElement("img");
-          cell.src = p.url; cell.alt = p.name; cell.loading = "lazy";
-        }
-        cell.addEventListener("click", function () { openLightbox(i); });
-        g.appendChild(cell);
+        if (p.plan) { nPlans++; gp.appendChild(galleryCell(p, i)); }
+        else { g.appendChild(galleryCell(p, i)); }
       });
+      section.hidden = photos.length === nPlans;
+      planSection.hidden = nPlans === 0;
     });
   }
 
@@ -2474,11 +2899,709 @@
     $("#view-listings").hidden = name !== "listings";
     $("#view-towns").hidden = name !== "towns";
     $("#view-criteria").hidden = name !== "criteria";
+    $("#view-drafts").hidden = name !== "drafts";
     if (name === "towns" && !townsLoaded) { townsLoaded = true; loadTowns(); }
     if (name === "criteria" && !critLoaded) { critLoaded = true; loadCriteria(); }
+    if (name === "drafts" && !draftsLoaded) { draftsLoaded = true; loadDrafts(); }
   }
   document.querySelectorAll(".tabs .tab").forEach(function (b) {
     b.addEventListener("click", function () { switchView(b.getAttribute("data-view")); });
+  });
+
+  // ---- "vue tableau" on a phone -------------------------------------------
+  // Widening the viewport (what a browser's "Request desktop site" does) brings
+  // the table back but shrinks every glyph to fit 1280 px into a 390 px screen,
+  // which is unreadable. This instead marks the root and lets the mobile block
+  // hand the tables their desktop layout back: full-size text, swipe sideways.
+  var desktopKey = "hh-force-desktop";
+
+  function applyViewMode(on) {
+    document.documentElement.toggleAttribute("data-wide-tables", on);
+    var btn = $("#desktop-btn");
+    btn.classList.toggle("on", on);
+    btn.title = on ? "Revenir aux fiches" : "Voir le tableau complet";
+    try { localStorage.setItem(desktopKey, on ? "1" : "0"); } catch (e) {}
+  }
+
+  (function initViewMode() {
+    var btn = $("#desktop-btn");
+    // The behaviour is always wired; only whether the button is offered depends
+    // on the device — keeps the toggle testable, and the two concerns apart.
+    btn.addEventListener("click", function () { applyViewMode(!btn.classList.contains("on")); });
+    // screen.width, not the CSS width: once desktop mode widens the viewport a
+    // CSS-width test would hide the button and strand the user in it.
+    var handheld = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches)
+                   || (window.screen && window.screen.width <= 820);
+    if (!handheld) return;
+    btn.hidden = false;
+    var saved = "0";
+    try { saved = localStorage.getItem(desktopKey) || "0"; } catch (e) {}
+    applyViewMode(saved === "1");
+  })();
+
+  // ---- price history: median €/m² per commune per year ------------------
+  // Form: change over time, several entities -> multi-series line. The hues are
+  // the validated categorical order (adjacent-pair CVD >= 8 in both modes on
+  // this dashboard's own surfaces); three of the light steps sit under 3:1
+  // contrast, so the relief rule applies and the chart ships a legend in ink
+  // plus a table view. Colour follows the commune, never its rank, so hiding
+  // one never repaints the others.
+  var PH_SERIES_LIGHT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"];
+  var PH_SERIES_DARK  = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
+  var PH_MAX_SERIES = 8;
+  var phData = null;
+  var phSlots = {};   // commune id -> palette slot, held across renders
+
+  function phColors() {
+    var dark = document.documentElement.getAttribute("data-theme") === "dark";
+    return dark ? PH_SERIES_DARK : PH_SERIES_LIGHT;
+  }
+
+  function loadPriceHistory() {
+    return fetchJSON("/api/price-history").then(function (res) {
+      phData = res.data && res.data.communes ? res.data : null;
+      renderPriceHistory();
+    });
+  }
+
+  // the communes on screen, in the user's own order, capped at the palette
+  function phSeries() {
+    if (!phData || !state.townsAll.length) return { shown: [], total: 0 };
+    var cols = phColors();
+    var out = [];
+    state.townsAll.forEach(function (t) {
+      if (state.townHidden && state.townHidden.has(t.id)) return;
+      var c = phData.communes[t.id];
+      if (!c) return;
+      var pts = phData.years.map(function (y) {
+        var v = c.years[String(y)];
+        return v ? { year: y, med: v.med, n: v.n } : null;
+      }).filter(Boolean);
+      if (pts.length < 2) return;   // a single dot is not an evolution
+      out.push({ id: t.id, name: (t.title || t.id).split("(")[0].trim(), pts: pts });
+    });
+    var shown = out.slice(0, PH_MAX_SERIES);
+    // Colour follows the commune, not its rank: slots are held across renders
+    // and only freed when a commune leaves the chart, so hiding one never
+    // repaints the ones that stay.
+    var live = {};
+    shown.forEach(function (s) { live[s.id] = true; });
+    Object.keys(phSlots).forEach(function (id) { if (!live[id]) delete phSlots[id]; });
+    var taken = {};
+    Object.keys(phSlots).forEach(function (id) { taken[phSlots[id]] = true; });
+    shown.forEach(function (s) {
+      if (phSlots[s.id] === undefined) {
+        for (var k = 0; k < PH_MAX_SERIES; k++) {
+          if (!taken[k]) { phSlots[s.id] = k; taken[k] = true; break; }
+        }
+      }
+      s.color = cols[phSlots[s.id] || 0];
+    });
+    return { shown: shown, total: out.length };
+  }
+
+  function renderPriceHistory() {
+    var section = $("#ph");
+    if (!phData) { section.hidden = true; return; }
+    var res = phSeries();
+    var series = res.shown;
+    if (series.length < 1) { section.hidden = true; return; }
+    section.hidden = false;
+
+    var years = phData.years;
+    var vals = [];
+    series.forEach(function (s) { s.pts.forEach(function (p) { vals.push(p.med); }); });
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var step = Math.max(250, Math.ceil((hi - lo) / 4 / 250) * 250);
+    var y0 = Math.floor(lo / step) * step - (lo === hi ? step : 0);
+    var y1 = Math.ceil(hi / step) * step;
+    if (y1 === y0) y1 = y0 + step;
+
+    var W = 900, H = 300, ml = 56, mr = series.length <= 4 ? 130 : 16, mt = 10, mb = 26;
+    var pw = W - ml - mr, ph = H - mt - mb;
+    var X = function (y) { return ml + (years.indexOf(y) / (years.length - 1)) * pw; };
+    var Y = function (v) { return mt + ph - ((v - y0) / (y1 - y0)) * ph; };
+
+    var svg = ['<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Évolution du prix médian au m² par commune">'];
+    for (var g = y0; g <= y1 + 1; g += step) {
+      svg.push('<line class="ph-grid" x1="' + ml + '" y1="' + Y(g) + '" x2="' + (ml + pw) + '" y2="' + Y(g) + '"/>');
+      svg.push('<text class="ph-axis" x="' + (ml - 9) + '" y="' + (Y(g) + 4) + '" text-anchor="end">' + fmtNum(g) + '</text>');
+    }
+    years.forEach(function (y) {
+      svg.push('<text class="ph-axis" x="' + X(y) + '" y="' + (H - 6) + '" text-anchor="middle">' + y + '</text>');
+    });
+    series.forEach(function (s) {
+      // segments only between consecutive years: a gap stays a gap
+      var d = "", prev = null;
+      s.pts.forEach(function (p) {
+        var gap = prev && years.indexOf(p.year) !== years.indexOf(prev.year) + 1;
+        d += (!prev || gap ? "M" : "L") + X(p.year).toFixed(1) + " " + Y(p.med).toFixed(1) + " ";
+        prev = p;
+      });
+      svg.push('<path class="ph-line" d="' + d.trim() + '" stroke="' + s.color + '"/>');
+      s.pts.forEach(function (p) {
+        svg.push('<circle class="ph-dot" cx="' + X(p.year).toFixed(1) + '" cy="' + Y(p.med).toFixed(1)
+                 + '" r="4" fill="' + s.color + '"/>');
+      });
+      if (mr > 100) {
+        var last = s.pts[s.pts.length - 1];
+        svg.push('<text class="ph-endlabel" x="' + (X(last.year) + 10) + '" y="' + (Y(last.med) + 4) + '">'
+                 + escapeHtml(s.name) + '</text>');
+      }
+    });
+    svg.push('<line class="ph-cross" id="ph-cross" x1="0" y1="' + mt + '" x2="0" y2="' + (mt + ph) + '" style="display:none"/>');
+    years.forEach(function (y) {
+      var w = pw / (years.length - 1);
+      svg.push('<rect class="ph-hit" data-year="' + y + '" x="' + (X(y) - w / 2) + '" y="' + mt
+               + '" width="' + w + '" height="' + ph + '"/>');
+    });
+    svg.push('</svg>');
+    var plot = $("#ph-plot");
+    plot.innerHTML = svg.join("");
+
+    var legend = $("#ph-legend");
+    legend.innerHTML = series.map(function (s) {
+      return '<span class="ph-leg"><span class="ph-swatch" style="background:' + s.color + '"></span>'
+        + escapeHtml(s.name) + '</span>';
+    }).join("");
+
+    var note = [];
+    if (res.total > series.length) {
+      note.push('<strong>' + series.length + ' communes sur ' + res.total + ' affichées</strong> — masquez-en dans la liste ci-dessus pour en tracer d\'autres (au-delà de huit lignes, les couleurs ne se distinguent plus de façon fiable).');
+    }
+    note.push('Médiane des maisons vendues chaque année (geo-DVF, agrégé par mutation). ⚠️ Sur les petites communes une année peut reposer sur une poignée de ventes : la médiane bouge alors pour des raisons de composition, pas de marché — le nombre de ventes est dans l\'infobulle et dans le tableau.');
+    $("#ph-note").innerHTML = note.join(" ");
+
+    phBuildTable(series, years);
+    phWireHover(plot, series, years, X, Y, mt, ph);
+  }
+
+  function phBuildTable(series, years) {
+    var thin = (phData && phData.thin_below) || 12;
+    var h = '<table class="ph-table"><thead><tr><th>Commune</th>'
+      + years.map(function (y) { return '<th>' + y + '</th>'; }).join("") + '</tr></thead><tbody>';
+    series.forEach(function (s) {
+      h += '<tr><td>' + escapeHtml(s.name) + '</td>';
+      years.forEach(function (y) {
+        var p = s.pts.filter(function (q) { return q.year === y; })[0];
+        h += p ? '<td' + (p.n < thin ? ' class="thin"' : '') + '>' + fmtNum(p.med) + ' <span class="n">(n=' + p.n + ')</span></td>'
+               : '<td class="thin">—</td>';
+      });
+      h += '</tr>';
+    });
+    $("#ph-tablewrap").innerHTML = h + '</tbody></table>';
+  }
+
+  function phWireHover(plot, series, years, X, Y, mt, ph) {
+    var tip = el("div", "ph-tip");
+    tip.style.display = "none";
+    plot.appendChild(tip);
+    var cross = plot.querySelector("#ph-cross");
+    var thin = (phData && phData.thin_below) || 12;
+    function show(year) {
+      var rows = series.map(function (s) {
+        var p = s.pts.filter(function (q) { return q.year === year; })[0];
+        return p ? { s: s, p: p } : null;
+      }).filter(Boolean).sort(function (a, b) { return b.p.med - a.p.med; });
+      if (!rows.length) return;
+      tip.innerHTML = '<h4>' + year + '</h4>' + rows.map(function (r) {
+        return '<div class="r"><span class="ph-swatch" style="background:' + r.s.color + '"></span>'
+          + escapeHtml(r.s.name) + ' <b>' + fmtNum(r.p.med) + ' €/m²</b>'
+          + '<span class="n">n=' + r.p.n + (r.p.n < thin ? ' ⚠' : '') + '</span></div>';
+      }).join("");
+      var box = plot.getBoundingClientRect();
+      var px = X(year) / 900 * box.width;
+      cross.setAttribute("x1", X(year)); cross.setAttribute("x2", X(year));
+      cross.style.display = "";
+      tip.style.display = "";
+      var tw = tip.offsetWidth;
+      tip.style.left = Math.max(0, Math.min(box.width - tw, px - tw / 2)) + "px";
+      tip.style.top = "0px";
+    }
+    plot.querySelectorAll(".ph-hit").forEach(function (r) {
+      r.addEventListener("mouseenter", function () { show(+r.getAttribute("data-year")); });
+      r.addEventListener("touchstart", function () { show(+r.getAttribute("data-year")); }, { passive: true });
+    });
+    plot.addEventListener("mouseleave", function () {
+      tip.style.display = "none";
+      cross.style.display = "none";
+    });
+  }
+
+  $("#ph-table-btn").addEventListener("click", function () {
+    var w = $("#ph-tablewrap"), b = $("#ph-table-btn");
+    w.hidden = !w.hidden;
+    b.setAttribute("aria-expanded", String(!w.hidden));
+    b.textContent = w.hidden ? "Voir les chiffres" : "Masquer les chiffres";
+  });
+
+  // ---- Brouillons : ads to look at later, edited straight in the grid ----
+  // No md file, no research — just a row the user types into. Each cell PATCHes
+  // on blur (not on keystroke) so a half-typed price never reaches the server,
+  // and the row is re-read from the response so codes/normalisation stick.
+  var draftsLoaded = false;
+  var drafts = [];
+  var draftCities = [];
+  var draftAgencies = [];
+  // The comment box belongs to the selected line only: showing every note at
+  // once turned a 5-row list into a wall of text. A row selects itself when it
+  // is clicked or when any of its cells takes focus.
+  var selectedDraft = null;
+  // Transient, like the sort on the Villes ciblées tab: never saved, so a
+  // reload comes back to the natural B-code order.
+  var DRAFTS_PREFS = "hh-drafts-view";
+  var draftSort = { key: "code", dir: "asc" };
+  var draftSort2 = null;   // the column you were sorting by, kept as tie-breaker
+
+  function saveDraftsView() {
+    prefsSet(DRAFTS_PREFS, { filter: $("#draft-filter").value, sort: draftSort, sort2: draftSort2 });
+  }
+
+  function restoreDraftsView() {
+    var p = prefsGet(DRAFTS_PREFS);
+    setSelectIfValid($("#draft-filter"), p.filter);
+    var known = function (x) { return x && x.key && document.querySelector('#drafts-table th[data-sort="' + x.key + '"]'); };
+    if (known(p.sort)) draftSort = { key: p.sort.key, dir: p.sort.dir === "desc" ? "desc" : "asc" };
+    if (known(p.sort2)) draftSort2 = { key: p.sort2.key, dir: p.sort2.dir === "desc" ? "desc" : "asc" };
+  }
+  var DRAFT_NUM_SORT = { price: 1, surface: 1, land_surface: 1, price_per_m2: 1 };
+  // Statut sorts along the workflow, not the alphabet.
+  var DRAFT_STATUS_RANK = { attente: 0, visite: 1, verifie: 2, ecarte: 3, promu: 4 };
+
+  function draftSortValue(rec, key) {
+    if (key === "status") return DRAFT_STATUS_RANK[rec.status];
+    if (key === "url") return draftHost(rec.url || "") || rec.url || "";
+    return rec[key];
+  }
+
+  function cmpDraftBy(a, b, s) {
+    var av = draftSortValue(a, s.key), bv = draftSortValue(b, s.key);
+    // Empty cells always land at the bottom, whichever way the column is
+    // pointing: half this grid is blank, and blanks bubbling to the top would
+    // bury the rows you sorted for. Two blanks are a tie, so the next
+    // criterion gets to decide.
+    var ae = av === null || av === undefined || av === "";
+    var be = bv === null || bv === undefined || bv === "";
+    if (ae || be) return ae && be ? 0 : (ae ? 1 : -1);
+    var numeric = !!DRAFT_NUM_SORT[s.key] || s.key === "status";
+    var d = numeric ? av - bv : String(av).localeCompare(String(bv), "fr", { numeric: true });
+    return d ? d * (s.dir === "asc" ? 1 : -1) : 0;
+  }
+
+  function sortedDrafts() {
+    return drafts.slice().sort(function (a, b) {
+      return cmpDraftBy(a, b, draftSort)
+        || (draftSort2 && draftSort2.key !== draftSort.key ? cmpDraftBy(a, b, draftSort2) : 0)
+        || cmpCode(a, b);
+    });
+  }
+
+  function setDraftSort(key) {
+    if (draftSort.key === key) {
+      draftSort = { key: key, dir: draftSort.dir === "asc" ? "desc" : "asc" };
+    } else {
+      draftSort2 = draftSort;               // demoted, not discarded
+      draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
+    }
+    saveDraftsView();
+  }
+
+  function cmpCode(a, b) { return (a.code || "").localeCompare(b.code || ""); }
+
+  function renderSortCarets() {
+    var mob = $("#draft-sort");
+    if (mob && mob.value !== draftSort.key) mob.value = draftSort.key;
+    var second = draftSort2 && draftSort2.key !== draftSort.key ? draftSort2 : null;
+    document.querySelectorAll("#drafts-table th[data-sort]").forEach(function (th) {
+      var key = th.getAttribute("data-sort");
+      var on = key === draftSort.key;
+      var isSecond = !on && second && key === second.key;
+      th.classList.toggle("sorted", on);
+      th.classList.toggle("sorted-2nd", !!isSecond);
+      var caret = th.querySelector(".caret");
+      if ((on || isSecond) && !caret) { caret = el("span", "caret"); th.appendChild(caret); }
+      if (caret) {
+        caret.textContent = on ? (draftSort.dir === "asc" ? "▲" : "▼")
+                               : (second.dir === "asc" ? "▲" : "▼");
+        caret.classList.toggle("sort-2nd", !!isSecond);
+        caret.title = isSecond ? "2ᵉ critère de tri" : "";
+      }
+      if (!on && !isSecond && caret) caret.remove();
+    });
+  }
+
+  function selectDraft(id) {
+    if (selectedDraft === id) return;
+    selectedDraft = id;
+    syncDraftSelection();
+  }
+
+  function syncDraftSelection() {
+    Array.prototype.forEach.call($("#drafts-body").children, function (tr) {
+      var rowId = tr.dataset.id || tr.dataset.noteFor;
+      var on = rowId === selectedDraft;
+      tr.classList.toggle("sel", on);
+      if (tr.dataset.noteFor) {
+        var owner = tr.previousElementSibling;
+        tr.hidden = !on || (owner && owner.hidden);
+      }
+    });
+  }
+
+  var DRAFT_STATUS_LABELS = {
+    attente: "\u25F7 À vérifier",
+    visite: "\u25C9 Visite prévue",
+    verifie: "\u2713 Vérifié",
+    ecarte: "\u2717 Écarté",
+    promu: "\u2192 Promu en dossier"
+  };
+
+  function loadDrafts() {
+    return fetchJSON("/api/drafts").then(function (res) {
+      drafts = (res.data && res.data.drafts) || [];
+      draftCities = (res.data && res.data.cities) || [];
+      draftAgencies = (res.data && res.data.agencies) || [];
+      renderDrafts();
+    });
+  }
+
+  // Suggestions only: a <datalist> proposes what the file already knows but
+  // never blocks a name that is not in it — leads turn up outside the target
+  // list, and an agency can be one nobody has dealt with yet.
+  function fillDatalist(id, values) {
+    var dl = $("#" + id);
+    if (!dl) return;
+    dl.innerHTML = "";
+    values.forEach(function (name) {
+      var o = document.createElement("option");
+      o.value = name;
+      dl.appendChild(o);
+    });
+  }
+
+  function renderSuggestions() {
+    fillDatalist("draft-cities", draftCities);
+    fillDatalist("draft-agencies", draftAgencies);
+  }
+
+  // a name typed once is offered on the next row, without a reload
+  function rememberSuggestion(list, value, id) {
+    if (!value || list.indexOf(value) !== -1) return;
+    list.push(value);
+    list.sort(function (a, b) { return a.localeCompare(b, "fr"); });
+    fillDatalist(id, list);
+  }
+
+  function draftHost(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ""); } catch (e) { return ""; }
+  }
+
+  function saveDraft(rec, patch, done) {
+    return fetchJSON("/api/drafts/" + rec.id, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch)
+    }).then(function (res) {
+      if (!res.ok) return;
+      Object.assign(rec, res.data);
+      if (done) done(rec);
+      updateDraftsCount();
+      if (patch.price !== undefined || patch.surface !== undefined) {
+        var row = $('#drafts-body tr[data-id="' + rec.id + '"]');
+        var cell = row && row.querySelector('[data-role="m2"]');
+        if (cell) {
+          cell.textContent = rec.price_per_m2 ? fmtNum(rec.price_per_m2) : "—";
+        }
+      }
+      if (patch.city !== undefined) rememberSuggestion(draftCities, rec.city, "draft-cities");
+      if (patch.agency !== undefined) rememberSuggestion(draftAgencies, rec.agency, "draft-agencies");
+    });
+  }
+
+  // one editable cell: <input> that writes `field` back on change/blur
+  function draftCell(rec, field, opts) {
+    opts = opts || {};
+    var input = el("input", "dcell" + (opts.num ? " num" : ""));
+    input.type = opts.when ? "datetime-local" : "text";
+    if (!opts.when) input.inputMode = opts.num ? "decimal" : "text";
+    if (opts.placeholder) input.placeholder = opts.placeholder;
+    if (opts.list) input.setAttribute("list", opts.list);
+    if (opts.title) input.title = opts.title;
+    var pending = false;
+    function show() {
+      var v = rec[field];
+      input.value = v === null || v === undefined ? "" : (opts.num ? fmtNum(v) : v);
+      if (opts.when) input.classList.toggle("empty", !v);
+    }
+    // Shared commit: compare against what the server holds, PATCH only on a
+    // real change, and re-read the stored value so normalisation is visible.
+    function commit(raw) {
+      if (pending || same(raw)) { show(); return; }
+      pending = true;
+      var patch = {};
+      patch[field] = raw;
+      saveDraft(rec, patch, function () { pending = false; show(); if (opts.after) opts.after(rec); })
+        .catch(function () { pending = false; show(); });
+    }
+    function same(raw) {
+      var current = rec[field];
+      if (opts.num) return raw === "" ? current === null : parseFloat(raw.replace(",", ".")) === current;
+      return raw === (current || "");
+    }
+    show();
+    // a datetime field has nothing to select and no French formatting to undo
+    if (opts.when) {
+      input.addEventListener("change", function () { commit(input.value); });
+      input.addEventListener("blur", function () { commit(input.value); });
+      return input;
+    }
+    input.addEventListener("focus", function () {
+      if (opts.num && rec[field] !== null && rec[field] !== undefined) input.value = rec[field];
+      input.select();
+    });
+    input.addEventListener("change", function () { commit(input.value.trim()); });
+    input.addEventListener("blur", function () { commit(input.value.trim()); });
+    input.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") input.blur();
+      if (ev.key === "Escape") { show(); input.blur(); }
+    });
+    return input;
+  }
+
+  // Read-only: €/m² is the fastest triage signal on a raw list, and deriving it
+  // means it can never contradict the price and surface next to it.
+  function draftPriceM2(rec) {
+    var cell = el("span", "dcell-ro");
+    var set = function () {
+      cell.textContent = rec.price_per_m2 ? fmtNum(rec.price_per_m2) : "—";
+      cell.title = rec.price_per_m2 ? "Prix / surface habitable" : "Renseignez prix et surface";
+    };
+    set();
+    cell.dataset.role = "m2";
+    return cell;
+  }
+
+  function renderDraftRow(rec) {
+    var tr = el("tr", "st-" + rec.status);
+    tr.dataset.id = rec.id;
+    tr.addEventListener("mousedown", function () { selectDraft(rec.id); });
+    tr.addEventListener("focusin", function () { selectDraft(rec.id); });
+
+    var tdCode = el("td", "c-code", rec.code);
+    tdCode.setAttribute("data-label", "Code");
+    tr.appendChild(tdCode);
+
+    // annonce: the link opens in a new tab, the field next to it stays editable
+    var tdUrl = el("td", "c-url");
+    tdUrl.setAttribute("data-label", "Annonce");
+    var wrap = el("div", "dcell-url");
+    var a = el("a", null, "\u2197");
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    var syncLink = function () {
+      var u = rec.url || "";
+      a.href = u || "#";
+      a.title = u ? "Ouvrir " + draftHost(u) : "Aucun lien";
+      a.setAttribute("aria-disabled", u ? "false" : "true");
+    };
+    var urlInput = draftCell(rec, "url", { placeholder: "https://…", after: syncLink });
+    syncLink();
+    wrap.appendChild(urlInput);
+    wrap.appendChild(a);
+    tdUrl.appendChild(wrap);
+    tr.appendChild(tdUrl);
+
+    var cells = [
+      ["c-num c-price", "Prix", draftCell(rec, "price", { num: true, placeholder: "€" })],
+      ["c-city", "Ville", draftCell(rec, "city", { placeholder: "Ville", list: "draft-cities" })],
+      ["c-num c-area", "Surface", draftCell(rec, "surface", { num: true, placeholder: "m²", title: "Surface habitable" })],
+      ["c-num c-area", "Terrain", draftCell(rec, "land_surface", { num: true, placeholder: "m²", title: "Surface du terrain" })],
+      ["c-num c-m2", "€/m²", draftPriceM2(rec)],
+      ["c-contact", "Téléphone", draftCell(rec, "contact", { placeholder: "06…" })],
+      ["c-agency", "Agence", draftCell(rec, "agency", { placeholder: "Agence", list: "draft-agencies" })],
+      ["c-visit", "Visite", draftCell(rec, "visit_at", { when: true, title: "Date et heure de visite" })]
+    ];
+    cells.forEach(function (c) {
+      var td = el("td", c[0]);
+      td.setAttribute("data-label", c[1]);   // becomes the field label in mobile card view
+      td.appendChild(c[2]);
+      tr.appendChild(td);
+    });
+
+    var tdStatus = el("td", "c-status");
+    tdStatus.setAttribute("data-label", "Statut");
+    var sel = el("select", "dcell");
+    Object.keys(DRAFT_STATUS_LABELS).forEach(function (k) {
+      var o = el("option", null, DRAFT_STATUS_LABELS[k]);
+      o.value = k;
+      sel.appendChild(o);
+    });
+    sel.value = rec.status;
+    sel.addEventListener("change", function () {
+      saveDraft(rec, { status: sel.value }, function () {
+        tr.className = "st-" + rec.status;
+        applyDraftFilter();
+      });
+    });
+    tdStatus.appendChild(sel);
+    tr.appendChild(tdStatus);
+
+    var tdAct = el("td", "c-act");
+    tdAct.setAttribute("data-label", "");
+    var note = el("button", "note-btn", "\u2709");
+    note.dataset.role = "note";
+    tdAct.appendChild(note);
+    var del = el("button", "row-del", "\u00D7");
+    del.title = "Supprimer ce brouillon";
+    del.addEventListener("click", function () {
+      var what = rec.url || rec.city || rec.code;
+      if (!confirm("Supprimer le brouillon " + rec.code + " (" + what + ") ?")) return;
+      fetchJSON("/api/drafts/" + rec.id, { method: "DELETE" }).then(function (res) {
+        if (!res.ok) return;
+        drafts = drafts.filter(function (d) { return d.id !== rec.id; });
+        renderDrafts();
+      });
+    });
+    tdAct.appendChild(del);
+    tr.appendChild(tdAct);
+    return tr;
+  }
+
+  // The comment lives on its own full-width row under the line: a column would
+  // truncate it, and these notes are the reason a lead was kept or dropped.
+  function renderDraftNoteRow(rec, btn) {
+    var noteTr = el("tr", "note-row");
+    noteTr.dataset.noteFor = rec.id;
+    var td = el("td");
+    td.colSpan = $("#drafts-table thead tr").children.length;   // stays right if a column is added
+    var ta = el("textarea", "dnote");
+    ta.placeholder = "Commentaire — pourquoi cette annonce, ce qu'il faut vérifier, ce qu'a dit l'agence…";
+    ta.value = rec.note || "";
+    ta.rows = 2;
+    var sync = function () {
+      var has = !!(rec.note || "").trim();
+      btn.classList.toggle("on", has);
+      btn.title = has ? "Commentaire — cliquer pour l'éditer" : "Ajouter un commentaire";
+    };
+    ta.addEventListener("blur", function () {
+      if (ta.value.trim() === (rec.note || "")) return;
+      saveDraft(rec, { note: ta.value }, function () { ta.value = rec.note || ""; sync(); });
+    });
+    ta.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") { ta.value = rec.note || ""; ta.blur(); }
+    });
+    td.appendChild(ta);
+    noteTr.appendChild(td);
+    noteTr.hidden = rec.id !== selectedDraft;
+    sync();
+    // typing in the comment must not look like leaving the row
+    ta.addEventListener("focus", function () { selectDraft(rec.id); });
+    btn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      selectDraft(rec.id);
+      ta.focus();
+    });
+    return noteTr;
+  }
+
+  function renderDrafts() {
+    renderSuggestions();
+    var body = $("#drafts-body");
+    body.innerHTML = "";
+    sortedDrafts().forEach(function (rec) {
+      var tr = renderDraftRow(rec);
+      body.appendChild(tr);
+      body.appendChild(renderDraftNoteRow(rec, tr.querySelector('[data-role="note"]')));
+    });
+    renderSortCarets();
+    $("#drafts-empty").hidden = drafts.length > 0;
+    if (selectedDraft && !drafts.some(function (d) { return d.id === selectedDraft; })) selectedDraft = null;
+    applyDraftFilter();
+    updateDraftsCount();
+  }
+
+  function applyDraftFilter() {
+    var want = $("#draft-filter").value;
+    var shown = 0;
+    Array.prototype.forEach.call($("#drafts-body").children, function (tr) {
+      if (tr.dataset.noteFor) return;   // the comment row follows its line, handled below
+      var rec = drafts.find(function (d) { return d.id === tr.dataset.id; });
+      var ok = !want || (rec && rec.status === want);
+      tr.hidden = !ok;
+      var noteTr = tr.nextElementSibling;
+      if (noteTr && noteTr.dataset.noteFor === tr.dataset.id) {
+        noteTr.hidden = !ok || !(rec && (rec.note || "").trim());
+      }
+      if (ok) shown++;
+    });
+    syncDraftSelection();
+    var counts = {};
+    drafts.forEach(function (d) { counts[d.status] = (counts[d.status] || 0) + 1; });
+    var parts = Object.keys(DRAFT_STATUS_LABELS)
+      .filter(function (k) { return counts[k]; })
+      .map(function (k) { return counts[k] + " " + DRAFT_STATUS_LABELS[k].slice(2).toLowerCase(); });
+    $("#drafts-progress").textContent = drafts.length
+      ? shown + " / " + drafts.length + " ligne" + (drafts.length > 1 ? "s" : "") +
+        (parts.length ? " · " + parts.join(" · ") : "")
+      : "";
+  }
+
+  function updateDraftsCount() {
+    var n = drafts.filter(function (d) { return d.status === "attente"; }).length;
+    var badge = $("#drafts-count");
+    badge.textContent = n ? String(n) : "";
+    badge.hidden = !n;
+  }
+
+  document.addEventListener("mousedown", function (ev) {
+    var view = $("#view-drafts");
+    if (view.hidden || !selectedDraft) return;
+    if (ev.target.closest("#drafts-table") || ev.target.closest("#draft-add")) return;
+    selectedDraft = null;
+    syncDraftSelection();
+  });
+
+  document.querySelectorAll("#drafts-table th[data-sort]").forEach(function (th) {
+    th.addEventListener("click", function () {
+      setDraftSort(th.getAttribute("data-sort"));
+      renderDrafts();
+    });
+  });
+
+  $("#draft-sort").addEventListener("change", function () {
+    setDraftSort($("#draft-sort").value);
+    renderDrafts();
+  });
+
+  $("#draft-filter").addEventListener("change", function () { saveDraftsView(); applyDraftFilter(); });
+  $("#draft-add").addEventListener("click", function () {
+    fetchJSON("/api/drafts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}"
+    }).then(function (res) {
+      if (!res.ok) return;
+      drafts.push(res.data);
+      selectedDraft = res.data.id;
+      renderDrafts();
+      var tr = $('#drafts-body tr[data-id="' + res.data.id + '"]');
+      if (tr) {
+        tr.scrollIntoView({ block: "nearest" });
+        var first = tr.querySelector("input.dcell");
+        if (first) first.focus();
+      }
+    });
+  });
+
+  // Keep the tab badge honest even if the user never opens the tab.
+  restoreDraftsView();
+  fetchJSON("/api/drafts").then(function (res) {
+    if (!res.ok) return;
+    drafts = (res.data && res.data.drafts) || [];
+    draftCities = (res.data && res.data.cities) || [];
+    draftAgencies = (res.data && res.data.agencies) || [];
+    draftsLoaded = true;
+    renderDrafts();
   });
 
   // ---- Critères : reference checklist + per-listing visit ticks ----------
@@ -2487,12 +3610,35 @@
   // { <itemId>: "ok" | "ko" }. Absent = not looked at yet.
   var critLoaded = false;
   var critData = null;
+  var CRIT_PREFS = "hh-criteria-view";
+
+  function saveCritView() {
+    prefsSet(CRIT_PREFS, { part: state.critPart, filter: $("#crit-filter").value, listing: $("#crit-listing").value });
+  }
+
+  // The three halves of the check-list are told apart by their heading, so a new
+  // part in criteria.md only needs a title the regex recognises.
+  var CRIT_PART_HINT = {
+    rouge: "Ce qui fait annuler et repartir chercher — un seul suffit",
+    immuable: "Ce qu'aucun budget ne corrige — un défaut ici disqualifie ou se paie en décote",
+    modifiable: "Ce qui se répare avec de l'argent — un défaut ici est une ligne de chiffrage"
+  };
+
+  function critPartKind(title) {
+    if (/drapeau|rouge/i.test(title)) return "rouge";
+    if (/immuable/i.test(title)) return "immuable";
+    return "modifiable";
+  }
 
   function loadCriteria() {
     fetchJSON("/api/criteria").then(function (res) {
       critData = res.data || { parts: [] };
       $("#crit-intro").innerHTML = renderMarkdown(critData.intro || "");
       buildCritListingPicker();
+      var p = prefsGet(CRIT_PREFS);
+      setSelectIfValid($("#crit-listing"), p.listing);
+      setSelectIfValid($("#crit-filter"), p.filter);
+      if (typeof p.part === "number" && p.part >= 0 && p.part < critData.parts.length) state.critPart = p.part;
       renderCriteria();
     }, function () {
       $("#crit-body").innerHTML = '<div class="empty" style="display:flex">Chargement de criteria.md impossible.</div>';
@@ -2550,7 +3696,7 @@
     tabsBox.innerHTML = "";
     if (state.critPart >= critData.parts.length) state.critPart = 0;
     critData.parts.forEach(function (part, idx) {
-      var isImm = /immuable/i.test(part.title);
+      var kind = critPartKind(part.title);
       // how many of this part's items survive the current filter
       var shown = 0;
       part.groups.forEach(function (g) {
@@ -2564,15 +3710,14 @@
           shown++;
         });
       });
-      var tab = el("div", "crit-part-tab " + (isImm ? "immuable" : "modifiable")
+      var tab = el("div", "crit-part-tab " + kind
                     + (idx === state.critPart ? " active" : ""));
       tab.appendChild(document.createTextNode(part.title));
       tab.appendChild(el("span", "n", String(shown)));
-      tab.title = isImm
-        ? "Ce qu'aucun budget ne corrige — un défaut ici disqualifie ou se paie en décote"
-        : "Ce qui se répare avec de l'argent — un défaut ici est une ligne de chiffrage";
+      tab.title = CRIT_PART_HINT[kind];
       tab.addEventListener("click", function () {
         state.critPart = idx;
+        saveCritView();
         renderCriteria();
         $("#crit-parts").scrollIntoView({ block: "nearest" });
       });
@@ -2589,8 +3734,7 @@
         });
       });
       if (partIdx !== state.critPart) return;   // the other half lives on its own tab
-      var isImm = /immuable/i.test(part.title);
-      var partEl = el("div", "crit-part " + (isImm ? "immuable" : "modifiable"));
+      var partEl = el("div", "crit-part " + critPartKind(part.title));
       var body = el("div", "crit-part-body");
       var shownInPart = 0;
 
@@ -2654,8 +3798,8 @@
     $("#crit-reset").style.display = hasListing ? "" : "none";
   }
 
-  $("#crit-listing").addEventListener("change", renderCriteria);
-  $("#crit-filter").addEventListener("change", renderCriteria);
+  $("#crit-listing").addEventListener("change", function () { saveCritView(); renderCriteria(); });
+  $("#crit-filter").addEventListener("change", function () { saveCritView(); renderCriteria(); });
   $("#crit-reset").addEventListener("click", function () {
     var l = critCurrent();
     if (!l) return;
@@ -2692,12 +3836,11 @@
   // Which towns the user has hidden from the comparison (persisted).
   function loadTownHidden() {
     if (state.townHidden) return;
-    var arr = [];
-    try { arr = JSON.parse(localStorage.getItem("hh-towns-hidden") || "[]"); } catch (e) {}
+    var arr = prefsGet("hh-towns-hidden", []);
     state.townHidden = new Set(Array.isArray(arr) ? arr : []);
   }
   function saveTownHidden() {
-    try { localStorage.setItem("hh-towns-hidden", JSON.stringify(Array.from(state.townHidden))); } catch (e) {}
+    prefsSet("hh-towns-hidden", Array.from(state.townHidden));
   }
 
   // Persist the shared drag order to the server (town ids in display order).
@@ -2733,10 +3876,16 @@
   // shared saved order (persisted via saveTownOrder, same as a drag).
   // The click-sort is transient (session-only): it is never persisted, so a refresh
   // / reopen always shows the personal order, not the last sort. Kept in memory only.
+  // Was deliberately transient (a reload returned to the personal order); now
+  // remembered like the other lists. "↩ Mon ordre" still clears it in one click.
   function loadTownSort() {
-    if (!state.townSort) state.townSort = { key: null, dir: 1 };
+    if (state.townSort) return;
+    var p = prefsGet("hh-towns-sort");
+    state.townSort = { key: p.key || null, dir: p.dir === -1 ? -1 : 1 };
   }
-  function saveTownSort() { /* intentionally not persisted */ }
+  function saveTownSort() {
+    prefsSet("hh-towns-sort", { key: state.townSort && state.townSort.key, dir: state.townSort && state.townSort.dir });
+  }
 
   // Turn a free-text repère value into something comparable. Handles star ratings
   // (count of ★), French-formatted numbers ("~5 500 €/m²" → 5500, "69 %" → 69,
@@ -2900,6 +4049,7 @@
   }
 
   function renderTownViews() {
+    renderPriceHistory();   // follows the same show/hide and order as the tables
     var wrap = $("#towns-compare"), cards = $("#town-cards");
     cards.innerHTML = "";
     if (!state.townsAll.length) {
@@ -2992,6 +4142,7 @@
   function loadTowns() {
     fetchJSON("/api/towns").then(function (res) {
       renderTowns((res.data && res.data.towns) || []);
+      loadPriceHistory();
     }, function () {
       $("#towns-compare").innerHTML = '<div class="empty" style="display:flex">Chargement des villes impossible.</div>';
     });

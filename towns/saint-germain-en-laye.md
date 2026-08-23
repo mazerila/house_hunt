@@ -6,8 +6,10 @@ Ville royale et capitale de fait de l'ouest francilien : château, forêt domani
 - **Population**: ~45 930 hab. (la plus peuplée de la liste)
 - **Densité**: ~865 hab/km² (trompeur : **la commune est majoritairement forestière**, ~5 300 ha dont la forêt domaniale)
 - **Prix maison (2025)**: ~6 470–6 605 €/m² (DVF)
+- **Prix maison DVF (2023-25)**: **6 605 €/m²** (médiane, n=242)
 - **~700 k€ achète**: ~106 m²
 - **Terrain maison (indicatif)**: ~290–750 m² (médiane DVF **490 m²**)
+- **Terrain médian (DVF)**: 490 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~33 250 €/an
 - **Propriétaires**: **50 %** — le plus bas de la liste (forte part de locatif)
 - **Part de maisons**: **19,8 %** (80,2 % d'appartements)
@@ -22,6 +24,9 @@ Ville royale et capitale de fait de l'ouest francilien : château, forêt domani
 - **Couloir aérien**: faible
 - **Topographie**: **plateau** (centre et forêt) + **coteau marqué** vers la Seine — très variable selon le secteur
 - **Logement social**: significatif (ville-centre)
+- **Cambriolages (‰ logements)**: 6,20 ‰
+- **Violences (‰ hab.)**: 3,57 ‰
+- **Dégradations (‰ hab.)**: 6,23 ‰
 - **Contraintes patrimoniales**: 🔴 **fortes au centre** — **AC4 « Site patrimonial remarquable de Saint-Germain-en-Laye »** (avis ABF sur l'extérieur). La forêt domaniale est en **espace boisé classé (EBC)**. Périmètres à vérifier parcelle par parcelle.
 - **Quartiers (cibler / éviter)**: cibler les secteurs pavillonnaires périphériques **hors SPR** (côté Fourqueux, Bel-Air, lisière de forêt) ; le **centre historique est verrouillé** et essentiellement collectif.
 - **Caractère**: ville royale, forêt domaniale, urbaine et complète

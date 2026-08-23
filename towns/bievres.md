@@ -6,8 +6,10 @@ Village peu dense de l'Essonne, dans la vallée de la Bièvre, entre Jouy-en-Jos
 - **Population**: ~4 690 hab.
 - **Densité**: ~520 hab/km² (très peu dense)
 - **Prix maison (2025)**: ~5 000–5 400 €/m²
+- **Prix maison DVF (2023-25)**: **5 073 €/m²** (médiane, n=65)
 - **~700 k€ achète**: ~130 m²
 - **Terrain maison (indicatif)**: grandes parcelles (vallée), ~400–1 500 m²
+- **Terrain médian (DVF)**: 620 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~34 800 €/an
 - **Propriétaires**: 69 %
 - **Part de maisons**: 55 % (45 % d'appartements) — nettement plus "maison"
@@ -22,6 +24,9 @@ Village peu dense de l'Essonne, dans la vallée de la Bièvre, entre Jouy-en-Jos
 - **Couloir aérien**: ⚠ **base aérienne de Villacoublay à proximité** (hélicoptères / militaire) — nuisances possibles
 - **Topographie**: vallée de la Bièvre — fond plat + coteaux
 - **Logement social**: faible
+- **Cambriolages (‰ logements)**: 11,05 ‰
+- **Violences (‰ hab.)**: 0,00 ‰
+- **Dégradations (‰ hab.)**: 5,55 ‰
 - **Contraintes patrimoniales**: ponctuelles (village, secteurs classés vallée) — à vérifier par parcelle
 - **Quartiers (cibler / éviter)**: cibler le **centre-village** et le pavillonnaire de la **vallée** ; vigilance sur les abords **RN118 / voie ferrée** (bruit) et le **couloir de Villacoublay**. Homogène sinon.
 - **Caractère**: village de vallée verdoyant, peu dense, familial

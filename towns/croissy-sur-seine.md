@@ -6,8 +6,10 @@ Presqu'île résidentielle de la boucle de Seine, entre Chatou et Le Vésinet �
 - **Population**: ~11 010 hab. (**+13,5 % entre 2017 et 2023**)
 - **Densité**: ~3 200 hab/km²
 - **Prix maison (2025)**: **~6 630–7 040 €/m² — le plus cher de la liste** (DVF)
+- **Prix maison DVF (2023-25)**: **7 040 €/m²** (médiane, n=114)
 - **~700 k€ achète**: ~99 m²
 - **Terrain maison (indicatif)**: ~360–800 m² (médiane DVF **554 m²**)
+- **Terrain médian (DVF)**: 554 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~38 780 €/an
 - **Propriétaires**: 62 %
 - **Part de maisons**: **41 %** (59 % d'appartements) — l'un des meilleurs ratios de la liste
@@ -22,6 +24,9 @@ Presqu'île résidentielle de la boucle de Seine, entre Chatou et Le Vésinet �
 - **Couloir aérien**: faible
 - **Topographie**: **plate** (boucle de Seine) — conforme au filtre « terrain plat »
 - **Logement social**: modéré
+- **Cambriolages (‰ logements)**: 10,03 ‰
+- **Violences (‰ hab.)**: 0,00 ‰
+- **Dégradations (‰ hab.)**: 5,18 ‰
 - **Contraintes patrimoniales**: **légères** — une seule servitude relevée au centre (**AC1 « Hôpital »**, périmètre ponctuel d'abords MH). Pas de SPR ni de site inscrit détecté.
 - **Quartiers (cibler / éviter)**: cibler le **cœur de village** (hors périmètre d'abords) et les secteurs pavillonnaires vers Le Vésinet ; les bords de Seine sont les plus chers.
 - **Caractère**: presqu'île de Seine, esprit village, très résidentiel

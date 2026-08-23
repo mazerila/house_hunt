@@ -6,8 +6,10 @@ Commune familiale de l'Essonne, dans la vallée de la Bièvre, voisine de Bièvr
 - **Population**: ~10 830 hab.
 - **Densité**: ~2 836 hab/km²
 - **Prix maison (2025)**: **~4 200 €/m²** — le moins cher de la sélection
+- **Prix maison DVF (2023-25)**: **4 634 €/m²** (médiane, n=194)
 - **~700 k€ achète**: **~165 m²** — le meilleur pour la surface
 - **Terrain maison (indicatif)**: parcelles moyennes à grandes, ~300–800 m²
+- **Terrain médian (DVF)**: 450 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~31 800 €/an
 - **Propriétaires**: 71 %
 - **Part de maisons**: **63 %** (37 % d'appartements) — la plus "maison"
@@ -22,6 +24,9 @@ Commune familiale de l'Essonne, dans la vallée de la Bièvre, voisine de Bièvr
 - **Couloir aérien**: ⚠ **proximité de Villacoublay** — survols possibles
 - **Topographie**: vallée de la Bièvre / plateau — mixte
 - **Logement social**: modéré (quelques ensembles collectifs)
+- **Cambriolages (‰ logements)**: 9,94 ‰
+- **Violences (‰ hab.)**: 2,22 ‰
+- **Dégradations (‰ hab.)**: 6,37 ‰
 - **Contraintes patrimoniales**: ponctuelles — à vérifier par parcelle
 - **Quartiers (cibler / éviter)**: cibler le pavillonnaire **Gommonvilliers** et les coteaux résidentiels ; vigilance sur les abords **RN118** (bruit) et le **couloir de Villacoublay**. Quelques ensembles collectifs près de la gare.
 - **Caractère**: commune familiale, pavillonnaire, la plus abordable de la sélection

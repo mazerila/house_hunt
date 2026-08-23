@@ -6,8 +6,10 @@ Petit village très aisé et boisé des Yvelines, blotti dans la forêt de Marly
 - **Population**: ~5 100 hab.
 - **Densité**: ~900 hab/km² (peu dense)
 - **Prix maison (2025)**: ~5 420 €/m²
+- **Prix maison DVF (2023-25)**: **5 027 €/m²** (médiane, n=105)
 - **~700 k€ achète**: ~130 m²
 - **Terrain maison (indicatif)**: grandes parcelles (lisière forêt), ~400–1 000 m²
+- **Terrain médian (DVF)**: 901 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: **~68 400 €/an** — de très loin le plus élevé de la sélection
 - **Propriétaires**: 79 % (le plus élevé)
 - **Part de maisons**: 60 % (40 % d'appartements) — forte part de maisons
@@ -22,6 +24,9 @@ Petit village très aisé et boisé des Yvelines, blotti dans la forêt de Marly
 - **Couloir aérien**: faible à modéré — aérodrome de Saint-Cyr plus éloigné que Noisy/Bailly (à vérifier)
 - **Topographie**: cuvette boisée / coteaux — **vallonné**
 - **Logement social**: faible
+- **Cambriolages (‰ logements)**: 13,41 ‰
+- **Violences (‰ hab.)**: 0,00 ‰
+- **Dégradations (‰ hab.)**: 5,62 ‰
 - **Contraintes patrimoniales**: ponctuelles (forêt de Marly classée, abords) — à vérifier par parcelle
 - **Quartiers (cibler / éviter)**: cibler les **abords de la forêt de Marly** (belles maisons avec jardin) ; commune homogène, très résidentielle, pas de secteur "à éviter".
 - **Caractère**: village forestier prestigieux, très résidentiel et familial

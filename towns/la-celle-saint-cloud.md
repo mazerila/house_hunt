@@ -6,8 +6,10 @@ Commune plus grande (~20 500 hab.) des Yvelines, très boisée (forêts de Marly
 - **Population**: ~20 460 hab.
 - **Densité**: ~4 000 hab/km² (dense)
 - **Prix maison (2025)**: ~6 150 €/m²
+- **Prix maison DVF (2023-25)**: **6 114 €/m²** (médiane, n=147)
 - **~700 k€ achète**: ~115 m²
 - **Terrain maison (indicatif)**: pavillon ~250–600 m² (secteurs maisons)
+- **Terrain médian (DVF)**: 537 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: ~29 500 €/an — le plus bas (commune plus mixte)
 - **Propriétaires**: 54 % (le plus bas — beaucoup de collectif/locatif)
 - **Part de maisons**: 25 % (75 % d'appartements) — peu de maisons
@@ -22,6 +24,9 @@ Commune plus grande (~20 500 hab.) des Yvelines, très boisée (forêts de Marly
 - **Couloir aérien**: faible — éloigné des aérodromes de Saint-Cyr / Toussus
 - **Topographie**: coteaux boisés — **vallonné**
 - **Logement social**: **notable** (Beauregard / Élysée 2 ; +71 logements en cours) — le plus élevé des communes étudiées
+- **Cambriolages (‰ logements)**: 11,50 ‰
+- **Violences (‰ hab.)**: 2,69 ‰
+- **Dégradations (‰ hab.)**: 7,48 ‰
 - **Contraintes patrimoniales**: ponctuelles (château, forêts) — à vérifier par parcelle
 - **Quartiers (cibler / éviter)**: cibler les secteurs villas **Les Gressets, Les Sablons, La Feuillaume, le Bourg, la Châtaigneraie** ; éviter (pour une maison) les grands ensembles **Beauregard** et **Élysée 1 & 2 / La Jonchère** (collectif / social).
 - **Caractère**: ville résidentielle boisée, socialement plus mixte

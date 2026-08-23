@@ -6,8 +6,10 @@ Commune très aisée des Hauts-de-Seine, entre la forêt de Fausses-Reposes et c
 - **Population**: ~8 430 hab.
 - **Densité**: ~2 772 hab/km²
 - **Prix maison (2025)**: **~7 600 €/m²** — parmi les plus chers
+- **Prix maison DVF (2023-25)**: **7 456 €/m²** (médiane, n=93)
 - **~700 k€ achète**: ~92 m²
 - **Terrain maison (indicatif)**: parcelles moyennes (tissu dense), ~300–700 m²
+- **Terrain médian (DVF)**: 800 m² (médiane des ventes)
 - **Revenu médian (INSEE)**: **~41 300 €/an** — le plus élevé
 - **Propriétaires**: 73 %
 - **Part de maisons**: 32 % (68 % d'appartements)
@@ -22,6 +24,9 @@ Commune très aisée des Hauts-de-Seine, entre la forêt de Fausses-Reposes et c
 - **Couloir aérien**: faible — éloigné des aérodromes de Saint-Cyr / Toussus
 - **Topographie**: coteaux boisés — **vallonné**
 - **Logement social**: ~7,5 % HLM (faible)
+- **Cambriolages (‰ logements)**: 8,56 ‰
+- **Violences (‰ hab.)**: 0,00 ‰
+- **Dégradations (‰ hab.)**: 10,67 ‰
 - **Contraintes patrimoniales**: ponctuelles (proximité forêts / domaines) — à vérifier par parcelle
 - **Quartiers (cibler / éviter)**: cibler les **abords de la forêt de Fausses-Reposes / Marly** (maisons de standing) ; commune homogène et huppée, pas de secteur "à éviter".
 - **Caractère**: résidentiel haut de gamme, très boisé, calme
