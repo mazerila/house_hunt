@@ -1361,6 +1361,29 @@
     if (typeof phData !== "undefined" && phData) renderPriceHistory();
   });
 
+  // ---- remembered view state --------------------------------------------
+  // Filters and sorts survive a reload: re-picking them on every visit was the
+  // single most repeated gesture in the app. Kept in localStorage (per browser,
+  // never on the server) and defensive on read — a stale or hand-edited value
+  // must never be able to leave a list stuck showing nothing.
+  function prefsGet(key, fallback) {
+    var empty = fallback === undefined ? {} : fallback;
+    try {
+      var raw = localStorage.getItem(key);
+      return raw === null ? empty : (JSON.parse(raw) || empty);
+    } catch (e) { return empty; }
+  }
+  function prefsSet(key, obj) {
+    try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {}
+  }
+  // assign to a <select> only if the option exists, so a renamed option or a
+  // commune that no longer has listings silently falls back to "all"
+  function setSelectIfValid(sel, value) {
+    if (!sel || !value) return;
+    var ok = Array.prototype.some.call(sel.options, function (o) { return o.value === value; });
+    if (ok) sel.value = value;
+  }
+
   var state = { listings: [], filtered: [], sortKey: "updated", sortDir: "desc", sortKey2: null, sortDir2: "asc", currentId: null, commentDirty: false, columns: [], allColumns: [], works: [], links: [], visits: [], townsAll: [], townHidden: null, townSort: null, showArchived: false, critPart: 0 };
 
   var STATUS_LABELS = {
@@ -1405,6 +1428,7 @@
     return fetchJSON("/api/listings").then(function (res) {
       state.listings = res.data.listings || [];
       populateCommuneFilter();
+      if (!state.viewRestored) { state.viewRestored = true; restoreListingsView(); }
       applyFilters();
     });
   }
@@ -1460,7 +1484,37 @@
     applyFilters();
   }
 
+  var LISTINGS_PREFS = "hh-listings-view";
+
+  function saveListingsView() {
+    prefsSet(LISTINGS_PREFS, {
+      q: $("#f-search").value, status: $("#f-status").value, commune: $("#f-commune").value,
+      flags: $("#f-flags").value, rating: $("#f-rating").value,
+      sortKey: state.sortKey, sortDir: state.sortDir,
+      sortKey2: state.sortKey2, sortDir2: state.sortDir2
+    });
+  }
+
+  // Called after the listings (and so the commune options) exist.
+  function restoreListingsView() {
+    var p = prefsGet(LISTINGS_PREFS);
+    if (p.q) $("#f-search").value = p.q;
+    setSelectIfValid($("#f-status"), p.status);
+    setSelectIfValid($("#f-commune"), p.commune);
+    setSelectIfValid($("#f-flags"), p.flags);
+    setSelectIfValid($("#f-rating"), p.rating);
+    if (p.sortKey && CATALOG_BY_KEY[p.sortKey]) {
+      state.sortKey = p.sortKey;
+      state.sortDir = p.sortDir === "asc" ? "asc" : "desc";
+    }
+    if (p.sortKey2 && CATALOG_BY_KEY[p.sortKey2]) {
+      state.sortKey2 = p.sortKey2;
+      state.sortDir2 = p.sortDir2 === "desc" ? "desc" : "asc";
+    }
+  }
+
   function applyFilters() {
+    saveListingsView();
     var q = $("#f-search").value.trim().toLowerCase();
     var status = $("#f-status").value;
     var commune = $("#f-commune").value;
@@ -1740,6 +1794,7 @@
           state.sortKey = key;
           state.sortDir = NUMERIC_KEYS[key] ? "desc" : "asc";
         }
+        saveListingsView();
         sortFiltered();
         render();
       });
@@ -2911,7 +2966,7 @@
 
   // the communes on screen, in the user's own order, capped at the palette
   function phSeries() {
-    if (!phData || !state.townsAll.length) return [];
+    if (!phData || !state.townsAll.length) return { shown: [], total: 0 };
     var cols = phColors();
     var out = [];
     state.townsAll.forEach(function (t) {
@@ -2949,7 +3004,7 @@
     var section = $("#ph");
     if (!phData) { section.hidden = true; return; }
     var res = phSeries();
-    var series = res.shown || [];
+    var series = res.shown;
     if (series.length < 1) { section.hidden = true; return; }
     section.hidden = false;
 
@@ -2995,7 +3050,7 @@
       }
     });
     svg.push('<line class="ph-cross" id="ph-cross" x1="0" y1="' + mt + '" x2="0" y2="' + (mt + ph) + '" style="display:none"/>');
-    years.forEach(function (y, i) {
+    years.forEach(function (y) {
       var w = pw / (years.length - 1);
       svg.push('<rect class="ph-hit" data-year="' + y + '" x="' + (X(y) - w / 2) + '" y="' + mt
                + '" width="' + w + '" height="' + ph + '"/>');
@@ -3043,7 +3098,7 @@
     plot.appendChild(tip);
     var cross = plot.querySelector("#ph-cross");
     var thin = (phData && phData.thin_below) || 12;
-    function show(year, clientX) {
+    function show(year) {
       var rows = series.map(function (s) {
         var p = s.pts.filter(function (q) { return q.year === year; })[0];
         return p ? { s: s, p: p } : null;
@@ -3094,8 +3149,21 @@
   var selectedDraft = null;
   // Transient, like the sort on the Villes ciblées tab: never saved, so a
   // reload comes back to the natural B-code order.
+  var DRAFTS_PREFS = "hh-drafts-view";
   var draftSort = { key: "code", dir: "asc" };
   var draftSort2 = null;   // the column you were sorting by, kept as tie-breaker
+
+  function saveDraftsView() {
+    prefsSet(DRAFTS_PREFS, { filter: $("#draft-filter").value, sort: draftSort, sort2: draftSort2 });
+  }
+
+  function restoreDraftsView() {
+    var p = prefsGet(DRAFTS_PREFS);
+    setSelectIfValid($("#draft-filter"), p.filter);
+    var known = function (x) { return x && x.key && document.querySelector('#drafts-table th[data-sort="' + x.key + '"]'); };
+    if (known(p.sort)) draftSort = { key: p.sort.key, dir: p.sort.dir === "desc" ? "desc" : "asc" };
+    if (known(p.sort2)) draftSort2 = { key: p.sort2.key, dir: p.sort2.dir === "desc" ? "desc" : "asc" };
+  }
   var DRAFT_NUM_SORT = { price: 1, surface: 1, land_surface: 1, price_per_m2: 1 };
   // Statut sorts along the workflow, not the alphabet.
   var DRAFT_STATUS_RANK = { attente: 0, visite: 1, verifie: 2, ecarte: 3, promu: 4 };
@@ -3131,10 +3199,11 @@
   function setDraftSort(key) {
     if (draftSort.key === key) {
       draftSort = { key: key, dir: draftSort.dir === "asc" ? "desc" : "asc" };
-      return;
+    } else {
+      draftSort2 = draftSort;               // demoted, not discarded
+      draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
     }
-    draftSort2 = draftSort;                 // demoted, not discarded
-    draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
+    saveDraftsView();
   }
 
   function cmpCode(a, b) { return (a.code || "").localeCompare(b.code || ""); }
@@ -3504,7 +3573,7 @@
     renderDrafts();
   });
 
-  $("#draft-filter").addEventListener("change", applyDraftFilter);
+  $("#draft-filter").addEventListener("change", function () { saveDraftsView(); applyDraftFilter(); });
   $("#draft-add").addEventListener("click", function () {
     fetchJSON("/api/drafts", {
       method: "POST",
@@ -3525,6 +3594,7 @@
   });
 
   // Keep the tab badge honest even if the user never opens the tab.
+  restoreDraftsView();
   fetchJSON("/api/drafts").then(function (res) {
     if (!res.ok) return;
     drafts = (res.data && res.data.drafts) || [];
@@ -3540,6 +3610,11 @@
   // { <itemId>: "ok" | "ko" }. Absent = not looked at yet.
   var critLoaded = false;
   var critData = null;
+  var CRIT_PREFS = "hh-criteria-view";
+
+  function saveCritView() {
+    prefsSet(CRIT_PREFS, { part: state.critPart, filter: $("#crit-filter").value, listing: $("#crit-listing").value });
+  }
 
   // The three halves of the check-list are told apart by their heading, so a new
   // part in criteria.md only needs a title the regex recognises.
@@ -3560,6 +3635,10 @@
       critData = res.data || { parts: [] };
       $("#crit-intro").innerHTML = renderMarkdown(critData.intro || "");
       buildCritListingPicker();
+      var p = prefsGet(CRIT_PREFS);
+      setSelectIfValid($("#crit-listing"), p.listing);
+      setSelectIfValid($("#crit-filter"), p.filter);
+      if (typeof p.part === "number" && p.part >= 0 && p.part < critData.parts.length) state.critPart = p.part;
       renderCriteria();
     }, function () {
       $("#crit-body").innerHTML = '<div class="empty" style="display:flex">Chargement de criteria.md impossible.</div>';
@@ -3638,6 +3717,7 @@
       tab.title = CRIT_PART_HINT[kind];
       tab.addEventListener("click", function () {
         state.critPart = idx;
+        saveCritView();
         renderCriteria();
         $("#crit-parts").scrollIntoView({ block: "nearest" });
       });
@@ -3718,8 +3798,8 @@
     $("#crit-reset").style.display = hasListing ? "" : "none";
   }
 
-  $("#crit-listing").addEventListener("change", renderCriteria);
-  $("#crit-filter").addEventListener("change", renderCriteria);
+  $("#crit-listing").addEventListener("change", function () { saveCritView(); renderCriteria(); });
+  $("#crit-filter").addEventListener("change", function () { saveCritView(); renderCriteria(); });
   $("#crit-reset").addEventListener("click", function () {
     var l = critCurrent();
     if (!l) return;
@@ -3756,12 +3836,11 @@
   // Which towns the user has hidden from the comparison (persisted).
   function loadTownHidden() {
     if (state.townHidden) return;
-    var arr = [];
-    try { arr = JSON.parse(localStorage.getItem("hh-towns-hidden") || "[]"); } catch (e) {}
+    var arr = prefsGet("hh-towns-hidden", []);
     state.townHidden = new Set(Array.isArray(arr) ? arr : []);
   }
   function saveTownHidden() {
-    try { localStorage.setItem("hh-towns-hidden", JSON.stringify(Array.from(state.townHidden))); } catch (e) {}
+    prefsSet("hh-towns-hidden", Array.from(state.townHidden));
   }
 
   // Persist the shared drag order to the server (town ids in display order).
@@ -3797,10 +3876,16 @@
   // shared saved order (persisted via saveTownOrder, same as a drag).
   // The click-sort is transient (session-only): it is never persisted, so a refresh
   // / reopen always shows the personal order, not the last sort. Kept in memory only.
+  // Was deliberately transient (a reload returned to the personal order); now
+  // remembered like the other lists. "↩ Mon ordre" still clears it in one click.
   function loadTownSort() {
-    if (!state.townSort) state.townSort = { key: null, dir: 1 };
+    if (state.townSort) return;
+    var p = prefsGet("hh-towns-sort");
+    state.townSort = { key: p.key || null, dir: p.dir === -1 ? -1 : 1 };
   }
-  function saveTownSort() { /* intentionally not persisted */ }
+  function saveTownSort() {
+    prefsSet("hh-towns-sort", { key: state.townSort && state.townSort.key, dir: state.townSort && state.townSort.dir });
+  }
 
   // Turn a free-text repère value into something comparable. Handles star ratings
   // (count of ★), French-formatted numbers ("~5 500 €/m²" → 5500, "69 %" → 69,
