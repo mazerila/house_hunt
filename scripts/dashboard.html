@@ -156,6 +156,7 @@
   tbody tr:active { filter: brightness(.96); }
   .num { text-align: right; font-variant-numeric: tabular-nums; }
   .sort-2nd { opacity: .45; font-size: 9px; }
+  .sort-3rd { opacity: .28; font-size: 9px; }
   /* red-flag screen badges (computed by scripts/enrich.py) */
   .flag-pill {
     display: inline-block; min-width: 20px; padding: 1px 6px; margin-right: 3px;
@@ -182,14 +183,25 @@
      frame on hover/focus, so a full row reads as text until you touch it. */
   .drafts-main { padding: 16px 20px 60px; }
   .drafts-bar { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; flex-wrap: wrap; }
+  /* status filter: chips, not a single-choice select — several statuses read
+     together ("à vérifier + visite prévue") is the normal way to work the list */
+  .drafts-filter { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .drafts-filter .st-chip { padding: 4px 10px; font-size: 12.5px; }
+  .drafts-filter .st-chip .chip-box { width: 13px; height: 13px; font-size: 9px; }
+  .drafts-filter-hint { color: var(--text-dim); font-size: 12px; font-style: italic; }
   .drafts-bar .spacer { flex: 1; }
   .drafts-progress { color: var(--text-dim); font-size: 12.5px; }
-  .drafts-table-wrap { overflow-x: auto; }
+  /* Bounded scroll box, like the Annonces grid: the box is sized to the space
+     under the sticky tab bar, so the header can pin to its top (sticky against
+     the page instead only works when nothing above is an overflow container —
+     and this wrap has to scroll sideways). */
+  .drafts-table-wrap {
+    overflow: auto;
+    max-height: calc(100vh - var(--topbar-h, 96px) - 168px); min-height: 240px;
+  }
   .drafts-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
-  /* Not sticky: the wrap is an overflow-x scroll container, and a sticky header
-     inside it slides down over the first rows instead of pinning. The page
-     scrolls as one here, like the Critères tab. */
   .drafts-table th {
+    position: sticky; top: 0; z-index: 5;
     text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em;
     color: var(--text-dim); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border);
     background: var(--bg);
@@ -197,22 +209,48 @@
   .drafts-table td { padding: 1px 3px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .drafts-table tr.st-ecarte { opacity: .5; }
   .drafts-table tr.st-promu td.c-code { font-weight: 700; }
+  /* row number: smaller and quieter than the data — it is a landmark, not a field */
+  .drafts-table .c-rank {
+    width: 34px; text-align: right; padding-right: 7px; white-space: nowrap;
+    font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums;
+  }
+  .drafts-table th.c-rank { text-align: right; padding-right: 7px; cursor: default; }
+  .drafts-table tr.sel > td.c-rank { color: var(--text); }
   .drafts-table .c-code { color: var(--text-dim); font-variant-numeric: tabular-nums; padding-left: 8px; white-space: nowrap; }
   .drafts-table .c-num { text-align: right; }
+  /* Priorité: the level is read at a glance down the column, so it carries a
+     colour rather than a shape — P1 warm, P3 quiet, untriaged nearly invisible. */
+  .drafts-table .c-prio { width: 68px; }
+  .drafts-table .c-prio .dcell { min-width: 0; padding: 5px 2px 5px 5px; font-weight: 700; }
+  select.dcell.prio-none { color: var(--text-dim); font-weight: 400; opacity: .55; }
+  select.dcell.prio-p1 { color: #b91c1c; }
+  select.dcell.prio-p2 { color: #b45309; }
+  select.dcell.prio-p3 { color: var(--text-dim); font-weight: 600; }
+  html[data-theme="dark"] select.dcell.prio-p1 { color: #f87171; }
+  html[data-theme="dark"] select.dcell.prio-p2 { color: #fbbf24; }
   .drafts-table .c-act { width: 62px; white-space: nowrap; }
-  .drafts-table .c-visit .dcell { min-width: 158px; }
+  .drafts-table .c-visit { width: 212px; }
+  .drafts-table .c-visit .dcell { min-width: 0; }
   .drafts-table .c-area { width: 76px; }
   .drafts-table .c-area .dcell { min-width: 0; }
   /* wide enough for the longest label ("Promu en dossier") plus the chevron */
   .drafts-table .c-status { width: 152px; }
   .drafts-table .c-status .dcell { min-width: 0; }
   .drafts-table .c-m2 { color: var(--text-dim); font-variant-numeric: tabular-nums; padding-right: 9px; }
+  /* Visite = [date native][heure][:][minutes] on one line */
+  .dcell-when { display: flex; align-items: center; gap: 2px; }
+  /* both halves shrink rather than spill into the next column when the Visite
+     column is narrow (a saved drag width, a small window) */
+  .dcell-when .dcell-date { flex: 1 1 auto; min-width: 0; }
+  .dcell-when .dcell-time { flex: 0 1 auto; min-width: 0; width: 88px; padding: 5px 0 5px 4px; }
   /* the native picker icon is dim until the row is hovered, so an empty slot
      reads as empty rather than as a control */
-  .dcell[type="datetime-local"]::-webkit-calendar-picker-indicator { opacity: .35; cursor: pointer; }
-  .drafts-table tr:hover .dcell[type="datetime-local"]::-webkit-calendar-picker-indicator,
-  .dcell[type="datetime-local"]:focus::-webkit-calendar-picker-indicator { opacity: .8; }
-  .dcell[type="datetime-local"].empty:not(:focus) { color: var(--text-dim); opacity: .45; }
+  .dcell[type="date"]::-webkit-calendar-picker-indicator { opacity: .35; cursor: pointer; }
+  .drafts-table tr:hover .dcell[type="date"]::-webkit-calendar-picker-indicator,
+  .dcell[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: .8; }
+  /* NB: not `.empty` — that class is the global "aucun résultat" placeholder
+     (flex column, 60px padding) and it would stack these three controls. */
+  .dcell-when.no-visit .dcell:not(:focus) { color: var(--text-dim); opacity: .45; }
   .dcell {
     width: 100%; background: transparent; border: 1px solid transparent; border-radius: 5px;
     color: var(--text); font: inherit; padding: 6px 6px; min-width: 60px;
@@ -242,7 +280,28 @@
   .drafts-table th[data-sort]:hover { color: var(--text); }
   .drafts-table th.sorted { color: var(--accent); }
   .drafts-table th.sorted-2nd { color: var(--text); }
+  .drafts-table th.sorted-3rd { color: var(--text-dim); }
   .drafts-table th .caret { font-size: 9px; margin-left: 3px; vertical-align: 1px; }
+  /* drag the right edge of a header to set that column's width. The first drag
+     freezes every column at its measured width and switches the table to a
+     fixed layout (widths only hold there), which is why the whole set is seeded
+     at once — an undeclared column in a fixed layout collapses to zero. */
+  /* the sticky th is already a positioned containing block for the handle */
+  /* the grab zone stays INSIDE its own header cell: sticky headers all share a
+     z-index, so anything overhanging the edge is painted over by the next one
+     and can't be grabbed. */
+  .col-resizer {
+    position: absolute; top: 0; right: 0; width: 9px; height: 100%;
+    cursor: col-resize; user-select: none; touch-action: none; z-index: 1;
+  }
+  .col-resizer::after {
+    content: ""; position: absolute; right: 0; top: 5px; bottom: 5px; width: 1px;
+    background: transparent;
+  }
+  .drafts-table th:hover .col-resizer::after { background: var(--border); }
+  .col-resizer:hover::after, .col-resizer.dragging::after { background: var(--accent); width: 2px; }
+  body.col-resizing { cursor: col-resize; user-select: none; }
+  .drafts-table.has-colw { table-layout: fixed; width: var(--dt-w); min-width: 0; }
   .dnote {
     width: 100%; box-sizing: border-box; resize: vertical; min-height: 46px;
     background: var(--input-bg); color: var(--text); font: inherit; line-height: 1.5;
@@ -872,15 +931,22 @@
     .drafts-main { padding: 12px 12px 64px; }
     .drafts-bar { gap: 8px; }
     .drafts-bar select { flex: 1 1 100%; min-width: 0; }
-    .drafts-table-wrap { overflow: visible; }
+    .drafts-table-wrap { overflow: visible; max-height: none; min-height: 0; }
     .drafts-table { min-width: 0; }
+    /* cards ignore the table model, so the frozen widths must be dropped too */
+    .drafts-table.has-colw { width: 100%; table-layout: auto; }
+    .col-resizer { display: none; }
     .drafts-table td { text-align: left; }
     .drafts-table .dcell { text-align: left; flex: 1 1 auto; min-width: 0; padding: 4px 6px; }
     .drafts-table .dcell.num { text-align: left; }
     /* the derived €/m² is a span, not an input — keep it under its label too */
     .drafts-table .dcell-ro { flex: 1 1 auto; text-align: left; padding-left: 7px; }
-    .drafts-table .c-area, .drafts-table .c-status { width: auto; }
-    .drafts-table .c-visit .dcell { min-width: 0; }
+    .drafts-table .c-rank { display: none; }
+    .drafts-table .c-area, .drafts-table .c-status, .drafts-table .c-prio { width: auto; }
+    .drafts-table .c-prio .dcell { flex: 0 0 auto; }
+    .drafts-table .c-visit { width: auto; }
+    .drafts-table .c-visit .dcell-when { flex: 1 1 auto; min-width: 0; }
+    .drafts-table .c-visit .dcell-date { min-width: 0; }
     .drafts-table .dcell-url { flex: 1 1 auto; min-width: 0; }
     /* code and the row actions share the card's title line */
     .drafts-table td.c-code {
@@ -930,22 +996,26 @@
 
     /* the drafts grid keeps its own column widths and inline inputs */
     html[data-wide-tables] .mobile-only { display: none; }
-    html[data-wide-tables] .drafts-table-wrap { overflow-x: auto; }
+    html[data-wide-tables] .drafts-table-wrap { overflow-x: auto; overflow-y: visible; max-height: none; }
     /* `auto` layout inside a 374 px scrollport hands the whole surplus to the
        first column (Code ended up 716 px wide). Fixed layout plus the explicit
        widths below make the grid resolve the same way it does on a desktop. */
     /* Fixed layout reads the column widths off the header row, and shares only
        what is left over — so EVERY column needs one here, or the undeclared
        ones collapse to zero. The min-width is their exact sum. */
-    html[data-wide-tables] .drafts-table { min-width: 1238px; table-layout: fixed; }
+    html[data-wide-tables] .drafts-table { min-width: 1380px; table-layout: fixed; }
+    html[data-wide-tables] .drafts-table.has-colw { min-width: 0; width: var(--dt-w); }
+    html[data-wide-tables] .col-resizer { display: block; }
+    html[data-wide-tables] .drafts-table .c-rank { display: table-cell; width: 34px; }
     html[data-wide-tables] .drafts-table .c-code { width: 54px; }
+    html[data-wide-tables] .drafts-table .c-prio { width: 68px; }
     html[data-wide-tables] .drafts-table .c-url { width: 140px; }
     html[data-wide-tables] .drafts-table .c-price { width: 100px; }
     html[data-wide-tables] .drafts-table .c-city { width: 116px; }
     html[data-wide-tables] .drafts-table .c-m2 { width: 62px; }
     html[data-wide-tables] .drafts-table .c-contact { width: 118px; }
     html[data-wide-tables] .drafts-table .c-agency { width: 110px; }
-    html[data-wide-tables] .drafts-table .c-visit { width: 172px; }
+    html[data-wide-tables] .drafts-table .c-visit { width: 212px; }
     html[data-wide-tables] .drafts-table .c-act { width: 62px; }
     html[data-wide-tables] .drafts-table td { padding: 1px 3px; }
     html[data-wide-tables] .drafts-table .c-num { text-align: right; }
@@ -955,7 +1025,8 @@
     html[data-wide-tables] .drafts-table .c-area { width: 76px; }
     html[data-wide-tables] .drafts-table .c-area .dcell { min-width: 0; }
     html[data-wide-tables] .drafts-table .c-status { width: 152px; }
-    html[data-wide-tables] .drafts-table .c-visit .dcell { min-width: 158px; }
+    html[data-wide-tables] .drafts-table .c-visit .dcell { min-width: 0; }
+    html[data-wide-tables] .drafts-table .c-visit .dcell-date { min-width: 0; }
     html[data-wide-tables] .drafts-table td.c-code {
       display: table-cell; font-weight: 400; font-size: 13px;
       color: var(--text-dim); padding: 1px 3px 1px 8px;
@@ -1079,6 +1150,8 @@
     <div class="drafts-bar">
       <select id="draft-sort" class="mobile-only" aria-label="Trier les brouillons">
         <option value="code">Trier : code</option>
+        <option value="status">Trier : statut</option>
+        <option value="priority">Trier : priorité</option>
         <option value="price">Trier : prix</option>
         <option value="price_per_m2">Trier : €/m²</option>
         <option value="city">Trier : ville</option>
@@ -1086,35 +1159,36 @@
         <option value="land_surface">Trier : terrain</option>
         <option value="visit_at">Trier : visite</option>
         <option value="agency">Trier : agence</option>
-        <option value="status">Trier : statut</option>
       </select>
-      <select id="draft-filter">
-        <option value="">Tous les statuts</option>
-        <option value="attente">◷ À vérifier</option>
-        <option value="visite">◉ Visite prévue</option>
-        <option value="verifie">✓ Vérifié</option>
-        <option value="ecarte">✗ Écarté</option>
-        <option value="promu">→ Promu en dossier</option>
-      </select>
+      <div class="drafts-filter" id="draft-filter" role="group" aria-label="Filtrer par statut"></div>
       <div class="spacer"></div>
       <span class="drafts-progress" id="drafts-progress"></span>
     </div>
     <div class="drafts-table-wrap">
       <table class="drafts-table" id="drafts-table">
+        <colgroup id="drafts-colgroup">
+          <col data-col="rank"><col data-col="code"><col data-col="status"><col data-col="priority">
+          <col data-col="url"><col data-col="price"><col data-col="city">
+          <col data-col="surface"><col data-col="land_surface"><col data-col="price_per_m2">
+          <col data-col="contact"><col data-col="agency"><col data-col="visit_at">
+          <col data-col="act">
+        </colgroup>
         <thead>
           <tr>
-            <th class="c-code" data-sort="code">Code</th>
-            <th class="c-url" data-sort="url">Annonce</th>
-            <th class="c-num c-price" data-sort="price">Prix</th>
-            <th class="c-city" data-sort="city">Ville</th>
-            <th class="c-num c-area" data-sort="surface">Surface</th>
-            <th class="c-num c-area" data-sort="land_surface">Terrain</th>
-            <th class="c-num c-m2" data-sort="price_per_m2">€/m²</th>
-            <th class="c-contact" data-sort="contact">Téléphone</th>
-            <th class="c-agency" data-sort="agency">Agence</th>
-            <th class="c-visit" data-sort="visit_at">Visite</th>
-            <th class="c-status" data-sort="status">Statut</th>
-            <th class="c-act"></th>
+            <th class="c-rank" data-col="rank" title="Numéro de ligne — la position affichée, pas une donnée : elle se renumérote à chaque tri et à chaque filtre">#</th>
+            <th class="c-code" data-col="code" data-sort="code">Code</th>
+            <th class="c-status" data-col="status" data-sort="status">Statut</th>
+            <th class="c-prio" data-col="priority" data-sort="priority" title="Priorité d'appel / de visite">Prio</th>
+            <th class="c-url" data-col="url" data-sort="url">Annonce</th>
+            <th class="c-num c-price" data-col="price" data-sort="price">Prix</th>
+            <th class="c-city" data-col="city" data-sort="city">Ville</th>
+            <th class="c-num c-area" data-col="surface" data-sort="surface">Surface</th>
+            <th class="c-num c-area" data-col="land_surface" data-sort="land_surface">Terrain</th>
+            <th class="c-num c-m2" data-col="price_per_m2" data-sort="price_per_m2">€/m²</th>
+            <th class="c-contact" data-col="contact" data-sort="contact">Téléphone</th>
+            <th class="c-agency" data-col="agency" data-sort="agency">Agence</th>
+            <th class="c-visit" data-col="visit_at" data-sort="visit_at">Visite</th>
+            <th class="c-act" data-col="act"></th>
           </tr>
         </thead>
         <tbody id="drafts-body"></tbody>
@@ -3147,29 +3221,153 @@
   // once turned a 5-row list into a wall of text. A row selects itself when it
   // is clicked or when any of its cells takes focus.
   var selectedDraft = null;
-  // Transient, like the sort on the Villes ciblées tab: never saved, so a
-  // reload comes back to the natural B-code order.
   var DRAFTS_PREFS = "hh-drafts-view";
-  var draftSort = { key: "code", dir: "asc" };
-  var draftSort2 = null;   // the column you were sorting by, kept as tie-breaker
+  // The last three columns you clicked, primary first: clicking a new one
+  // demotes the others instead of discarding them, so "prix, puis ville, puis
+  // statut" keeps all three orderings nested.
+  var DRAFT_SORT_DEPTH = 3;
+  var draftSorts = [{ key: "code", dir: "asc" }];
+  var draftColW = {};   // {colonne: px} — widths the user dragged, empty until they do
+
+  // A set, not one value: "montre-moi les à vérifier ET les visites prévues" is
+  // the normal way to read this list. Empty = no filter, everything shows.
+  var draftStatusFilter = [];
+  // A brand-new row is born "à vérifier". With that status filtered out it was
+  // created, focused and invisible — the button looked broken. The new row is
+  // shown whatever the filter says, until the filter is touched again.
+  var draftForceShow = null;
 
   function saveDraftsView() {
-    prefsSet(DRAFTS_PREFS, { filter: $("#draft-filter").value, sort: draftSort, sort2: draftSort2 });
+    prefsSet(DRAFTS_PREFS, {
+      statuses: draftStatusFilter, sorts: draftSorts, colw: draftColW
+    });
   }
 
   function restoreDraftsView() {
     var p = prefsGet(DRAFTS_PREFS);
-    setSelectIfValid($("#draft-filter"), p.filter);
+    // `statuses` is the current shape; `filter` is the single value the
+    // one-choice select used to write, and still reads back as a set of one.
+    var saved = Array.isArray(p.statuses) ? p.statuses : (p.filter ? [p.filter] : []);
+    draftStatusFilter = saved.filter(function (k) { return DRAFT_STATUS_LABELS[k]; });
+    renderStatusChips();
     var known = function (x) { return x && x.key && document.querySelector('#drafts-table th[data-sort="' + x.key + '"]'); };
-    if (known(p.sort)) draftSort = { key: p.sort.key, dir: p.sort.dir === "desc" ? "desc" : "asc" };
-    if (known(p.sort2)) draftSort2 = { key: p.sort2.key, dir: p.sort2.dir === "desc" ? "desc" : "asc" };
+    var clean = function (x) { return { key: x.key, dir: x.dir === "desc" ? "desc" : "asc" }; };
+    // `sorts` is the current shape; `sort`/`sort2` is what the two-level
+    // version wrote, and still reads back fine.
+    var saved = Array.isArray(p.sorts) ? p.sorts : [p.sort, p.sort2];
+    var seen = {}, list = [];
+    saved.forEach(function (x) {
+      if (!known(x) || seen[x.key]) return;
+      seen[x.key] = 1;
+      list.push(clean(x));
+    });
+    if (list.length) draftSorts = list.slice(0, DRAFT_SORT_DEPTH);
+    if (p.colw && typeof p.colw === "object") {
+      draftCols().forEach(function (c) {
+        var w = p.colw[c.getAttribute("data-col")];
+        if (typeof w === "number" && w >= DRAFT_COL_MIN) draftColW[c.getAttribute("data-col")] = w;
+      });
+      applyDraftColW();
+    }
   }
+
+  // ---- column widths: drag a header's right edge ----
+  var DRAFT_COL_MIN = 44;
+  var colResizeJustDone = false;   // a drag ends with a click on the th; don't let it sort
+
+  function draftCols() {
+    return Array.prototype.slice.call(document.querySelectorAll("#drafts-colgroup col"));
+  }
+
+  // Widths only hold under `table-layout: fixed`, and there an undeclared
+  // column collapses to zero — so every column is written, or none is.
+  function applyDraftColW() {
+    var table = $("#drafts-table"), cols = draftCols();
+    var full = cols.every(function (c) { return draftColW[c.getAttribute("data-col")]; });
+    if (!full) {
+      cols.forEach(function (c) { c.style.width = ""; });
+      table.classList.remove("has-colw");
+      table.style.removeProperty("--dt-w");
+      return;
+    }
+    var total = 0;
+    cols.forEach(function (c) {
+      var w = draftColW[c.getAttribute("data-col")];
+      c.style.width = w + "px";
+      total += w;
+    });
+    table.style.setProperty("--dt-w", total + "px");
+    table.classList.add("has-colw");
+  }
+
+  // Freeze the auto layout as it looks right now, so the first drag moves one
+  // edge instead of reflowing the whole grid.
+  function seedDraftColW() {
+    if (draftCols().every(function (c) { return draftColW[c.getAttribute("data-col")]; })) return;
+    document.querySelectorAll("#drafts-table thead th").forEach(function (th) {
+      var key = th.getAttribute("data-col");
+      if (key && !draftColW[key]) draftColW[key] = Math.max(DRAFT_COL_MIN, Math.round(th.getBoundingClientRect().width));
+    });
+    applyDraftColW();
+  }
+
+  function startColResize(ev, th) {
+    if (ev.button) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    var key = th.getAttribute("data-col"), startX = ev.clientX;
+    var startW = Math.round(th.getBoundingClientRect().width);
+    var handle = ev.currentTarget, moved = false;
+    handle.classList.add("dragging");
+    document.body.classList.add("col-resizing");
+    function move(e) {
+      if (e.clientX === startX && !moved) return;   // a click on the edge is not a resize
+      if (!moved) { moved = true; seedDraftColW(); }
+      draftColW[key] = Math.max(DRAFT_COL_MIN, Math.round(startW + (e.clientX - startX)));
+      applyDraftColW();
+    }
+    function up() {
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", up);
+      document.removeEventListener("pointercancel", up);
+      handle.classList.remove("dragging");
+      document.body.classList.remove("col-resizing");
+      if (!moved) return;
+      colResizeJustDone = true;   // the drag ends with a click; it must not sort
+      setTimeout(function () { colResizeJustDone = false; }, 0);
+      saveDraftsView();
+    }
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", up);
+    document.addEventListener("pointercancel", up);
+  }
+
+  function resetDraftColW() {
+    draftColW = {};
+    applyDraftColW();
+    saveDraftsView();
+  }
+
+  function mountColResizers() {
+    document.querySelectorAll("#drafts-table thead th[data-col]").forEach(function (th) {
+      if (th.querySelector(".col-resizer")) return;
+      var h = el("span", "col-resizer");
+      h.title = "Glisser pour redimensionner · double-clic pour rétablir les largeurs par défaut";
+      h.addEventListener("pointerdown", function (ev) { startColResize(ev, th); });
+      h.addEventListener("click", function (ev) { ev.stopPropagation(); });
+      h.addEventListener("dblclick", function (ev) { ev.stopPropagation(); resetDraftColW(); });
+      th.appendChild(h);
+    });
+  }
+  mountColResizers();
   var DRAFT_NUM_SORT = { price: 1, surface: 1, land_surface: 1, price_per_m2: 1 };
   // Statut sorts along the workflow, not the alphabet.
   var DRAFT_STATUS_RANK = { attente: 0, visite: 1, verifie: 2, ecarte: 3, promu: 4 };
 
   function draftSortValue(rec, key) {
     if (key === "status") return DRAFT_STATUS_RANK[rec.status];
+    // "" stays "" so an untriaged row sinks to the bottom like any blank cell
+    if (key === "priority") return rec.priority ? DRAFT_PRIO_RANK[rec.priority] : "";
     if (key === "url") return draftHost(rec.url || "") || rec.url || "";
     return rec[key];
   }
@@ -3183,25 +3381,28 @@
     var ae = av === null || av === undefined || av === "";
     var be = bv === null || bv === undefined || bv === "";
     if (ae || be) return ae && be ? 0 : (ae ? 1 : -1);
-    var numeric = !!DRAFT_NUM_SORT[s.key] || s.key === "status";
+    var numeric = !!DRAFT_NUM_SORT[s.key] || s.key === "status" || s.key === "priority";
     var d = numeric ? av - bv : String(av).localeCompare(String(bv), "fr", { numeric: true });
     return d ? d * (s.dir === "asc" ? 1 : -1) : 0;
   }
 
   function sortedDrafts() {
     return drafts.slice().sort(function (a, b) {
-      return cmpDraftBy(a, b, draftSort)
-        || (draftSort2 && draftSort2.key !== draftSort.key ? cmpDraftBy(a, b, draftSort2) : 0)
-        || cmpCode(a, b);
+      for (var i = 0; i < draftSorts.length; i++) {
+        var d = cmpDraftBy(a, b, draftSorts[i]);
+        if (d) return d;
+      }
+      return cmpCode(a, b);
     });
   }
 
   function setDraftSort(key) {
-    if (draftSort.key === key) {
-      draftSort = { key: key, dir: draftSort.dir === "asc" ? "desc" : "asc" };
-    } else {
-      draftSort2 = draftSort;               // demoted, not discarded
-      draftSort = { key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" };
+    if (draftSorts[0] && draftSorts[0].key === key) {   // same column: only flip it
+      draftSorts[0] = { key: key, dir: draftSorts[0].dir === "asc" ? "desc" : "asc" };
+    } else {                                            // new primary; the rest demote one rank
+      var rest = draftSorts.filter(function (s) { return s.key !== key; });
+      draftSorts = [{ key: key, dir: DRAFT_NUM_SORT[key] ? "desc" : "asc" }]
+        .concat(rest).slice(0, DRAFT_SORT_DEPTH);
     }
     saveDraftsView();
   }
@@ -3210,23 +3411,23 @@
 
   function renderSortCarets() {
     var mob = $("#draft-sort");
-    if (mob && mob.value !== draftSort.key) mob.value = draftSort.key;
-    var second = draftSort2 && draftSort2.key !== draftSort.key ? draftSort2 : null;
+    if (mob && draftSorts[0] && mob.value !== draftSorts[0].key) mob.value = draftSorts[0].key;
+    var rank = {};
+    draftSorts.forEach(function (s, i) { if (!(s.key in rank)) rank[s.key] = i; });
     document.querySelectorAll("#drafts-table th[data-sort]").forEach(function (th) {
       var key = th.getAttribute("data-sort");
-      var on = key === draftSort.key;
-      var isSecond = !on && second && key === second.key;
-      th.classList.toggle("sorted", on);
-      th.classList.toggle("sorted-2nd", !!isSecond);
+      var i = key in rank ? rank[key] : -1;
+      th.classList.toggle("sorted", i === 0);
+      th.classList.toggle("sorted-2nd", i === 1);
+      th.classList.toggle("sorted-3rd", i === 2);
       var caret = th.querySelector(".caret");
-      if ((on || isSecond) && !caret) { caret = el("span", "caret"); th.appendChild(caret); }
-      if (caret) {
-        caret.textContent = on ? (draftSort.dir === "asc" ? "▲" : "▼")
-                               : (second.dir === "asc" ? "▲" : "▼");
-        caret.classList.toggle("sort-2nd", !!isSecond);
-        caret.title = isSecond ? "2ᵉ critère de tri" : "";
-      }
-      if (!on && !isSecond && caret) caret.remove();
+      if (i < 0) { if (caret) caret.remove(); return; }
+      // the caret goes before the resize handle, which must stay last
+      if (!caret) { caret = el("span", "caret"); th.insertBefore(caret, th.querySelector(".col-resizer")); }
+      caret.textContent = draftSorts[i].dir === "asc" ? "▲" : "▼";
+      caret.classList.toggle("sort-2nd", i === 1);
+      caret.classList.toggle("sort-3rd", i === 2);
+      caret.title = i ? (i + 1) + "ᵉ critère de tri" : "";
     });
   }
 
@@ -3236,17 +3437,65 @@
     syncDraftSelection();
   }
 
+  // Opening a row's comment changes the grid's height, and doing that the
+  // instant a row is selected moved what the user was aiming at out from under
+  // the cursor: the native <select> popup (priorité, statut) opened, the rows
+  // slid, and the pick appeared to do nothing — the same defect the ↗ link had.
+  // So the highlight moves immediately, but the comment sub-rows only appear or
+  // disappear once the gesture is over: the pointer is up AND the control that
+  // was clicked is done (change or blur). Waiting for pointerup alone is not
+  // enough — Chrome releases the pointer as soon as a select opens its popup.
+  var pointerDown = false, notesPending = false;
+
+  function flushNotes() {
+    if (pointerDown || !notesPending) return;
+    notesPending = false;
+    syncDraftNotes();
+  }
+
+  // The dangerous window is narrow and precise: a native <select> popup opens
+  // during mousedown's default action, i.e. AFTER our listeners have run. Move
+  // the rows there and the popup opens 60 px away from the cursor — which is
+  // how "I can't change the priority" happened. Holding the closes until the
+  // button comes back up is enough: by then the popup is open and anchored.
+  document.addEventListener("pointerdown", function () { pointerDown = true; }, true);
+  function releasePointer() { pointerDown = false; flushNotes(); }
+  document.addEventListener("pointerup", releasePointer, true);
+  document.addEventListener("pointercancel", releasePointer, true);
+
   function syncDraftSelection() {
     Array.prototype.forEach.call($("#drafts-body").children, function (tr) {
       var rowId = tr.dataset.id || tr.dataset.noteFor;
-      var on = rowId === selectedDraft;
-      tr.classList.toggle("sel", on);
-      if (tr.dataset.noteFor) {
-        var owner = tr.previousElementSibling;
-        tr.hidden = !on || (owner && owner.hidden);
-      }
+      tr.classList.toggle("sel", rowId === selectedDraft);
+    });
+    // Opening the clicked row's comment is always safe: the sub-row goes
+    // directly under that row, so nothing above it — nothing under the cursor —
+    // moves. Only CLOSING another row's comment can slide the grid, so that is
+    // the half that waits for the gesture to finish.
+    syncDraftNotes(pointerDown);
+    if (pointerDown) notesPending = true;
+  }
+
+  function syncDraftNotes(openOnly) {
+    Array.prototype.forEach.call($("#drafts-body").children, function (tr) {
+      if (!tr.dataset.noteFor) return;
+      var mine = tr.dataset.noteFor === selectedDraft;
+      if (!mine && openOnly) return;   // closing the others is deferred
+      var owner = tr.previousElementSibling;
+      tr.hidden = !mine || (owner && owner.hidden);
     });
   }
+
+  // Priorité d'appel / de visite. Empty = not triaged; it sorts last like every
+  // other blank in this grid.
+  var DRAFT_PRIO_LABELS = { "": "—", p1: "P1", p2: "P2", p3: "P3" };
+  var DRAFT_PRIO_TITLES = {
+    "": "Pas de priorité",
+    p1: "P1 — à appeler / visiter en premier",
+    p2: "P2 — à traiter ensuite",
+    p3: "P3 — quand il y aura le temps"
+  };
+  var DRAFT_PRIO_RANK = { p1: 0, p2: 1, p3: 2 };
 
   var DRAFT_STATUS_LABELS = {
     attente: "\u25F7 À vérifier",
@@ -3322,8 +3571,8 @@
   function draftCell(rec, field, opts) {
     opts = opts || {};
     var input = el("input", "dcell" + (opts.num ? " num" : ""));
-    input.type = opts.when ? "datetime-local" : "text";
-    if (!opts.when) input.inputMode = opts.num ? "decimal" : "text";
+    input.type = "text";
+    input.inputMode = opts.num ? "decimal" : "text";
     if (opts.placeholder) input.placeholder = opts.placeholder;
     if (opts.list) input.setAttribute("list", opts.list);
     if (opts.title) input.title = opts.title;
@@ -3331,7 +3580,6 @@
     function show() {
       var v = rec[field];
       input.value = v === null || v === undefined ? "" : (opts.num ? fmtNum(v) : v);
-      if (opts.when) input.classList.toggle("empty", !v);
     }
     // Shared commit: compare against what the server holds, PATCH only on a
     // real change, and re-read the stored value so normalisation is visible.
@@ -3349,12 +3597,6 @@
       return raw === (current || "");
     }
     show();
-    // a datetime field has nothing to select and no French formatting to undo
-    if (opts.when) {
-      input.addEventListener("change", function () { commit(input.value); });
-      input.addEventListener("blur", function () { commit(input.value); });
-      return input;
-    }
     input.addEventListener("focus", function () {
       if (opts.num && rec[field] !== null && rec[field] !== undefined) input.value = rec[field];
       input.select();
@@ -3366,6 +3608,91 @@
       if (ev.key === "Escape") { show(); input.blur(); }
     });
     return input;
+  }
+
+  // ---- Visite: date + heure, with OUR minute list ----
+  // A native datetime-local offers every minute, and its `step` only drives the
+  // spinner — the picker still lists 60 minutes. A viewing is agreed on the
+  // five, never on the minute, so the time half is two <select>s (24 hours,
+  // 00/05/…/55) and only the date half stays native.
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  function addOpt(sel, value, label) {
+    var o = el("option", null, label);
+    o.value = value;
+    sel.appendChild(o);
+    return o;
+  }
+
+  // A value already in the file wins over the list: an off-step time (17:33 set
+  // before this existed, or written from elsewhere) gets its own option rather
+  // than being silently snapped to 17:30.
+  function setTimeSel(sel, value) {
+    if (value && !sel.querySelector('option[value="' + value + '"]')) {
+      addOpt(sel, value, value + " ·").title = "valeur hors pas de 5 min, conservée";
+    }
+    sel.value = value || "";
+  }
+
+  var VISIT_FROM = 9, VISIT_TO = 21;
+  // The hour is optional: a slot can be agreed for a day before its time is
+  // fixed, and the record stores just "YYYY-MM-DD" then (the server accepts it).
+  var VISIT_RE = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2}))?$/;
+
+  function draftVisitCell(rec) {
+    var wrap = el("div", "dcell-when");
+    var date = el("input", "dcell dcell-date");
+    date.type = "date";
+    date.title = "Date de visite";
+    // One list for the whole time, not one per half, and only the hours a
+    // viewing is ever booked in: 9 h → 21 h by 5 minutes. Half a day of dead
+    // entries made the list longer to walk for nothing. A time outside the
+    // window that is already in the file keeps its own option (see setTimeSel).
+    var time = el("select", "dcell dcell-time");
+    time.title = "Heure de visite — de " + pad2(VISIT_FROM) + " h à " + pad2(VISIT_TO) + " h, par pas de 5 min";
+    addOpt(time, "", "--:--");
+    for (var h = VISIT_FROM; h <= VISIT_TO; h++) {
+      for (var m = 0; m < 60; m += 5) {
+        if (h === VISIT_TO && m) break;   // the window closes on the hour
+        addOpt(time, pad2(h) + ":" + pad2(m), pad2(h) + ":" + pad2(m));
+      }
+    }
+    var pending = false, again = false;
+
+    function show() {
+      var v = rec.visit_at || "";
+      var m2 = VISIT_RE.exec(v);
+      date.value = m2 ? m2[1] : "";
+      setTimeSel(time, m2 && m2[2] ? m2[2] + ":" + m2[3] : "");
+      wrap.classList.toggle("no-visit", !v);
+    }
+
+    function commit() {
+      // No date, no appointment: a bare time is meaningless, and clearing the
+      // date is how you cancel a visit.
+      // No time chosen: store the date alone rather than inventing a midnight
+      // viewing (that is where B18's 00:00 came from).
+      var raw = date.value ? (time.value ? date.value + "T" + time.value : date.value) : "";
+      if (raw === (rec.visit_at || "")) { show(); return; }
+      // Three controls, one field: picking the date then the hour then the
+      // minutes fires three saves in a row. A pick made while the previous one
+      // is in flight must be queued, never dropped — re-showing the stored
+      // value here would wipe the choice the user just made.
+      if (pending) { again = true; return; }
+      pending = true;
+      saveDraft(rec, { visit_at: raw }, function () {
+        pending = false;
+        if (again) { again = false; commit(); return; }
+        show();
+      }).catch(function () { pending = false; again = false; show(); });
+    }
+
+    show();
+    [date, time].forEach(function (c) { c.addEventListener("change", commit); });
+    date.addEventListener("blur", commit);
+    wrap.appendChild(date);
+    wrap.appendChild(time);
+    return wrap;
   }
 
   // Read-only: €/m² is the fastest triage signal on a raw list, and deriving it
@@ -3387,46 +3714,16 @@
     tr.addEventListener("mousedown", function () { selectDraft(rec.id); });
     tr.addEventListener("focusin", function () { selectDraft(rec.id); });
 
+    // Position in the list as displayed — filled by applyDraftFilter(), never
+    // from the record: it follows the sort and skips the filtered-out rows, so
+    // the visible list always reads 1, 2, 3…
+    var tdRank = el("td", "c-rank");
+    tdRank.setAttribute("data-label", "#");
+    tr.appendChild(tdRank);
+
     var tdCode = el("td", "c-code", rec.code);
     tdCode.setAttribute("data-label", "Code");
     tr.appendChild(tdCode);
-
-    // annonce: the link opens in a new tab, the field next to it stays editable
-    var tdUrl = el("td", "c-url");
-    tdUrl.setAttribute("data-label", "Annonce");
-    var wrap = el("div", "dcell-url");
-    var a = el("a", null, "\u2197");
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    var syncLink = function () {
-      var u = rec.url || "";
-      a.href = u || "#";
-      a.title = u ? "Ouvrir " + draftHost(u) : "Aucun lien";
-      a.setAttribute("aria-disabled", u ? "false" : "true");
-    };
-    var urlInput = draftCell(rec, "url", { placeholder: "https://…", after: syncLink });
-    syncLink();
-    wrap.appendChild(urlInput);
-    wrap.appendChild(a);
-    tdUrl.appendChild(wrap);
-    tr.appendChild(tdUrl);
-
-    var cells = [
-      ["c-num c-price", "Prix", draftCell(rec, "price", { num: true, placeholder: "€" })],
-      ["c-city", "Ville", draftCell(rec, "city", { placeholder: "Ville", list: "draft-cities" })],
-      ["c-num c-area", "Surface", draftCell(rec, "surface", { num: true, placeholder: "m²", title: "Surface habitable" })],
-      ["c-num c-area", "Terrain", draftCell(rec, "land_surface", { num: true, placeholder: "m²", title: "Surface du terrain" })],
-      ["c-num c-m2", "€/m²", draftPriceM2(rec)],
-      ["c-contact", "Téléphone", draftCell(rec, "contact", { placeholder: "06…" })],
-      ["c-agency", "Agence", draftCell(rec, "agency", { placeholder: "Agence", list: "draft-agencies" })],
-      ["c-visit", "Visite", draftCell(rec, "visit_at", { when: true, title: "Date et heure de visite" })]
-    ];
-    cells.forEach(function (c) {
-      var td = el("td", c[0]);
-      td.setAttribute("data-label", c[1]);   // becomes the field label in mobile card view
-      td.appendChild(c[2]);
-      tr.appendChild(td);
-    });
 
     var tdStatus = el("td", "c-status");
     tdStatus.setAttribute("data-label", "Statut");
@@ -3445,6 +3742,74 @@
     });
     tdStatus.appendChild(sel);
     tr.appendChild(tdStatus);
+
+    var tdPrio = el("td", "c-prio");
+    tdPrio.setAttribute("data-label", "Priorité");
+    var prio = el("select", "dcell");
+    Object.keys(DRAFT_PRIO_LABELS).forEach(function (k) {
+      var o = el("option", null, DRAFT_PRIO_LABELS[k]);
+      o.value = k;
+      o.title = DRAFT_PRIO_TITLES[k];
+      prio.appendChild(o);
+    });
+    var showPrio = function () {
+      prio.value = rec.priority || "";
+      prio.title = DRAFT_PRIO_TITLES[rec.priority || ""];
+      prio.className = "dcell prio-" + (rec.priority || "none");
+    };
+    showPrio();
+    prio.addEventListener("change", function () {
+      saveDraft(rec, { priority: prio.value }, showPrio).catch(showPrio);
+    });
+    tdPrio.appendChild(prio);
+    tr.appendChild(tdPrio);
+
+    // annonce: the link opens in a new tab, the field next to it stays editable
+    var tdUrl = el("td", "c-url");
+    tdUrl.setAttribute("data-label", "Annonce");
+    var wrap = el("div", "dcell-url");
+    var a = el("a", null, "\u2197");
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    var syncLink = function () {
+      var u = rec.url || "";
+      a.href = u || "#";
+      a.title = u ? "Ouvrir " + draftHost(u) : "Aucun lien";
+      a.setAttribute("aria-disabled", u ? "false" : "true");
+    };
+    // Clicking ↗ has to do both: open the ad AND open the row (its comment).
+    // Selecting on mousedown collapsed whichever comment was open above, the
+    // grid slid up under the pointer, and the mouseup landed on another
+    // element — so the click never reached the link and nothing opened.
+    // Selecting on click instead moves the layout only once the link has
+    // already been activated. (focusin has to be held back for the same
+    // reason: the browser focuses the link on mousedown.)
+    a.addEventListener("mousedown", function (ev) { ev.stopPropagation(); });
+    a.addEventListener("focusin", function (ev) { ev.stopPropagation(); });
+    a.addEventListener("click", function () { selectDraft(rec.id); });
+    var urlInput = draftCell(rec, "url", { placeholder: "https://…", after: syncLink });
+    syncLink();
+    wrap.appendChild(urlInput);
+    wrap.appendChild(a);
+    tdUrl.appendChild(wrap);
+    tr.appendChild(tdUrl);
+
+    var cells = [
+      ["c-num c-price", "Prix", draftCell(rec, "price", { num: true, placeholder: "€" })],
+      ["c-city", "Ville", draftCell(rec, "city", { placeholder: "Ville", list: "draft-cities" })],
+      ["c-num c-area", "Surface", draftCell(rec, "surface", { num: true, placeholder: "m²", title: "Surface habitable" })],
+      ["c-num c-area", "Terrain", draftCell(rec, "land_surface", { num: true, placeholder: "m²", title: "Surface du terrain" })],
+      ["c-num c-m2", "€/m²", draftPriceM2(rec)],
+      ["c-contact", "Téléphone", draftCell(rec, "contact", { placeholder: "06…" })],
+      ["c-agency", "Agence", draftCell(rec, "agency", { placeholder: "Agence", list: "draft-agencies" })],
+      ["c-visit", "Visite", draftVisitCell(rec)]
+    ];
+    cells.forEach(function (c) {
+      var td = el("td", c[0]);
+      td.setAttribute("data-label", c[1]);   // becomes the field label in mobile card view
+      td.appendChild(c[2]);
+      tr.appendChild(td);
+    });
 
     var tdAct = el("td", "c-act");
     tdAct.setAttribute("data-label", "");
@@ -3520,19 +3885,65 @@
     updateDraftsCount();
   }
 
+  function renderStatusChips() {
+    var box = $("#draft-filter");
+    var keys = Object.keys(DRAFT_STATUS_LABELS);
+    box.innerHTML = "";
+    // Master toggle, ahead of the chips like the one on Villes ciblées: one
+    // click ticks every status, one more unticks them all.
+    var allOn = draftStatusFilter.length === keys.length;
+    var master = el("button", "town-chip all-toggle", allOn ? "☒ Tout décocher" : "☑ Tout cocher");
+    master.type = "button";
+    master.title = allOn ? "Décocher tous les statuts" : "Cocher tous les statuts";
+    master.addEventListener("click", function () {
+      draftStatusFilter = allOn ? [] : keys.slice();
+      draftForceShow = null;
+      saveDraftsView();
+      renderStatusChips();
+      applyDraftFilter();
+    });
+    box.appendChild(master);
+    keys.forEach(function (k) {
+      var on = draftStatusFilter.indexOf(k) >= 0;
+      var chip = el("button", "town-chip st-chip" + (on ? "" : " off"));
+      chip.type = "button";
+      chip.setAttribute("aria-pressed", on ? "true" : "false");
+      chip.appendChild(el("span", "chip-box", on ? "✓" : ""));
+      chip.appendChild(el("span", null, DRAFT_STATUS_LABELS[k]));
+      chip.addEventListener("click", function () {
+        var i = draftStatusFilter.indexOf(k);
+        if (i >= 0) draftStatusFilter.splice(i, 1);
+        else draftStatusFilter.push(k);
+        draftForceShow = null;
+        saveDraftsView();
+        renderStatusChips();
+        applyDraftFilter();
+      });
+      box.appendChild(chip);
+    });
+    // Neither extreme hides anything, but only one of them is a filter — say
+    // which, so an empty row never reads as "everything is filtered out".
+    if (!draftStatusFilter.length) box.appendChild(el("span", "drafts-filter-hint", "aucun filtre — tous les statuts"));
+  }
+
   function applyDraftFilter() {
-    var want = $("#draft-filter").value;
-    var shown = 0;
+    var want = draftStatusFilter;
+    var shown = 0, outside = 0;
     Array.prototype.forEach.call($("#drafts-body").children, function (tr) {
       if (tr.dataset.noteFor) return;   // the comment row follows its line, handled below
       var rec = drafts.find(function (d) { return d.id === tr.dataset.id; });
-      var ok = !want || (rec && rec.status === want);
+      var matches = !want.length || (rec && want.indexOf(rec.status) >= 0);
+      var forced = !matches && tr.dataset.id === draftForceShow;
+      if (forced) outside++;
+      var ok = matches || forced;
       tr.hidden = !ok;
       var noteTr = tr.nextElementSibling;
       if (noteTr && noteTr.dataset.noteFor === tr.dataset.id) {
         noteTr.hidden = !ok || !(rec && (rec.note || "").trim());
       }
       if (ok) shown++;
+      var rank = tr.querySelector(".c-rank");
+      if (rank) rank.textContent = ok ? shown : "";
     });
     syncDraftSelection();
     var counts = {};
@@ -3542,6 +3953,7 @@
       .map(function (k) { return counts[k] + " " + DRAFT_STATUS_LABELS[k].slice(2).toLowerCase(); });
     $("#drafts-progress").textContent = drafts.length
       ? shown + " / " + drafts.length + " ligne" + (drafts.length > 1 ? "s" : "") +
+        (outside ? " · dont 1 nouvelle hors filtre" : "") +
         (parts.length ? " · " + parts.join(" · ") : "")
       : "";
   }
@@ -3563,6 +3975,7 @@
 
   document.querySelectorAll("#drafts-table th[data-sort]").forEach(function (th) {
     th.addEventListener("click", function () {
+      if (colResizeJustDone) return;   // that click is the end of a resize drag
       setDraftSort(th.getAttribute("data-sort"));
       renderDrafts();
     });
@@ -3573,7 +3986,7 @@
     renderDrafts();
   });
 
-  $("#draft-filter").addEventListener("change", function () { saveDraftsView(); applyDraftFilter(); });
+
   $("#draft-add").addEventListener("click", function () {
     fetchJSON("/api/drafts", {
       method: "POST",
@@ -3583,6 +3996,7 @@
       if (!res.ok) return;
       drafts.push(res.data);
       selectedDraft = res.data.id;
+      draftForceShow = res.data.id;
       renderDrafts();
       var tr = $('#drafts-body tr[data-id="' + res.data.id + '"]');
       if (tr) {

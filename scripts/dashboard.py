@@ -213,7 +213,9 @@ DOC_TITLE_RULES = [
     (("permis", "declaration prealable", "pc ", "urbanisme", "cub", "certificat d urbanisme"),
      "Urbanisme (permis / DP / CU)"),
     (("cadastr", "plan", "releve"), "Plan / cadastre"),
-    (("ebook", "brochure", "plaquette", "annonce", "mandat"), "Ebook agence / annonce"),
+    (("ebook", "brochure", "plaquette", "annonce", "mandat", "fiche"), "Ebook agence / annonce"),
+    (("mesure", "mesures"), "Mesurage des surfaces"),
+    (("photos", "photo", "projection"), "Photos / projections"),
 ]
 
 
@@ -345,6 +347,9 @@ def now_iso():
 DRAFT_LOCK = threading.Lock()
 
 DRAFT_STATUSES = ["attente", "visite", "verifie", "ecarte", "promu"]
+# Call-and-visit priority, three levels on purpose: a longer scale gets used as
+# a ranking and stops meaning anything. "" = not triaged yet.
+DRAFT_PRIORITIES = ["p1", "p2", "p3"]
 DRAFT_TEXT_FIELDS = {"url", "city", "agency", "contact", "note"}
 DRAFT_NUM_FIELDS = {"price", "surface", "land_surface"}
 # visit_at holds what an <input type="datetime-local"> produces: "YYYY-MM-DDTHH:MM"
@@ -437,6 +442,7 @@ def draft_price_m2(rec):
 def with_derived(rec):
     out = dict(rec)
     out["price_per_m2"] = draft_price_m2(rec)
+    out.setdefault("priority", "")   # rows written before priorities existed
     return out
 
 
@@ -459,7 +465,7 @@ def new_draft(db):
         "code": draft_code(n),
         "url": "", "price": None, "city": "", "surface": None,
         "land_surface": None, "contact": "", "agency": "", "note": "",
-        "visit_at": "", "status": "attente",
+        "visit_at": "", "status": "attente", "priority": "",
         "created": now_iso(), "updated": now_iso(),
     }
     db["drafts"][rec["id"]] = rec
@@ -502,6 +508,11 @@ def apply_draft_patch(rec, body):
         if body["status"] not in DRAFT_STATUSES:
             return "invalid status"
         rec["status"] = body["status"]
+    if "priority" in body:
+        raw = "" if body["priority"] is None else str(body["priority"]).strip().lower()
+        if raw and raw not in DRAFT_PRIORITIES:
+            return "invalid priority"
+        rec["priority"] = raw
     rec["updated"] = now_iso()
     return None
 
