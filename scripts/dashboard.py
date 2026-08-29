@@ -11,6 +11,7 @@ Binds to 127.0.0.1 only. Never sends any data outward — this is a purely
 local tool over the user's own private/ notes.
 """
 import argparse
+import errno
 import glob
 import hashlib
 import json
@@ -18,6 +19,7 @@ import os
 import re
 import socket
 import subprocess
+import sys
 import tempfile
 import threading
 import unicodedata
@@ -1690,7 +1692,27 @@ def main():
     save_db(db)
     print(f"Imported listings: {added} added, {updated} updated, {len(db['listings'])} total")
 
-    server = ThreadingHTTPServer((host, args.port), Handler)
+    try:
+        server = ThreadingHTTPServer((host, args.port), Handler)
+    except OSError as exc:
+        if exc.errno != errno.EADDRINUSE:
+            raise
+        # Le cas courant : un dashboard tourne déjà (souvent oublié dans un
+        # terminal fermé). Une trace de 12 lignes ne dit pas quoi faire.
+        holder, pids = "", []
+        try:
+            out = subprocess.run(["lsof", "-nP", f"-iTCP:{args.port}", "-sTCP:LISTEN"],
+                                 capture_output=True, text=True, timeout=5).stdout.splitlines()
+            pids = sorted({ln.split()[1] for ln in out[1:] if len(ln.split()) > 1})
+            if pids:
+                holder = " (PID " + ", ".join(pids) + ")"
+        except Exception:
+            pass
+        print(f"\nLe port {args.port} est déjà pris{holder} — un dashboard tourne probablement déjà.")
+        print(f"  · pour l'utiliser tel quel :  http://localhost:{args.port}/")
+        print(f"  · pour le remplacer :         kill {' '.join(pids) or '<PID>'} puis relancer")
+        print(f"  · pour en lancer un second :  python3 scripts/dashboard.py --port {args.port + 1}\n")
+        sys.exit(1)
     if host in ("127.0.0.1", "localhost"):
         print(f"House Hunt dashboard (this machine only): http://127.0.0.1:{args.port}/")
     else:
