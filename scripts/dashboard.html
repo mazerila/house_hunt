@@ -215,6 +215,17 @@
   .drafts-table tr.st-ecarte { opacity: .5; }
   .drafts-table tr.st-promu td.c-code { font-weight: 700; }
   /* row number: smaller and quieter than the data — it is a landmark, not a field */
+  /* vignette de reconnaissance : la façade en petit, à gauche de la ligne */
+  .row-thumb {
+    width: 46px; height: 34px; object-fit: cover; border-radius: 5px; display: block;
+    background: var(--panel-2); border: 1px solid var(--border);
+  }
+  .thumb-none {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 46px; height: 34px; border-radius: 5px; border: 1px dashed var(--border);
+    color: var(--text-dim); font-size: 13px; opacity: .5;
+  }
+  .col-thumb, .drafts-table .c-thumb { width: 58px; padding-left: 8px; padding-right: 4px; }
   .drafts-table .c-rank {
     width: 34px; text-align: right; padding-right: 7px; white-space: nowrap;
     font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums;
@@ -947,6 +958,9 @@
     /* the derived €/m² is a span, not an input — keep it under its label too */
     .drafts-table .dcell-ro { flex: 1 1 auto; text-align: left; padding-left: 7px; }
     .drafts-table .c-rank { display: none; }
+    .drafts-table td.c-thumb { justify-content: flex-start; padding: 10px 0 4px; border-bottom: none; }
+    .drafts-table td.c-thumb::before { content: none; }
+    .row-thumb, .thumb-none { width: 76px; height: 56px; }
     .drafts-table .c-area, .drafts-table .c-status, .drafts-table .c-prio { width: auto; }
     .drafts-table .c-prio .dcell { flex: 0 0 auto; }
     .drafts-table .c-visit { width: auto; }
@@ -1008,10 +1022,12 @@
     /* Fixed layout reads the column widths off the header row, and shares only
        what is left over — so EVERY column needs one here, or the undeclared
        ones collapse to zero. The min-width is their exact sum. */
-    html[data-wide-tables] .drafts-table { min-width: 1380px; table-layout: fixed; }
+    html[data-wide-tables] .drafts-table { min-width: 1438px; table-layout: fixed; }
     html[data-wide-tables] .drafts-table.has-colw { min-width: 0; width: var(--dt-w); }
     html[data-wide-tables] .col-resizer { display: block; }
     html[data-wide-tables] .drafts-table .c-rank { display: table-cell; width: 34px; }
+    html[data-wide-tables] .drafts-table .c-thumb { display: table-cell; width: 58px; padding: 1px 4px 1px 8px; }
+    html[data-wide-tables] .row-thumb, html[data-wide-tables] .thumb-none { width: 46px; height: 34px; }
     html[data-wide-tables] .drafts-table .c-code { width: 54px; }
     html[data-wide-tables] .drafts-table .c-prio { width: 68px; }
     html[data-wide-tables] .drafts-table .c-url { width: 140px; }
@@ -1172,7 +1188,7 @@
     <div class="drafts-table-wrap">
       <table class="drafts-table" id="drafts-table">
         <colgroup id="drafts-colgroup">
-          <col data-col="rank"><col data-col="code"><col data-col="status"><col data-col="priority">
+          <col data-col="rank"><col data-col="thumb"><col data-col="code"><col data-col="status"><col data-col="priority">
           <col data-col="url"><col data-col="price"><col data-col="city">
           <col data-col="surface"><col data-col="land_surface"><col data-col="price_per_m2">
           <col data-col="contact"><col data-col="agency"><col data-col="visit_at">
@@ -1181,6 +1197,7 @@
         <thead>
           <tr>
             <th class="c-rank" data-col="rank" title="Numéro de ligne — la position affichée, pas une donnée : elle se renumérote à chaque tri et à chaque filtre">#</th>
+            <th class="c-thumb" data-col="thumb" title="Vignette de l'annonce"></th>
             <th class="c-code" data-col="code" data-sort="code">Code</th>
             <th class="c-status" data-col="status" data-sort="status">Statut</th>
             <th class="c-prio" data-col="priority" data-sort="priority" title="Priorité d'appel / de visite">Prio</th>
@@ -1752,8 +1769,21 @@
   }
 
   // ---- column catalog (frontend owns labels + cell renderers; server persists which are visible) ----
-  var DEFAULT_COLS = ["code", "title", "commune", "flags", "price", "price_offer", "spread", "works_total", "land_surface", "surface", "dpe", "rating", "status", "visits", "offer_date", "updated"];
+  var DEFAULT_COLS = ["photo", "code", "title", "commune", "flags", "price", "price_offer", "spread", "works_total", "land_surface", "surface", "dpe", "rating", "status", "visits", "offer_date", "updated"];
   var COLUMN_CATALOG = [
+    // Reconnaître la maison d'un coup d'œil : la façade, pas le nom de code.
+    { key: "photo", label: "", cls: "col-thumb", cell: function (td, l) {
+      if (!l.thumb) { td.innerHTML = '<span class="thumb-none" title="Aucune photo dans le dossier">⌂</span>'; return; }
+      var img = el("img", "row-thumb");
+      img.src = l.thumb;
+      img.loading = "lazy";
+      img.alt = "";
+      img.title = l.title || l.code || "";
+      img.addEventListener("error", function () {
+        td.innerHTML = '<span class="thumb-none">⌂</span>';
+      });
+      td.appendChild(img);
+    } },
     { key: "code", label: "Code", cell: function (td, l) { td.textContent = l.code || "—"; } },
     { key: "title", label: "Titre", cls: "col-title", cell: function (td, l) { var t = l.title || l.id; td.textContent = t; td.title = t; } },
     { key: "commune", label: "Commune", cls: "col-commune", cell: function (td, l) { td.innerHTML = l.commune ? '<span class="ico">⌂</span> ' + escapeHtml(l.commune) : "—"; } },
@@ -3733,6 +3763,21 @@
     var tdRank = el("td", "c-rank");
     tdRank.setAttribute("data-label", "#");
     tr.appendChild(tdRank);
+
+    var tdThumb = el("td", "c-thumb");
+    tdThumb.setAttribute("data-label", "Photo");
+    if (rec.thumb) {
+      var timg = el("img", "row-thumb");
+      timg.src = rec.thumb;
+      timg.loading = "lazy";
+      timg.alt = "";
+      timg.title = [rec.city, rec.url && draftHost(rec.url)].filter(Boolean).join(" · ");
+      timg.addEventListener("error", function () { tdThumb.innerHTML = '<span class="thumb-none">⌂</span>'; });
+      tdThumb.appendChild(timg);
+    } else {
+      tdThumb.innerHTML = '<span class="thumb-none" title="Pas encore de vignette">⌂</span>';
+    }
+    tr.appendChild(tdThumb);
 
     var tdCode = el("td", "c-code", rec.code);
     tdCode.setAttribute("data-label", "Code");
