@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+# Start the House Hunt dashboard on the local network (LAN).
+#
+# Usage:
+#   ./run-server                 # LAN, default port 8420
+#   ./run-server --port 8421     # LAN, on another port
+#   ./run-server --help          # all dashboard.py options
+#
+# Open http://localhost:8420/ on this machine; the server also prints a
+# http://<your-lan-ip>:8420/ line for phones/tablets on the same Wi-Fi
+# (and works over Tailscale the same way).
+#
+set -euo pipefail
+
+# Resolve the repo root as the directory holding this script, so the command
+# works no matter where it is invoked from.
+REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" && pwd)"
+cd -- "$REPO_ROOT"
+
+# Prefer the project virtualenv (see CLAUDE.md); fall back to a system python3.
+if [[ -x ".venv/bin/python" ]]; then
+  PY=".venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then
+  PY="$(command -v python3)"
+else
+  echo "run-server: no Python found (looked for .venv/bin/python and python3)" >&2
+  exit 1
+fi
+
+# exec: hand the process over so Ctrl-C / SIGTERM reach the server directly and
+# no extra shell lingers. Extra args (e.g. --port) are forwarded after --lan.
+exec "$PY" scripts/dashboard.py --lan "$@"
