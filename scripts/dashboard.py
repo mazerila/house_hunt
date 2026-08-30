@@ -11,6 +11,7 @@ Binds to 127.0.0.1 only. Never sends any data outward — this is a purely
 local tool over the user's own private/ notes.
 """
 import argparse
+import errno
 import glob
 import hashlib
 import json
@@ -18,6 +19,7 @@ import os
 import re
 import socket
 import subprocess
+import sys
 import tempfile
 import threading
 import unicodedata
@@ -30,6 +32,9 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
 PRIVATE_DIR = os.path.join(REPO_ROOT, "private")
 LISTINGS_DIR = os.path.join(PRIVATE_DIR, "listings")
+# Draft rows have no folder of their own (no md, no research): their thumbnail
+# is the ad's hero shot, dropped here as <draft-id>.jpg.
+THUMBS_DIR = os.path.join(REPO_ROOT, "private", "thumbs")
 # Target-towns comparison data is generic public-record info (no user PII) → it
 # lives OUTSIDE private/ so it can be committed/shared, unlike the listings.
 TOWNS_DIR = os.path.join(REPO_ROOT, "towns")
@@ -85,14 +90,14 @@ def clean_dates(values):
 # renderers; the server only validates keys and persists the chosen visible set,
 # so the choice is shared across everyone hitting this server — "all users").
 ALLOWED_COLUMNS = [
-    "code", "title", "commune", "type", "mitoyennete", "price", "price_min", "price_offer", "price_per_m2",
+    "photo", "code", "title", "commune", "type", "mitoyennete", "price", "price_min", "price_offer", "price_per_m2",
     "works_total", "land_surface", "surface", "dpe", "rating", "status", "verdict", "tags",
     "visits", "offer_date", "agency", "contact", "created", "updated",
     # computed by scripts/enrich.py (red-flag screen, DVF, commute) + spread
     "flags", "zone", "spread", "commute_a", "commute_b",
 ]
 DEFAULT_COLUMNS = [
-    "code", "title", "commune", "flags", "price", "price_offer", "spread", "works_total", "land_surface", "surface",
+    "photo", "code", "title", "commune", "flags", "price", "price_offer", "spread", "works_total", "land_surface", "surface",
     "dpe", "rating", "status", "visits", "offer_date", "updated",
 ]
 
@@ -155,6 +160,8 @@ def decorate(rec):
     out["zone"] = enr.get("zone")
     out["heritage_locked"] = enr.get("heritage_locked")
     out["spread"] = computed_spread(rec)
+    rel = listing_thumb(rec.get("id") or "")
+    out["thumb"] = ("/photos/" + quote(rec["id"]) + "/" + quote(rel)) if rel else None
     comm = enr.get("commute") or {}
     for key, slot in (("work-a", "commute_a"), ("work-b", "commute_b")):
         c = comm.get(key)
@@ -287,6 +294,52 @@ def list_docs(listing_id):
     return sorted(out, key=lambda m: m["rel"])
 
 
+# Row thumbnail: the point is to recognise the house at a glance in the grid,
+# so it must be the FAÇADE, not the kitchen. Order of preference — placement
+# wins over guessing, like is_plan():
+#   1. a file named cover.* / vignette.* / facade.* (drop one in to override)
+#   2. the lowest-numbered annonce-NN (portals lead with the exterior hero shot)
+#   3. the first image that is not a plan
+COVER_HINTS = ("cover", "vignette", "facade")
+
+
+def is_cover(rel):
+    """A cover.* file is a derived thumbnail, not a gallery photo."""
+    return os.path.splitext(os.path.basename(rel))[0].lower() in COVER_HINTS
+
+
+def listing_thumb(listing_id):
+    """Relative path of the row thumbnail for a listing, or None.
+
+    A cover.* dropped in the folder wins; otherwise the lowest-numbered
+    annonce-NN (portals lead with the exterior); otherwise the first image."""
+    if not SLUG_RE.match(listing_id or ""):
+        return None
+    base = os.path.join(LISTINGS_DIR, listing_id)
+    for d in photo_dirs(listing_id):
+        if not os.path.isdir(d):
+            continue
+        for name in sorted(os.listdir(d)):
+            if os.path.splitext(name)[1].lower() in IMAGE_EXTS and is_cover(name):
+                return os.path.relpath(os.path.join(d, name), base)
+    imgs = [m for m in list_photos(listing_id) if m["kind"] == "image" and not m["plan"]]
+    if not imgs:
+        return None
+    ads = sorted(m["rel"] for m in imgs if "annonce-" in os.path.basename(m["rel"]).lower())
+    return ads[0] if ads else imgs[0]["rel"]
+
+
+def draft_thumb_file(draft_id):
+    """Path of a draft's thumbnail if one was dropped in private/thumbs/."""
+    if not re.match(r"^[0-9a-f]{6,32}$", draft_id or ""):
+        return None
+    for ext in (".jpg", ".jpeg", ".png", ".webp"):
+        p = os.path.join(THUMBS_DIR, draft_id + ext)
+        if os.path.isfile(p):
+            return p
+    return None
+
+
 def list_photos(listing_id):
     """Sorted media (image + video) in the listing folder (+ /photos), each a
     dict {rel, kind} with rel a path relative to that folder and kind image|video."""
@@ -302,7 +355,7 @@ def list_photos(listing_id):
             if ext not in MEDIA_EXTS:
                 continue
             full = os.path.join(d, name)
-            if os.path.isfile(full):
+            if os.path.isfile(full) and not is_cover(name):   # la vignette n'est pas une photo de plus
                 rel = os.path.relpath(full, base)
                 out.append({"rel": rel,
                             "kind": "video" if ext in VIDEO_EXTS else "image",
@@ -443,6 +496,7 @@ def with_derived(rec):
     out = dict(rec)
     out["price_per_m2"] = draft_price_m2(rec)
     out.setdefault("priority", "")   # rows written before priorities existed
+    out["thumb"] = ("/draft-thumb/" + rec["id"]) if draft_thumb_file(rec.get("id")) else None
     return out
 
 
@@ -568,6 +622,13 @@ def load_db():
             at = vc.index("works_total") if "works_total" in vc else len(vc)
             vc.insert(at, "spread")
         db["_mig_enrich_cols"] = True
+    # One-shot: the row thumbnail. Same reason — the visible set is persisted,
+    # so a new default column would never appear on an existing install.
+    if not db.get("_mig_photo_col"):
+        vc = settings["columns"]
+        if "photo" not in vc:
+            vc.insert(0, "photo")
+        db["_mig_photo_col"] = True
     # Migrations: "active" status folded into "researching"; new fields defaulted.
     for rec in db.get("listings", {}).values():
         if rec.get("status") == "active":
@@ -1220,6 +1281,14 @@ class Handler(BaseHTTPRequestHandler):
         if m:
             self._serve_photo(m.group(1), m.group(2))
             return
+        m = re.match(r"^/draft-thumb/([^/]+)$", path)
+        if m:
+            f = draft_thumb_file(m.group(1))
+            if not f:
+                self.send_error(404)
+                return
+            self._send_media(f, IMAGE_EXTS.get(os.path.splitext(f)[1].lower(), "image/jpeg"))
+            return
         m = re.match(r"^/api/listings/([^/]+)/docs$", path)
         if m:
             listing_id = m.group(1)
@@ -1623,7 +1692,27 @@ def main():
     save_db(db)
     print(f"Imported listings: {added} added, {updated} updated, {len(db['listings'])} total")
 
-    server = ThreadingHTTPServer((host, args.port), Handler)
+    try:
+        server = ThreadingHTTPServer((host, args.port), Handler)
+    except OSError as exc:
+        if exc.errno != errno.EADDRINUSE:
+            raise
+        # Le cas courant : un dashboard tourne déjà (souvent oublié dans un
+        # terminal fermé). Une trace de 12 lignes ne dit pas quoi faire.
+        holder, pids = "", []
+        try:
+            out = subprocess.run(["lsof", "-nP", f"-iTCP:{args.port}", "-sTCP:LISTEN"],
+                                 capture_output=True, text=True, timeout=5).stdout.splitlines()
+            pids = sorted({ln.split()[1] for ln in out[1:] if len(ln.split()) > 1})
+            if pids:
+                holder = " (PID " + ", ".join(pids) + ")"
+        except Exception:
+            pass
+        print(f"\nLe port {args.port} est déjà pris{holder} — un dashboard tourne probablement déjà.")
+        print(f"  · pour l'utiliser tel quel :  http://localhost:{args.port}/")
+        print(f"  · pour le remplacer :         kill {' '.join(pids) or '<PID>'} puis relancer")
+        print(f"  · pour en lancer un second :  python3 scripts/dashboard.py --port {args.port + 1}\n")
+        sys.exit(1)
     if host in ("127.0.0.1", "localhost"):
         print(f"House Hunt dashboard (this machine only): http://127.0.0.1:{args.port}/")
     else:
