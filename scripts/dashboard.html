@@ -529,10 +529,14 @@
   td.col-clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* Row height control. The address column was wrapping to 6+ lines and dragging
      every other cell down with it: give it real width, stop the short columns
-     wrapping at all, and hard-cap the title at 3 lines with an ellipsis. */
+     wrapping at all, and hard-cap the title at 3 lines with an ellipsis.
+     The 3-line clamp lives on an inner .clamp div, NOT on the <td>: putting
+     display:-webkit-box on the cell itself drops it out of the table's
+     cell layout, so its text stopped sitting on the same row band as the
+     other columns. */
   #grid th.col-title, #grid td.col-title { min-width: 306px; width: 306px; }
-  #grid td.col-title {
-    white-space: normal;
+  #grid td.col-title { white-space: normal; }
+  #grid td.col-title > .clamp {
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -1785,7 +1789,7 @@
       td.appendChild(img);
     } },
     { key: "code", label: "Code", cell: function (td, l) { td.textContent = l.code || "—"; } },
-    { key: "title", label: "Titre", cls: "col-title", cell: function (td, l) { var t = l.title || l.id; td.textContent = t; td.title = t; } },
+    { key: "title", label: "Titre", cls: "col-title", cell: function (td, l) { var t = l.title || l.id; td.appendChild(el("div", "clamp", t)); td.title = t; } },
     { key: "commune", label: "Commune", cls: "col-commune", cell: function (td, l) { td.innerHTML = l.commune ? '<span class="ico">⌂</span> ' + escapeHtml(l.commune) : "—"; } },
     { key: "type", label: "Type", cell: function (td, l) { td.textContent = TYPE_LABELS[l.type] || l.type || "—"; } },
     { key: "mitoyennete", label: "Mitoyen.", cls: "col-nowrap", cell: function (td, l) {
@@ -3057,7 +3061,16 @@
   // one never repaints the others.
   var PH_SERIES_LIGHT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"];
   var PH_SERIES_DARK  = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
-  var PH_MAX_SERIES = 8;
+  var PH_HUES = 8;                       // the validated categorical palette stops here
+  var PH_DASH = ["", "5 4", "2 3"];      // once the 8 hues are used, recycle them solid -> dashed -> dotted
+  var PH_MAX_SERIES = PH_HUES * PH_DASH.length;   // 24 — past this a line chart is unreadable whatever the palette
+
+  // block swatch (legend + tooltip) that carries the same solid/dashed/dotted cue as the line
+  function phSwatch(color, cycle) {
+    if (!cycle) return color;
+    if (cycle === 1) return "repeating-linear-gradient(to right," + color + " 0 5px,transparent 5px 9px)";
+    return "repeating-linear-gradient(to right," + color + " 0 2px,transparent 2px 5px)";
+  }
   var phData = null;
   var phSlots = {};   // commune id -> palette slot, held across renders
 
@@ -3104,7 +3117,11 @@
           if (!taken[k]) { phSlots[s.id] = k; taken[k] = true; break; }
         }
       }
-      s.color = cols[phSlots[s.id] || 0];
+      var slot = phSlots[s.id] || 0;
+      var cycle = Math.floor(slot / PH_HUES);
+      s.color = cols[slot % PH_HUES];
+      s.dash = PH_DASH[cycle] || "";
+      s.swatch = phSwatch(s.color, cycle);
     });
     return { shown: shown, total: out.length };
   }
@@ -3147,7 +3164,8 @@
         d += (!prev || gap ? "M" : "L") + X(p.year).toFixed(1) + " " + Y(p.med).toFixed(1) + " ";
         prev = p;
       });
-      svg.push('<path class="ph-line" d="' + d.trim() + '" stroke="' + s.color + '"/>');
+      svg.push('<path class="ph-line" d="' + d.trim() + '" stroke="' + s.color + '"'
+               + (s.dash ? ' stroke-dasharray="' + s.dash + '"' : '') + '/>');
       s.pts.forEach(function (p) {
         svg.push('<circle class="ph-dot" cx="' + X(p.year).toFixed(1) + '" cy="' + Y(p.med).toFixed(1)
                  + '" r="4" fill="' + s.color + '"/>');
@@ -3170,13 +3188,18 @@
 
     var legend = $("#ph-legend");
     legend.innerHTML = series.map(function (s) {
-      return '<span class="ph-leg"><span class="ph-swatch" style="background:' + s.color + '"></span>'
+      return '<span class="ph-leg"><span class="ph-swatch" style="background:' + s.swatch + '"></span>'
         + escapeHtml(s.name) + '</span>';
     }).join("");
 
     var note = [];
+    if (series.length > PH_HUES) {
+      note.push('<strong>' + series.length + ' communes tracées.</strong> Au-delà de ' + PH_HUES
+        + ', les couleurs se répètent — traits pleins, puis tiretés, puis pointillés (voir la légende et l\'infobulle). Masquez-en dans la liste ci-dessus pour alléger le graphe.');
+    }
     if (res.total > series.length) {
-      note.push('<strong>' + series.length + ' communes sur ' + res.total + ' affichées</strong> — masquez-en dans la liste ci-dessus pour en tracer d\'autres (au-delà de huit lignes, les couleurs ne se distinguent plus de façon fiable).');
+      note.push('<strong>' + series.length + ' sur ' + res.total + ' affichées</strong> — au-delà de '
+        + PH_MAX_SERIES + ' communes le graphe devient illisible ; masquez-en dans la liste pour en tracer d\'autres.');
     }
     note.push('Médiane des maisons vendues chaque année (geo-DVF, agrégé par mutation). ⚠️ Sur les petites communes une année peut reposer sur une poignée de ventes : la médiane bouge alors pour des raisons de composition, pas de marché — le nombre de ventes est dans l\'infobulle et dans le tableau.');
     $("#ph-note").innerHTML = note.join(" ");
@@ -3214,7 +3237,7 @@
       }).filter(Boolean).sort(function (a, b) { return b.p.med - a.p.med; });
       if (!rows.length) return;
       tip.innerHTML = '<h4>' + year + '</h4>' + rows.map(function (r) {
-        return '<div class="r"><span class="ph-swatch" style="background:' + r.s.color + '"></span>'
+        return '<div class="r"><span class="ph-swatch" style="background:' + r.s.swatch + '"></span>'
           + escapeHtml(r.s.name) + ' <b>' + fmtNum(r.p.med) + ' €/m²</b>'
           + '<span class="n">n=' + r.p.n + (r.p.n < thin ? ' ⚠' : '') + '</span></div>';
       }).join("");
