@@ -7,7 +7,7 @@
   2025
  ],
  "thin_below": 12,
- "generated": "2026-08-23",
+ "generated": "2026-09-07",
  "communes": {
   "bailly": {
    "title": "Bailly (78870)",
@@ -630,6 +630,33 @@
     }
    }
   },
+  "saint-cloud": {
+   "title": "Saint-Cloud (92210)",
+   "insee": "92064",
+   "quartier": false,
+   "years": {
+    "2021": {
+     "med": 10040,
+     "n": 74
+    },
+    "2022": {
+     "med": 10263,
+     "n": 61
+    },
+    "2023": {
+     "med": 10307,
+     "n": 37
+    },
+    "2024": {
+     "med": 9580,
+     "n": 45
+    },
+    "2025": {
+     "med": 9488,
+     "n": 45
+    }
+   }
+  },
   "saint-germain-en-laye": {
    "title": "Saint-Germain-en-Laye (78100)",
    "insee": "78551",
@@ -735,6 +762,33 @@
     "2025": {
      "med": 7347,
      "n": 40
+    }
+   }
+  },
+  "versailles": {
+   "title": "Versailles (78000)",
+   "insee": "78646",
+   "quartier": false,
+   "years": {
+    "2021": {
+     "med": 8821,
+     "n": 120
+    },
+    "2022": {
+     "med": 8940,
+     "n": 126
+    },
+    "2023": {
+     "med": 9236,
+     "n": 70
+    },
+    "2024": {
+     "med": 8779,
+     "n": 75
+    },
+    "2025": {
+     "med": 8424,
+     "n": 93
     }
    }
   },

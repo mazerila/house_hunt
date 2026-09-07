@@ -529,10 +529,14 @@
   td.col-clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* Row height control. The address column was wrapping to 6+ lines and dragging
      every other cell down with it: give it real width, stop the short columns
-     wrapping at all, and hard-cap the title at 3 lines with an ellipsis. */
+     wrapping at all, and hard-cap the title at 3 lines with an ellipsis.
+     The 3-line clamp lives on an inner .clamp div, NOT on the <td>: putting
+     display:-webkit-box on the cell itself drops it out of the table's
+     cell layout, so its text stopped sitting on the same row band as the
+     other columns. */
   #grid th.col-title, #grid td.col-title { min-width: 306px; width: 306px; }
-  #grid td.col-title {
-    white-space: normal;
+  #grid td.col-title { white-space: normal; }
+  #grid td.col-title > .clamp {
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -1785,7 +1789,7 @@
       td.appendChild(img);
     } },
     { key: "code", label: "Code", cell: function (td, l) { td.textContent = l.code || "—"; } },
-    { key: "title", label: "Titre", cls: "col-title", cell: function (td, l) { var t = l.title || l.id; td.textContent = t; td.title = t; } },
+    { key: "title", label: "Titre", cls: "col-title", cell: function (td, l) { var t = l.title || l.id; td.appendChild(el("div", "clamp", t)); td.title = t; } },
     { key: "commune", label: "Commune", cls: "col-commune", cell: function (td, l) { td.innerHTML = l.commune ? '<span class="ico">⌂</span> ' + escapeHtml(l.commune) : "—"; } },
     { key: "type", label: "Type", cell: function (td, l) { td.textContent = TYPE_LABELS[l.type] || l.type || "—"; } },
     { key: "mitoyennete", label: "Mitoyen.", cls: "col-nowrap", cell: function (td, l) {
