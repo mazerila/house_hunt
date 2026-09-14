@@ -105,11 +105,13 @@
     display: flex; gap: 10px; padding: 12px 20px; flex-wrap: wrap;
     background: var(--panel); border-bottom: 1px solid var(--border);
   }
-  .filters input[type=text], .filters select, .drafts-bar select {
+  .filters input[type=text], .filters input[type=search], .filters select,
+  .drafts-bar select, .drafts-bar input[type=search] {
     font: inherit; padding: 6px 10px; border: 1px solid var(--border);
     border-radius: 6px; background: var(--input-bg); color: var(--text);
   }
-  .filters input[type=text] { min-width: 240px; }
+  .filters input[type=text], .filters input[type=search] { min-width: 240px; }
+  .draft-search { min-width: 260px; flex: 0 1 320px; }
   .filters .spacer { flex: 1; }
   .col-picker { position: relative; }
   .col-menu {
@@ -576,6 +578,24 @@
   .links-empty { color: var(--text-dim); font-size: 13px; }
   /* map / location block in the drawer */
   .map-block { border-top: 1px solid var(--border); padding-top: 16px; }
+  .sun-dates { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .sun-date {
+    padding: 4px 10px; font-size: 12.5px; border-radius: 999px; cursor: pointer;
+    background: var(--panel-2); color: var(--text-dim); border: 1px solid var(--border);
+  }
+  .sun-date:hover { color: var(--text); }
+  .sun-date.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .sun-holder { width: 100%; }
+  .sun-frame { width: 100%; height: 420px; border: 1px solid var(--border); border-radius: 8px; display: block; }
+  .sun-load {
+    width: 100%; height: 120px; cursor: pointer; border-radius: 8px;
+    border: 1px dashed var(--border); background: var(--panel-2); color: var(--text);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    font-size: 14px;
+  }
+  .sun-load:hover { border-color: var(--accent); color: var(--accent); }
+  .sun-load-sub { font-size: 11.5px; color: var(--text-dim); }
+  .sun-note { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; margin: 6px 0 0; }
   .map-block .map-frame {
     width: 100%; height: 220px; border: 1px solid var(--border); border-radius: 8px;
     background: var(--panel-2); display: block;
@@ -912,7 +932,8 @@
     /* row 2: count on the left, spacer pushes the buttons to the right */
 
     .filters { padding: 10px 14px; gap: 8px; }
-    .filters input[type=text] { min-width: 0; flex: 1 1 100%; }
+    .filters input[type=text], .filters input[type=search] { min-width: 0; flex: 1 1 100%; }
+    .draft-search { min-width: 0; flex: 1 1 100%; }
     .filters select { flex: 1 1 42%; min-width: 0; }
     .col-picker { flex: 1 1 100%; }
     #cols-btn { width: 100%; }
@@ -1100,7 +1121,8 @@
 
 <div id="view-listings" class="view">
 <div class="filters">
-  <input type="text" id="f-search" placeholder="Rechercher titre, commune, tags, verdict…">
+  <input type="search" id="f-search" placeholder="Rechercher partout…"
+         title="Cherche dans tout : code, adresse, commune, agence, téléphone, tags, verdict, note, zone, DPE, drapeaux, prix, surfaces. Plusieurs mots = tous doivent correspondre ; accents et espaces ignorés.">
   <select id="f-status">
     <option value="">Tous statuts</option>
     <option value="researching">&#9906; Recherche</option>
@@ -1185,6 +1207,10 @@
         <option value="visit_at">Trier : visite</option>
         <option value="agency">Trier : agence</option>
       </select>
+      <input type="search" id="draft-search" class="draft-search"
+             placeholder="Rechercher partout…"
+             title="Cherche dans tout : code, ville, agence, téléphone, lien, commentaire, statut, priorité, date de visite, prix, surfaces. Plusieurs mots = tous doivent correspondre ; accents et espaces ignorés."
+             aria-label="Rechercher dans les brouillons">
       <div class="drafts-filter" id="draft-filter" role="group" aria-label="Filtrer par statut"></div>
       <div class="spacer"></div>
       <span class="drafts-progress" id="drafts-progress"></span>
@@ -1243,6 +1269,10 @@
         <option value="elim">⚠ Éliminatoires</option>
         <option value="visite">◉ À vérifier sur place</option>
       </select>
+      <input type="search" id="crit-search" class="draft-search"
+             placeholder="Rechercher un critère…"
+             title="Cherche dans le libellé, le détail, le coût, le groupe et la partie. Les compteurs des onglets suivent la recherche."
+             aria-label="Rechercher dans les critères">
       <div class="spacer"></div>
       <span class="crit-progress" id="crit-progress"></span>
       <button class="secondary" id="crit-reset" title="Effacer toutes les coches de cette annonce">↺ Réinitialiser</button>
@@ -1393,6 +1423,23 @@
     <div class="drawer-section map-block" id="d-map-section" hidden>
       <label class="section-label">Localisation</label>
       <iframe id="d-map-frame" class="map-frame" title="Carte" loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe>
+    </div>
+    <div class="drawer-section sun-block" id="d-sun-section" hidden>
+      <label class="section-label">Soleil &amp; ombres</label>
+      <div class="sun-dates" id="d-sun-dates"></div>
+      <div class="sun-holder" id="d-sun-holder"></div>
+      <p class="sun-note">
+        Vue 3D du soleil et des ombres des bâtiments à cette adresse.
+        La maison est signalée en <strong>cyan</strong> : un anneau clignote au chargement,
+        puis le bâtiment reste légèrement teinté et un point marque le pied exact.
+        Si deux petites parcelles sont très proches, la teinte peut tomber sur le voisin —
+        <strong>c'est le point qui fait foi</strong>, pas la teinte.
+        <strong>Hauteurs des bâtiments approximatives</strong> (OSM ne les renseigne pas ici :
+        un pavillon et un immeuble sont extrudés pareil) et
+        <strong>végétation non modélisée</strong> — la direction des ombres est juste,
+        la longueur de l'ombre d'un voisin précis ne l'est pas.
+        <a id="d-sun-link" href="#" target="_blank" rel="noopener noreferrer">Ouvrir dans Suncast 3D &#8599;</a>
+      </p>
     </div>
     <table class="facts-table" id="d-facts"></table>
     <div class="md-body" id="d-md"></div>
@@ -1557,6 +1604,42 @@
     };
   }
 
+  // ---- shared free-text search, used by every list ----
+  // The data is French, so a search that only folds case is useless: "etang"
+  // has to find "Étang-la-Ville" and "verifie" has to find "Vérifié". Strip
+  // diacritics via NFD rather than maintaining a character map.
+  function normText(s) {
+    return (s == null ? "" : String(s)).toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  // Every term must match (AND), so extra words narrow the list instead of
+  // widening it — "noisy mozart" finds one row, not every Noisy row.
+  function searchTerms(q) {
+    return normText(q).trim().split(/\s+/).filter(Boolean);
+  }
+
+  // `parts` is an array of anything (strings, numbers, nulls); they get joined.
+  // Digit-only terms are also matched against a digits-stripped copy so a phone
+  // typed as "0199001234" still finds the "01 99 00 12 34" in the cell, and
+  // "850000" finds a price rendered "850 000".
+  function matchesSearch(parts, terms) {
+    if (!terms.length) return true;
+    var hay = normText(parts.filter(function (p) {
+      return p !== null && p !== undefined && p !== "";
+    }).join(" "));
+    var digits = null;
+    for (var i = 0; i < terms.length; i++) {
+      if (hay.indexOf(terms[i]) !== -1) continue;
+      if (/^\d+$/.test(terms[i])) {
+        if (digits === null) digits = hay.replace(/\D+/g, "");
+        if (digits.indexOf(terms[i]) !== -1) continue;
+      }
+      return false;
+    }
+    return true;
+  }
+
   // --- archive view switch -------------------------------------------------
   // Deliberately transient: reloading the dashboard always lands on the active
   // listings, never on the archive.
@@ -1615,7 +1698,7 @@
 
   function applyFilters() {
     saveListingsView();
-    var q = $("#f-search").value.trim().toLowerCase();
+    var terms = searchTerms($("#f-search").value);
     var status = $("#f-status").value;
     var commune = $("#f-commune").value;
     var flagMode = $("#f-flags").value;
@@ -1635,10 +1718,14 @@
         if (flagMode === "nolock" && l.heritage_locked) return false;
       }
       if ((l.rating || 0) < minRating) return false;
-      if (q) {
-        var hay = [l.title, l.commune, l.verdict, l.agency, l.contact, (l.tags || []).join(" ")].join(" ").toLowerCase();
-        if (hay.indexOf(q) === -1) return false;
-      }
+      if (terms.length && !matchesSearch([
+        l.code, l.title, l.commune, l.verdict, l.comment, l.agency, l.contact,
+        (l.tags || []).join(" "), l.zone, l.dpe, STATUS_LABELS[l.status],
+        (l.flags || []).map(function (f) { return f.label; }).join(" "),
+        (l.links || []).join(" "),
+        l.price, l.price_offer, l.price_min, l.price_per_m2,
+        l.surface, l.land_surface, l.works_total
+      ], terms)) return false;
       return true;
     });
     sortFiltered();
@@ -2299,7 +2386,10 @@
       cell.appendChild(el("span", "play-badge", "▶"));
     } else {
       cell = document.createElement("img");
-      cell.src = p.url; cell.alt = p.name; cell.loading = "lazy";
+      // Tile only: the lightbox below still opens p.url at full resolution, so
+      // zooming loses nothing. Without this a 17-photo dossier pulled ~10 MB.
+      cell.src = p.url + (p.url.indexOf("?") < 0 ? "?" : "&") + "w=400";
+      cell.alt = p.name; cell.loading = "lazy";
       cell.title = p.name;
     }
     cell.addEventListener("click", function () { openLightbox(i); });
@@ -2752,6 +2842,99 @@
     section.hidden = false;
   }
 
+  // ---- Suncast 3D sun/shadow embed -------------------------------------
+  // Contract frozen by the Suncast project as /embed/v1; a breaking change
+  // there lands on /embed/v2, so this URL is safe to hardcode. HouseHunt only
+  // ever talks to Suncast through this URL — no shared code, no build step.
+  var SUNCAST_EMBED = "https://suncast.web.app/embed/v1";
+  // Same deep-link contract, full UI (date picker, UTC slider, camera controls):
+  // used for the "open it properly" link, while the iframe stays chrome-less.
+  var SUNCAST_APP = "https://suncast.web.app/";
+
+  // The chrome-less embed keeps a time-of-day slider but no date picker, so the
+  // date has to come from here. 21 December is the default on purpose: it is the
+  // worst case, and a garden that gets sun then gets sun all year.
+  function sunDates() {
+    var y = new Date().getFullYear();
+    var today = new Date();
+    var iso = function (d) {
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") +
+             "-" + String(d.getDate()).padStart(2, "0");
+    };
+    return [
+      { key: "dec", label: "21 déc", title: "Solstice d'hiver — le pire cas : soleil le plus bas, ombres les plus longues", date: y + "-12-21", time: "12:00" },
+      { key: "jun", label: "21 juin", title: "Solstice d'été — soleil le plus haut", date: y + "-06-21", time: "14:00" },
+      { key: "today", label: "Aujourd'hui", title: "Date du jour", date: iso(today), time: "14:00" }
+    ];
+  }
+
+  function sunUrl(l, d, fullApp) {
+    var c = (l.enrichment && l.enrichment.coords) || null;
+    if (!c || typeof c.lat !== "number" || typeof c.lon !== "number") return null;
+    return (fullApp ? SUNCAST_APP : SUNCAST_EMBED) +
+      "?lat=" + encodeURIComponent(c.lat) +
+      "&lng=" + encodeURIComponent(c.lon) +
+      "&date=" + encodeURIComponent(d.date) +
+      "&time=" + encodeURIComponent(d.time) +
+      "&range=260&pitch=-35";
+  }
+
+  function setupSun(l) {
+    var section = $("#d-sun-section"), holder = $("#d-sun-holder"), bar = $("#d-sun-dates");
+    // Always tear the iframe down when the drawer changes listing: leaving a
+    // Cesium instance alive would keep streaming tiles for a house you closed.
+    holder.innerHTML = "";
+    bar.innerHTML = "";
+    var dates = sunDates();
+    if (!l || !sunUrl(l, dates[0])) { section.hidden = true; return; }
+    section.hidden = false;
+
+    var chosen = dates[0];
+    var loaded = false;
+
+    var mount = function () {
+      loaded = true;
+      var f = document.createElement("iframe");
+      f.className = "sun-frame";
+      f.src = sunUrl(l, chosen);
+      f.title = "Soleil et ombres à cette adresse";
+      f.loading = "lazy";
+      f.setAttribute("allow", "fullscreen");
+      f.setAttribute("referrerpolicy", "no-referrer");
+      holder.innerHTML = "";
+      holder.appendChild(f);
+    };
+
+    var placeholder = function () {
+      loaded = false;
+      holder.innerHTML = "";
+      var b = el("button", "sun-load");
+      b.type = "button";
+      b.appendChild(document.createTextNode("☀ Afficher les ombres en 3D"));
+      b.appendChild(el("span", "sun-load-sub", "charge la vue Suncast (~quelques Mo)"));
+      b.addEventListener("click", mount);
+      holder.appendChild(b);
+    };
+
+    dates.forEach(function (d) {
+      var b = el("button", "sun-date" + (d.key === chosen.key ? " active" : ""), d.label);
+      b.type = "button";
+      b.title = d.title;
+      b.addEventListener("click", function () {
+        chosen = d;
+        Array.prototype.forEach.call(bar.children, function (x) { x.classList.remove("active"); });
+        b.classList.add("active");
+        $("#d-sun-link").href = sunUrl(l, chosen, true);
+        // only re-mount if the user had already paid the download cost
+        if (loaded) mount();
+      });
+      bar.appendChild(b);
+    });
+
+    $("#d-sun-link").href = sunUrl(l, chosen, true);
+    placeholder();
+  }
+
   var findReset = function () {};  // assigned by the find-in-drawer controller below
 
   function openDrawer(id) {
@@ -2782,6 +2965,7 @@
     state.map = mapInfo(l);
     renderFacts(l.facts);
     setupMap();
+    setupSun(l);
     $("#d-md").innerHTML = renderMarkdown(l.md_body);
     $("#overlay").classList.add("open");
     $("#drawer").classList.add("open");
@@ -2794,6 +2978,9 @@
     state.commentDirty = false;
     findReset();
     closePdf();
+    // drop the Suncast iframe: a live Cesium instance keeps streaming tiles
+    // for a listing the user has closed
+    $("#d-sun-holder").innerHTML = "";
     $("#overlay").classList.remove("open");
     $("#drawer").classList.remove("open");
     state.currentId = null;
@@ -3302,7 +3489,7 @@
   function saveDraftsView() {
     prefsSet(DRAFTS_PREFS, {
       statuses: draftStatusFilter, priorities: draftPrioFilter,
-      sorts: draftSorts, colw: draftColW
+      sorts: draftSorts, colw: draftColW, q: $("#draft-search").value
     });
   }
 
@@ -3312,6 +3499,7 @@
     // one-choice select used to write, and still reads back as a set of one.
     var saved = Array.isArray(p.statuses) ? p.statuses : (p.filter ? [p.filter] : []);
     draftStatusFilter = saved.filter(function (k) { return DRAFT_STATUS_LABELS[k]; });
+    if (typeof p.q === "string") $("#draft-search").value = p.q;
     if (Array.isArray(p.priorities)) {
       draftPrioFilter = p.priorities.filter(function (k) { return k in DRAFT_PRIO_LABELS; });
     }
@@ -3428,7 +3616,7 @@
   mountColResizers();
   var DRAFT_NUM_SORT = { price: 1, surface: 1, land_surface: 1, price_per_m2: 1 };
   // Statut sorts along the workflow, not the alphabet.
-  var DRAFT_STATUS_RANK = { attente: 0, visite: 1, verifie: 2, ecarte: 3, promu: 4 };
+  var DRAFT_STATUS_RANK = { attente: 0, contacte: 1, visite: 2, verifie: 3, ecarte: 4, promu: 5 };
 
   function draftSortValue(rec, key) {
     if (key === "status") return DRAFT_STATUS_RANK[rec.status];
@@ -3565,6 +3753,7 @@
 
   var DRAFT_STATUS_LABELS = {
     attente: "\u25F7 À vérifier",
+    contacte: "\u260E Contacté",
     visite: "\u25C9 Visite prévue",
     verifie: "\u2713 Vérifié",
     ecarte: "\u2717 Écarté",
@@ -4027,15 +4216,25 @@
     }
   }
 
+  function draftHaystack(rec) {
+    return [
+      rec.code, rec.city, rec.agency, rec.contact, rec.note, rec.url,
+      DRAFT_STATUS_LABELS[rec.status], DRAFT_PRIO_LABELS[rec.priority],
+      rec.visit_at, rec.price, rec.price_per_m2, rec.surface, rec.land_surface
+    ];
+  }
+
   function applyDraftFilter() {
     var want = draftStatusFilter;
+    var terms = searchTerms($("#draft-search").value);
     var shown = 0, outside = 0;
     Array.prototype.forEach.call($("#drafts-body").children, function (tr) {
       if (tr.dataset.noteFor) return;   // the comment row follows its line, handled below
       var rec = drafts.find(function (d) { return d.id === tr.dataset.id; });
       var okStatus = !want.length || (rec && want.indexOf(rec.status) >= 0);
       var okPrio = !draftPrioFilter.length || (rec && draftPrioFilter.indexOf(rec.priority || "") >= 0);
-      var matches = okStatus && okPrio;
+      var okText = !terms.length || (rec && matchesSearch(draftHaystack(rec), terms));
+      var matches = okStatus && okPrio && okText;
       var forced = !matches && tr.dataset.id === draftForceShow;
       if (forced) outside++;
       var ok = matches || forced;
@@ -4059,6 +4258,17 @@
         (outside ? " · dont 1 nouvelle hors filtre" : "") +
         (parts.length ? " · " + parts.join(" · ") : "")
       : "";
+    // An empty grid has two very different causes, and saying which one saves
+    // the user wondering whether the list broke.
+    var empty = $("#drafts-empty");
+    empty.hidden = shown > 0;
+    if (!drafts.length) {
+      empty.textContent = "Aucun brouillon. « Nouvelle annonce » ajoute une ligne vide.";
+    } else if (!shown) {
+      empty.textContent = terms.length
+        ? "Aucun brouillon ne correspond à cette recherche."
+        : "Aucun brouillon ne correspond à ce filtre.";
+    }
   }
 
   function updateDraftsCount() {
@@ -4088,6 +4298,14 @@
     setDraftSort($("#draft-sort").value);
     renderDrafts();
   });
+
+  $("#draft-search").addEventListener("input", debounce(function () {
+    // A search is an explicit act of looking for something: honour it over the
+    // "keep the row I just added visible" exception, like touching a filter does.
+    draftForceShow = null;
+    applyDraftFilter();
+    saveDraftsView();
+  }, 200));
 
 
   $("#draft-add").addEventListener("click", function () {
@@ -4130,7 +4348,7 @@
   var CRIT_PREFS = "hh-criteria-view";
 
   function saveCritView() {
-    prefsSet(CRIT_PREFS, { part: state.critPart, filter: $("#crit-filter").value, listing: $("#crit-listing").value });
+    prefsSet(CRIT_PREFS, { part: state.critPart, filter: $("#crit-filter").value, listing: $("#crit-listing").value, q: $("#crit-search").value });
   }
 
   // The three halves of the check-list are told apart by their heading, so a new
@@ -4155,6 +4373,7 @@
       var p = prefsGet(CRIT_PREFS);
       setSelectIfValid($("#crit-listing"), p.listing);
       setSelectIfValid($("#crit-filter"), p.filter);
+      if (typeof p.q === "string") $("#crit-search").value = p.q;
       if (typeof p.part === "number" && p.part >= 0 && p.part < critData.parts.length) state.critPart = p.part;
       renderCriteria();
     }, function () {
@@ -4205,6 +4424,7 @@
     box.innerHTML = "";
     var st = critState();
     var mode = $("#crit-filter").value;
+    var critTerms = searchTerms($("#crit-search").value);
     var hasListing = !!critCurrent();
     var total = 0, done = 0, ko = 0;
 
@@ -4218,6 +4438,11 @@
       var shown = 0;
       part.groups.forEach(function (g) {
         g.items.forEach(function (it) {
+          // the search is part of "the current filter": without this the tab
+          // still advertises 50 items while showing 2, so matches sitting in
+          // another part look like they do not exist
+          if (critTerms.length &&
+              !matchesSearch([it.label, it.detail, it.cost, g.title, part.title], critTerms)) return;
           var v = st[it.id];
           if (mode === "todo" && v) return;
           if (mode === "ok" && v !== "ok") return;
@@ -4257,6 +4482,8 @@
 
       part.groups.forEach(function (g) {
         var items = g.items.filter(function (it) {
+          if (critTerms.length &&
+              !matchesSearch([it.label, it.detail, it.cost, g.title, part.title], critTerms)) return false;
           var v = st[it.id];
           if (mode === "todo") return !v;
           if (mode === "ok") return v === "ok";
@@ -4317,6 +4544,7 @@
 
   $("#crit-listing").addEventListener("change", function () { saveCritView(); renderCriteria(); });
   $("#crit-filter").addEventListener("change", function () { saveCritView(); renderCriteria(); });
+  $("#crit-search").addEventListener("input", debounce(function () { saveCritView(); renderCriteria(); }, 200));
   $("#crit-reset").addEventListener("click", function () {
     var l = critCurrent();
     if (!l) return;

@@ -13,6 +13,7 @@ local tool over the user's own private/ notes.
 import argparse
 import errno
 import glob
+import gzip
 import hashlib
 import json
 import os
@@ -26,7 +27,7 @@ import unicodedata
 import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import quote, unquote, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlparse
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
@@ -161,7 +162,7 @@ def decorate(rec):
     out["heritage_locked"] = enr.get("heritage_locked")
     out["spread"] = computed_spread(rec)
     rel = listing_thumb(rec.get("id") or "")
-    out["thumb"] = ("/photos/" + quote(rec["id"]) + "/" + quote(rel)) if rel else None
+    out["thumb"] = ("/photos/" + quote(rec["id"]) + "/" + quote(rel) + "?w=160") if rel else None
     comm = enr.get("commute") or {}
     for key, slot in (("work-a", "commute_a"), ("work-b", "commute_b")):
         c = comm.get(key)
@@ -213,6 +214,10 @@ DOC_TITLE_RULES = [
     (("taxe habitation", "habitation"), "Taxe d'habitation"),
     (("compromis", "promesse de vente", "avant contrat"), "Compromis / promesse de vente"),
     (("titre de propriete", "acte de vente", "acte authentique"), "Titre de propriété"),
+    # A lotissement's cahier des charges is private law, distinct from the ASL's
+    # minutes and from a copropriété's règlement — it must not fold into either.
+    (("cahier des charges", "cahierdescharges"), "Cahier des charges du lotissement"),
+    (("asl", "association syndicale"), "ASL / lotissement (PV d'AG, charges)"),
     (("reglement de copro", "copropriete", "copro", "pv ag", "assemblee generale", "charges"),
      "Copropriété (règlement / PV / charges)"),
     (("devis", "chiffrage"), "Devis travaux"),
@@ -223,7 +228,14 @@ DOC_TITLE_RULES = [
     (("ebook", "brochure", "plaquette", "annonce", "mandat", "fiche"), "Ebook agence / annonce"),
     (("mesure", "mesures"), "Mesurage des surfaces"),
     (("photos", "photo", "projection"), "Photos / projections"),
+    # Last resort: a bare "Diagnostic 2025.pdf" is a full DDT. Kept at the end so
+    # "diagnostic amiante", "diagnostic électrique" etc. match their own rule first.
+    (("diagnostic",), "Dossier de diagnostic technique (DDT)"),
 ]
+
+# Titles where the document's year identifies it (three years of AG minutes are
+# otherwise indistinguishable in the list).
+DOC_TITLE_YEAR_MARKERS = ("Taxe", "Copropriété", "ASL", "Cahier des charges")
 
 
 def _deaccent(s):
@@ -239,9 +251,11 @@ def doc_title(name):
     hay = " " + re.sub(r"[^a-z0-9]+", " ", _deaccent(stem).lower()).strip() + " "
     for keys, title in DOC_TITLE_RULES:
         if any((" " + k.strip() + " ") in hay or k.strip() in hay for k in keys):
-            year = re.search(r"\b(19|20)\d{2}\b", stem)
+            # match on `hay`, not `stem`: "_" is a word char, so \b never fires
+            # between it and a digit and "pv_ago_2025" would lose its year
+            year = re.search(r"\b(19|20)\d{2}\b", hay)
             # a year is meaningful on fiscal/annual documents, noise elsewhere
-            if year and ("Taxe" in title or "Copropriété" in title):
+            if year and any(m in title for m in DOC_TITLE_YEAR_MARKERS):
                 return title + " " + year.group(0)
             return title
     return None
@@ -381,6 +395,43 @@ def heic_to_jpeg(src):
         return None
 
 
+# The grid renders a 46x34 cell and the gallery a ~200px tile, but both were
+# fetching the full-size original — a 900px cover is ~250 KB and a harvested ad
+# photo ~1 MB, so one drawer could pull 10 MB over Wi-Fi. Serve downscaled copies
+# instead, cached next to the HEIC transcodes. Widths are an allowlist: the URL
+# is user-facing, and an open integer would let anything fill the cache.
+THUMB_WIDTHS = (160, 400, 800)
+
+
+def resized_jpeg(src, width):
+    """Downscale an image to a cached JPEG at most `width` px on its long side
+    (macOS sips, which reads HEIC directly). Returns the cached path, or None so
+    callers fall back to serving the original."""
+    if width not in THUMB_WIDTHS:
+        return None
+    try:
+        st = os.stat(src)
+        key = hashlib.sha1(
+            ("%s:%s:%s:w%d" % (src, st.st_mtime, st.st_size, width)).encode("utf-8")
+        ).hexdigest() + ("-w%d.jpg" % width)
+        os.makedirs(PHOTO_CACHE, exist_ok=True)
+        dst = os.path.join(PHOTO_CACHE, key)
+        if os.path.exists(dst) and os.path.getsize(dst) > 0:
+            return dst
+        # Write to a temp name and rename: two browsers racing for the same
+        # missing thumbnail must never see a half-written file.
+        tmp = "%s.%d.tmp" % (dst, os.getpid())
+        subprocess.run(["sips", "-s", "format", "jpeg", "-Z", str(width),
+                        src, "--out", tmp],
+                       check=True, capture_output=True, timeout=60)
+        if os.path.exists(tmp) and os.path.getsize(tmp) > 0:
+            os.replace(tmp, dst)
+            return dst
+        return None
+    except Exception:
+        return None
+
+
 def now_iso():
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
@@ -399,7 +450,7 @@ def now_iso():
 # takes this lock for its whole read-modify-write.
 DRAFT_LOCK = threading.Lock()
 
-DRAFT_STATUSES = ["attente", "visite", "verifie", "ecarte", "promu"]
+DRAFT_STATUSES = ["attente", "contacte", "visite", "verifie", "ecarte", "promu"]
 # Call-and-visit priority, three levels on purpose: a longer scale gets used as
 # a ranking and stops meaning anything. "" = not triaged yet.
 DRAFT_PRIORITIES = ["p1", "p2", "p3"]
@@ -807,9 +858,17 @@ def extract_dpe(*texts):
     return None
 
 
+# "4 706 €/m²", "4930 €/mois": rates, never an asking price. They sit on lines
+# that say "prix" (a €/m² reading IS a price discussion), so they must be cut out
+# before the scan rather than filtered after it.
+PRICE_RATE_RE = re.compile(r"[\d\s ,.]*€\s*/\s*\w+[²2]?", re.IGNORECASE)
+MIN_PLAUSIBLE_PRICE = 10_000
+
+
 def extract_price(body):
     for line in body.splitlines():
         if re.search(r"prix|asking|price", line, re.IGNORECASE):
+            line = PRICE_RATE_RE.sub(" ", line)
             m = re.search(r"€\s?([\d\s ,.]+?)\s*k\b", line, re.IGNORECASE)
             if m:
                 val = parse_fr_number(m.group(1))
@@ -818,12 +877,12 @@ def extract_price(body):
             m = re.search(r"€\s?([\d\s ,.]+)", line)
             if m:
                 val = parse_fr_number(m.group(1))
-                if val:
+                if val and val >= MIN_PLAUSIBLE_PRICE:
                     return val
             m = re.search(r"([\d\s ]+)\s?€", line)
             if m:
                 val = parse_fr_number(m.group(1))
-                if val:
+                if val and val >= MIN_PLAUSIBLE_PRICE:
                     return val
     return None
 
@@ -1149,17 +1208,52 @@ def ensure_codes(db):
 # HTTP handler
 # --------------------------------------------------------------------------
 
+class DashboardServer(ThreadingHTTPServer):
+    # socketserver's default backlog is 5. A browser opens ~6 connections per
+    # origin and the grid fires a dozen image requests at once, so the accept
+    # queue overflows; the kernel then silently DROPS those SYNs and the client
+    # sits through TCP retransmission backoff (1s, 2s, 4s, 8s...). That is the
+    # "it hangs for minutes / looks disconnected" symptom over Wi-Fi, and it gets
+    # worse with a second device connected.
+    request_queue_size = 128
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "HouseHuntDashboard/0.1"
     protocol_version = "HTTP/1.1"  # keep-alive + proper Range streaming for <video>
+    # Keep-alive pins one worker thread per connection for as long as the client
+    # keeps it open. A phone that sleeps or roams between access points leaves
+    # the socket half-open, and with no timeout that thread blocks in readline()
+    # forever — they pile up over an afternoon of LAN use.
+    # This is the whole-socket timeout, so it also caps a single blocked write:
+    # keep it well above the worst plausible stall for one 64 KB chunk of a
+    # 10 MB diagnostic PDF over weak Wi-Fi.
+    timeout = 60
 
     def log_message(self, fmt, *args):
         pass  # quiet; this is a local-only tool
 
+    def _compress(self, data, content_type):
+        """gzip a text payload when the client accepts it. The dashboard ships
+        ~1 MB of HTML+JSON per cold load, which is the bulk of the LAN wait;
+        it compresses about 8x. Small bodies aren't worth the CPU."""
+        if len(data) < 1024:
+            return data, None
+        if "gzip" not in (self.headers.get("Accept-Encoding") or ""):
+            return data, None
+        if not (content_type.startswith("text/")
+                or "json" in content_type or "javascript" in content_type):
+            return data, None
+        return gzip.compress(data, 6), "gzip"
+
     def _send_json(self, obj, status=200):
         data = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        ctype = "application/json; charset=utf-8"
+        data, encoding = self._compress(data, ctype)
         self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Type", ctype)
+        if encoding:
+            self.send_header("Content-Encoding", encoding)
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
@@ -1171,8 +1265,11 @@ class Handler(BaseHTTPRequestHandler):
         except FileNotFoundError:
             self.send_error(404)
             return
+        data, encoding = self._compress(data, content_type)
         self.send_response(200)
         self.send_header("Content-Type", content_type)
+        if encoding:
+            self.send_header("Content-Encoding", encoding)
         self.send_header("Content-Length", str(len(data)))
         # local dev tool: never let the browser serve a stale page (a cached copy
         # would run old JS — e.g. missing the town drag-reorder/save wiring)
@@ -1184,11 +1281,25 @@ class Handler(BaseHTTPRequestHandler):
         """Serve a file with HTTP Range support (needed for <video> seeking and
         for the browser's PDF viewer). `extra` adds response headers."""
         try:
-            size = os.path.getsize(path)
+            st = os.stat(path)
         except OSError:
             self.send_error(404)
             return
+        size = st.st_size
+        # Photos and PDFs were served with no validator at all, so every visit
+        # re-downloaded the whole grid (~3.5 MB of thumbnails) and every drawer
+        # re-downloaded its gallery. They are static files: give them an ETag and
+        # answer conditional requests with 304. max-age stays short so a replaced
+        # cover.jpg still shows up promptly; the ETag makes the recheck ~0 bytes.
+        etag = '"%x-%x"' % (int(st.st_mtime), size)
         rng = self.headers.get("Range")
+        if not rng and self.headers.get("If-None-Match") == etag:
+            self.send_response(304)
+            self.send_header("ETag", etag)
+            self.send_header("Cache-Control", "max-age=60, must-revalidate")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         start, end = 0, size - 1
         partial = False
         if rng:
@@ -1206,6 +1317,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(206 if partial else 200)
         self.send_header("Content-Type", content_type)
         self.send_header("Accept-Ranges", "bytes")
+        self.send_header("ETag", etag)
+        self.send_header("Cache-Control", "max-age=60, must-revalidate")
         self.send_header("Content-Length", str(length))
         if partial:
             self.send_header("Content-Range", "bytes %d-%d/%d" % (start, end, size))
@@ -1223,8 +1336,11 @@ class Handler(BaseHTTPRequestHandler):
                     break
                 try:
                     self.wfile.write(chunk)
-                except (BrokenPipeError, ConnectionResetError):
-                    return  # client seeked away / closed — normal for video
+                except (BrokenPipeError, ConnectionResetError, TimeoutError):
+                    # client seeked away / closed / went out of Wi-Fi range —
+                    # all normal here; drop the connection instead of raising
+                    self.close_connection = True
+                    return
                 remaining -= len(chunk)
 
     def do_GET(self):
@@ -1279,7 +1395,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         m = re.match(r"^/photos/([^/]+)/(.+)$", path)
         if m:
-            self._serve_photo(m.group(1), m.group(2))
+            self._serve_photo(m.group(1), m.group(2), width=self._thumb_width())
             return
         m = re.match(r"^/draft-thumb/([^/]+)$", path)
         if m:
@@ -1313,7 +1429,18 @@ class Handler(BaseHTTPRequestHandler):
             return
         self.send_error(404)
 
-    def _serve_photo(self, listing_id, rel):
+    def _thumb_width(self):
+        """?w=<n> on a photo URL, validated against THUMB_WIDTHS (None = full size)."""
+        q = parse_qs(urlparse(self.path).query).get("w")
+        if not q:
+            return None
+        try:
+            w = int(q[0])
+        except (TypeError, ValueError):
+            return None
+        return w if w in THUMB_WIDTHS else None
+
+    def _serve_photo(self, listing_id, rel, width=None):
         # Guard against path traversal: slug-checked id, and the resolved file
         # must stay inside the listing folder and be a known media type.
         rel = unquote(rel)
@@ -1329,6 +1456,14 @@ class Handler(BaseHTTPRequestHandler):
         if ext not in MEDIA_EXTS or not os.path.isfile(target):
             self.send_error(404)
             return
+        # A downscaled copy answers both needs at once for HEIC: sips reads it
+        # directly, so no full-size transcode is needed on the way.
+        if width and ext in IMAGE_EXTS:
+            small = resized_jpeg(target, width)
+            if small:
+                self._send_media(small, "image/jpeg")
+                return
+            # fall through: resize unavailable, serve what we have
         if ext in HEIC_EXTS:
             jpg = heic_to_jpeg(target)
             if jpg:
@@ -1361,7 +1496,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         m = re.match(r"^/photos/([^/]+)/(.+)$", path)
         if m:
-            self._serve_photo(m.group(1), m.group(2))
+            self._serve_photo(m.group(1), m.group(2), width=self._thumb_width())
             return
         m = re.match(r"^/docs/([^/]+)/(.+)$", path)
         if m:
@@ -1693,7 +1828,7 @@ def main():
     print(f"Imported listings: {added} added, {updated} updated, {len(db['listings'])} total")
 
     try:
-        server = ThreadingHTTPServer((host, args.port), Handler)
+        server = DashboardServer((host, args.port), Handler)
     except OSError as exc:
         if exc.errno != errno.EADDRINUSE:
             raise
