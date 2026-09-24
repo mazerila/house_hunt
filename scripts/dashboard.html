@@ -98,7 +98,7 @@
   /* archive/un-archive action button, shown next to the delete button */
   button.secondary.toggle-on { background: var(--accent); color: #fff; border-color: var(--accent); }
   .danger-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  #theme-btn { font-size: 16px; padding: 6px 10px; line-height: 1; }
+  #theme-btn { width: 34px; height: 30px; padding: 0; display: inline-grid; place-items: center; }
   #desktop-btn { font-size: 15px; padding: 6px 10px; line-height: 1; }
   #desktop-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
   .filters {
@@ -578,6 +578,63 @@
   .links-empty { color: var(--text-dim); font-size: 13px; }
   /* map / location block in the drawer */
   .map-block { border-top: 1px solid var(--border); padding-top: 16px; }
+  #d-offer-banner {
+    margin: 0 0 14px; padding: 10px 13px; border-radius: 9px;
+    background: var(--panel-2); border: 1px solid var(--border); border-left: 3px solid #16a34a;
+  }
+  #d-offer-banner .ob-top { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+  #d-offer-banner .ob-amount { font-size: 19px; font-weight: 700; color: var(--text); }
+  #d-offer-banner .ob-delta { font-size: 12.5px; font-weight: 600; color: #c2410c; }
+  #d-offer-banner .ob-meta { margin-top: 3px; font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+  #d-offer-banner .ob-warn { color: #c2410c; font-weight: 600; }
+  /* Outils: a grid of small buttons, each with the site's own favicon. Tiles
+     rather than a full-width list — 13 links stacked vertically read as a wall
+     of dead space, and the logo is what makes one findable at a glance. */
+  .tools-main { max-width: 980px; }
+  .tool-group { margin: 20px 0 0; }
+  .tool-group h2 {
+    margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-dim);
+  }
+  .tool-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(216px, 1fr)); }
+  .tool {
+    display: block; padding: 10px 12px; border-radius: 9px; text-decoration: none;
+    color: inherit; background: var(--panel); border: 1px solid var(--border);
+    transition: border-color .12s, transform .06s;
+  }
+  .tool:hover { border-color: var(--accent); }
+  .tool:active { transform: translateY(1px); }
+  .tool-head { display: flex; align-items: center; gap: 8px; }
+  .tool-ico { flex: 0 0 18px; width: 18px; height: 18px; object-fit: contain; border-radius: 3px; }
+  .tool-ico-txt {
+    display: grid; place-items: center; font-size: 11px; font-weight: 700;
+    background: var(--panel-2); color: var(--text-dim); border: 1px solid var(--border);
+  }
+  .tool-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .tool-name::after { content: " ↗"; font-weight: 400; color: var(--text-dim); font-size: 11px; }
+  .tool-desc {
+    display: block; margin-top: 3px; padding-left: 26px; font-size: 11.5px;
+    color: var(--text-dim); line-height: 1.4;
+  }
+  #lang { position: relative; display: inline-flex; }
+  #lang-btn { width: 34px; height: 30px; padding: 0; display: grid; place-items: center; }
+  #lang-btn svg { border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.18); display: block; }
+  #lang-menu {
+    position: absolute; right: 0; top: 36px; z-index: 40; margin: 0; padding: 4px;
+    list-style: none; min-width: 150px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 9px; box-shadow: 0 8px 24px rgba(15,23,42,.18);
+  }
+  #lang-menu .flag-item {
+    width: 100%; display: flex; align-items: center; gap: 9px; padding: 6px 8px;
+    border: 0; border-radius: 6px; background: transparent; color: var(--text);
+    font-size: 13px; text-align: left; cursor: pointer;
+  }
+  #lang-menu .flag-item:hover { background: var(--panel-2); }
+  #lang-menu .flag-item[aria-current="true"] { font-weight: 700; }
+  #lang-note {
+    margin: 0; padding: 7px 14px; font-size: 12px; line-height: 1.5;
+    color: var(--text-dim); background: var(--panel-2); border-bottom: 1px solid var(--border);
+  }
   .sun-dates { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
   .sun-date {
     padding: 4px 10px; font-size: 12.5px; border-radius: 999px; cursor: pointer;
@@ -1108,15 +1165,21 @@
   <span class="count" id="listing-count"></span>
   <div class="spacer"></div>
   <button class="secondary" id="desktop-btn" hidden title="Voir le tableau complet">&#9707;</button>
-  <button class="secondary" id="theme-btn" title="Basculer clair/sombre">&#9680;</button>
+  <button class="secondary" id="theme-btn"></button>
+  <div id="lang" role="group" aria-label="Language">
+    <button class="secondary" id="lang-btn" aria-haspopup="menu" aria-expanded="false"></button>
+    <ul id="lang-menu" role="menu" hidden></ul>
+  </div>
   <button class="secondary" id="reimport-btn"><span class="ico">&#8635;</span> Réimporter</button>
 </header>
+<p id="lang-note" hidden>Interface in English. The listing dossiers, the criteria checklist and the town sheets stay in French: they are transcriptions of French legal and land-registry records (DDT, Carrez, ERP, RGA argile), and translating the terms would make them unusable against the source documents.</p>
 
 <nav class="tabs">
   <button class="tab active" data-view="listings"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg> Annonces</button>
   <button class="tab" data-view="drafts"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h10"/><path d="M4 10h7"/><path d="M4 15h5"/><path d="M14.5 18.5l5-5 2.5 2.5-5 5-3 .5z"/></svg> Brouillons <span class="tab-count" id="drafts-count"></span></button>
   <button class="tab" data-view="towns"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.7-6-10a6 6 0 0 1 12 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg> Villes ciblées</button>
   <button class="tab" data-view="criteria"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Critères</button>
+  <button class="tab" data-view="tools"><svg class="tab-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5a4 4 0 0 0 5.1 5.1l-8.2 8.2a2.5 2.5 0 0 1-3.5-3.5z"/><path d="M6 6l2.5 2.5"/></svg> Outils</button>
 </nav>
 
 <div id="view-listings" class="view">
@@ -1152,7 +1215,7 @@
     Archives<span class="badge" id="archive-count">0</span>
   </span>
   <div class="col-picker">
-    <button class="secondary" id="cols-btn">&#9776; Colonnes</button>
+    <button class="secondary" id="cols-btn">&#9776; <span data-i18n>Colonnes</span></button>
     <div class="col-menu" id="cols-menu" hidden></div>
   </div>
 </div>
@@ -1189,7 +1252,7 @@
 
 <div id="view-drafts" class="view" hidden>
   <main class="drafts-main">
-    <p class="towns-intro">
+    <p class="towns-intro" data-i18n-html="draftsIntro">
       Les annonces repérées mais pas encore instruites. Tout se tape directement dans le tableau&nbsp;;
       chaque cellule s'enregistre en la quittant. Quand un brouillon mérite un vrai dossier,
       passez-le en <em>promu</em> et écrivez sa note dans <code>private/listings/</code>.
@@ -1283,6 +1346,82 @@
 </div>
 
 <div id="overlay"></div>
+<div id="view-tools" class="view" hidden>
+  <main class="tools-main">
+    <p class="towns-intro">Liens externes utiles pendant la recherche.</p>
+
+    <section class="tool-group">
+      <h2>Simulateurs</h2>
+      <div class="tool-grid">
+        <a class="tool" href="https://suncast.web.app/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/suncast.svg" alt="" width="18" height="18" loading="lazy"><span class="tool-name">Suncast 3D</span></span>
+          <span class="tool-desc">Soleil et ombres en 3D à une adresse</span>
+        </a>
+        <a class="tool" href="https://creditsimulator.web.app/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/credisim.svg" alt="" width="18" height="18" loading="lazy"><span class="tool-name">Credisim</span></span>
+          <span class="tool-desc">Mensualité, coût total, amortissement</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="tool-group">
+      <h2>Recherche d'annonces</h2>
+      <div class="tool-grid">
+        <a class="tool" href="https://moteurimmo.fr/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/moteurimmo.png" alt="" width="18" height="18" loading="lazy"><span class="tool-name">MoteurImmo</span></span>
+          <span class="tool-desc">Méta-moteur — à ouvrir en premier</span>
+        </a>
+        <a class="tool" href="https://www.seloger.com/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/seloger.png" alt="" width="18" height="18" loading="lazy"><span class="tool-name">SeLoger</span></span>
+          <span class="tool-desc">Le plus fourni en agences</span>
+        </a>
+        <a class="tool" href="https://www.leboncoin.fr/recherche?category=9" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/leboncoin.png" alt="" width="18" height="18" loading="lazy"><span class="tool-name">Leboncoin</span></span>
+          <span class="tool-desc">Le plus gros volume</span>
+        </a>
+        <a class="tool" href="https://www.pap.fr/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/pap.png" alt="" width="18" height="18" loading="lazy"><span class="tool-name">PAP</span></span>
+          <span class="tool-desc">Entre particuliers, sans honoraires</span>
+        </a>
+        <a class="tool" href="https://www.bienici.com/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/bienici.png" alt="" width="18" height="18" loading="lazy"><span class="tool-name">Bien'ici</span></span>
+          <span class="tool-desc">Recherche sur carte</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="tool-group">
+      <h2>Références publiques</h2>
+      <div class="tool-grid">
+        <a class="tool" href="https://app.dvf.etalab.gouv.fr/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/dvf.png" alt="" width="18" height="18" loading="lazy"><span class="tool-name">DVF</span></span>
+          <span class="tool-desc">Prix de vente réels par parcelle</span>
+        </a>
+        <a class="tool" href="https://www.geoportail-urbanisme.gouv.fr/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/gpu.svg" alt="" width="18" height="18" loading="lazy"><span class="tool-name">Géoportail urbanisme</span></span>
+          <span class="tool-desc">PLU, zonage, servitudes</span>
+        </a>
+        <a class="tool" href="https://www.georisques.gouv.fr/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/georisques.png" alt="" width="18" height="18" loading="lazy"><span class="tool-name">Géorisques</span></span>
+          <span class="tool-desc">Argile, carrières, CatNat, radon</span>
+        </a>
+        <a class="tool" href="https://cadastre.data.gouv.fr/map" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/cadastre.png" alt="" width="18" height="18" loading="lazy"><span class="tool-name">Cadastre</span></span>
+          <span class="tool-desc">Parcelles, contenance, limites</span>
+        </a>
+        <a class="tool" href="https://observatoire-dpe-audit.ademe.fr/" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><span class="tool-ico tool-ico-txt">R</span><span class="tool-name">Registre DPE</span></span>
+          <span class="tool-desc">Le DPE officiel (ADEME)</span>
+        </a>
+        <a class="tool" href="https://rnb.beta.gouv.fr/carte" target="_blank" rel="noopener noreferrer">
+          <span class="tool-head"><img class="tool-ico" src="/assets/tools/rnb.png" alt="" width="18" height="18" loading="lazy"><span class="tool-name">RNB</span></span>
+          <span class="tool-desc">Identifiant unique du bâtiment</span>
+        </a>
+      </div>
+    </section>
+  </main>
+</div>
+
 <div id="drawer">
   <div class="drawer-head">
     <div class="head-text">
@@ -1305,6 +1444,7 @@
         <button class="find-nav find-x" id="find-close" title="Fermer (Échap)" aria-label="Fermer">&times;</button>
       </div>
     </div>
+    <div id="d-offer-banner" hidden></div>
     <div class="drawer-section" id="d-photos-section" hidden>
       <label class="section-label">Photos</label>
       <div class="gallery" id="d-gallery"></div>
@@ -1353,10 +1493,6 @@
         <input type="number" id="d-price-min" min="0" step="1000" placeholder="—">
       </div>
       <div class="field-row">
-        <label>Offre acceptable (€)</label>
-        <input type="number" id="d-price-offer" min="0" step="1000" placeholder="—">
-      </div>
-      <div class="field-row">
         <label title="Valeur au m² retenue après travaux. Vide = p75 DVF de la commune.">Valeur post-travaux (€/m²)</label>
         <input type="number" id="d-value-m2" min="0" step="50" placeholder="p75 DVF commune">
       </div>
@@ -1370,6 +1506,10 @@
       <button class="secondary works-add" id="d-visit-add">+ Ajouter une visite</button>
     </div>
     <div class="field-grid">
+      <div class="field-row">
+        <label>Offre (€)</label>
+        <input type="number" id="d-price-offer" min="0" step="1000" placeholder="—">
+      </div>
       <div class="field-row">
         <label>Date de l'offre</label>
         <input type="date" id="d-offer-date" placeholder="—">
@@ -1493,20 +1633,456 @@
 (function () {
   "use strict";
 
-  // ---- theme ----
-  function applyTheme(t) {
-    document.documentElement.setAttribute("data-theme", t);
-    try { localStorage.setItem("hh-theme", t); } catch (e) {}
+
+  // ---- i18n (FR ⇄ EN) --------------------------------------------------
+  // The French string IS the key: this UI was written in French and the app's
+  // content is French, so a missing entry degrades to French rather than to a
+  // key name. EN holds only the chrome — see the note in setLang() for why the
+  // dossiers, the checklist items and the town sheets stay French in both modes.
+  var LANG_PREF = "hh-lang";
+  var EN = {
+    // header + tabs
+    "Recherche maison — Île-de-France": "House search — Île-de-France",
+    "Réimporter": "Re-import",
+    "Annonces": "Listings",
+    "Brouillons": "Leads",
+    "Villes ciblées": "Target towns",
+    "Critères": "Criteria",
+    "Voir le tableau complet": "Show the full table",
+    "Basculer clair/sombre": "Toggle light/dark",
+    "Haut de page": "Back to top",
+    // filters
+    "Rechercher partout…": "Search everything…",
+    "Tous statuts": "All statuses",
+    "Toutes communes": "All towns",
+    "Tous drapeaux": "All flags",
+    "Toutes notes": "All ratings",
+    "✓ Sans drapeau rouge": "✓ No red flag",
+    "⌂ Sans verrouillage patrimonial": "⌂ No heritage lock",
+    "🔴 Avec drapeau rouge": "🔴 With a red flag",
+    "Effacer les filtres": "Clear filters",
+    "Afficher les annonces archivées": "Show archived listings",
+    "Colonnes affichées": "Visible columns",
+    "Filtre sur le criblage réglementaire (scripts/enrich.py)": "Filters on the regulatory screen (scripts/enrich.py)",
+    "Cherche dans tout : code, adresse, commune, agence, téléphone, tags, verdict, note, zone, DPE, drapeaux, prix, surfaces. Plusieurs mots = tous doivent correspondre ; accents et espaces ignorés.": "Searches everything: code, address, town, agency, phone, tags, verdict, rating, zone, EPC, flags, price, areas. Several words = all must match; accents and spaces ignored.",
+    // columns
+    "Code": "Code", "Ville": "Town", "Prix": "Price", "Statut": "Status",
+    "Surface": "Area", "Terrain": "Land", "Note": "Rating", "Écart": "Gap",
+    "Modifié": "Updated", "Créé": "Created", "Visite": "Viewing", "Agence": "Agency",
+    "Contact": "Contact", "Téléphone": "Phone", "Verdict": "Verdict", "Prio": "Prio",
+    "Priorité": "Priority", "Annonce": "Ad", "Document": "Document", "Documents": "Documents",
+    "Photos": "Photos", "Plans": "Plans", "Carte": "Map", "Localisation": "Location",
+    "Commentaire": "Comment", "Mitoyenneté": "Attachment", "Prix demandé": "Asking price",
+    "Individuelle": "Detached", "Mitoyenne": "Semi-detached", "Sans objet (appartement)": "N/A (flat)",
+    "Vignette de l'annonce": "Listing thumbnail",
+    // drawer fields
+    "Prix demandé (€)": "Asking price (€)", "Prix minimum (€)": "Minimum price (€)",
+    "Offre acceptable (€)": "Acceptable offer (€)", "Offre (€)": "Offer (€)", "Date de l'offre": "Offer date",
+    "Surface hab. (m²)": "Living area (m²)", "Terrain (m²)": "Land (m²)",
+    "Valeur post-travaux (€/m²)": "Post-works value (€/m²)",
+    "Valeur post-travaux estimée": "Estimated post-works value",
+    "Tags (séparés par des virgules)": "Tags (comma separated)",
+    "Travaux à prévoir": "Works to budget for", "Poste (ex. Isolation des murs)": "Item (e.g. Wall insulation)",
+    "Dates clés": "Key dates", "Offre le": "Offer on", "Enregistrer": "Save",
+    "Ajouter": "Add", "+ Ajouter une ligne": "+ Add a row", "+ Ajouter une visite": "+ Add a viewing",
+    "Retirer le lien": "Remove link", "Fermer": "Close", "Fermer (Échap)": "Close (Esc)",
+    "p75 DVF commune": "town DVF p75",
+    "Valeur au m² retenue après travaux. Vide = p75 DVF de la commune.": "Value per m² assumed after works. Empty = the town's DVF p75.",
+    "Repris de l'annonce si présent ; sinon à saisir à la main (la valeur saisie prime au réimport).": "Taken from the listing when present; otherwise enter it by hand (a typed value wins on re-import).",
+    "Valeur saisie = prioritaire (le réimport ne l'écrase plus). Vider le champ pour revenir à la valeur extraite de la fiche.": "A typed value takes priority (re-import no longer overwrites it). Clear the field to fall back to the value read from the note.",
+    "Rechercher dans la fiche": "Search this note", "Rechercher dans la fiche…": "Search this note…",
+    "Précédent": "Previous", "Suivant": "Next",
+    "Précédent (Maj+Entrée)": "Previous (Shift+Enter)", "Suivant (Entrée)": "Next (Enter)",
+    "Précédent (←)": "Previous (←)", "Suivant (→)": "Next (→)",
+    "Document précédent (←)": "Previous document (←)", "Document suivant (→)": "Next document (→)",
+    "Nouvel onglet": "New tab", "Télécharger": "Download",
+    "Abandonner le commentaire non enregistré ?": "Discard the unsaved comment?",
+    "Retire l'annonce du tableau de bord. La fiche": "Removes the listing from the dashboard. The",
+    "reste sur le disque ; réimporter ne la remet pas.": "file stays on disk; re-importing does not bring it back.",
+    "⤺ Désarchiver": "⤺ Unarchive", "⛁ Archivé": "⛁ Archived",
+    "⛃ Archivé — visible via « Archives »": "⛃ Archived — visible via “Archives”",
+    // statuses
+    "à voir  (": "to view  (", "✓ Visité": "✓ Visited", "⚑ Visite prévue": "⚑ Viewing booked",
+    "✕ Rejeté": "✕ Rejected", "à vérifier": "to check", "validé": "checked", "éliminatoire": "disqualifying",
+    // leads grid
+    "Nouvelle annonce": "New lead", "Supprimer la ligne": "Delete row", "Supprimer le brouillon": "Delete lead",
+    "Rechercher dans les brouillons": "Search the leads", "Filtrer par statut": "Filter by status",
+    "Trier les brouillons": "Sort the leads",
+    "Trier : code": "Sort: code", "Trier : statut": "Sort: status", "Trier : priorité": "Sort: priority",
+    "Trier : prix": "Sort: price", "Trier : €/m²": "Sort: €/m²", "Trier : ville": "Sort: town",
+    "Trier : surface": "Sort: area", "Trier : terrain": "Sort: land", "Trier : visite": "Sort: viewing",
+    "Trier : agence": "Sort: agency",
+    "Priorité d'appel / de visite": "Call / viewing priority",
+    "P1 — à appeler / visiter en premier": "P1 — call / view first",
+    "P2 — à traiter ensuite": "P2 — handle next",
+    "P3 — quand il y aura le temps": "P3 — when there is time",
+    "☒ Tout décocher": "☒ Untick all", "Cocher tous les statuts": "Tick every status",
+    "Décocher tous les statuts": "Untick every status", "aucun filtre — tout s'affiche": "no filter — everything shows",
+    "montre-moi les à vérifier ET les visites prévues": "show me the to-check AND the booked viewings",
+    "Aucun brouillon. « Nouvelle annonce » ajoute une ligne vide.": "No leads yet. “New lead” adds an empty row.",
+    "Aucun brouillon ne correspond à cette recherche.": "No lead matches this search.",
+    "Aucun brouillon ne correspond à ce filtre.": "No lead matches this filter.",
+    "Glisser pour redimensionner · double-clic pour rétablir les largeurs par défaut": "Drag to resize · double-click to restore the default widths",
+    "Numéro de ligne — la position affichée, pas une donnée : elle se renumérote à chaque tri et à chaque filtre": "Row number — the displayed position, not data: it renumbers on every sort and every filter",
+    "Cherche dans tout : code, ville, agence, téléphone, lien, commentaire, statut, priorité, date de visite, prix, surfaces. Plusieurs mots = tous doivent correspondre ; accents et espaces ignorés.": "Searches everything: code, town, agency, phone, link, comment, status, priority, viewing date, price, areas. Several words = all must match; accents and spaces ignored.",
+    "Commentaire — cliquer pour l'éditer": "Comment — click to edit",
+    "Commentaire — pourquoi cette annonce, ce qu'il faut vérifier, ce qu'a dit l'agence…": "Comment — why this lead, what to check, what the agency said…",
+    "h à": "h to", "h, par pas de 5 min": "h, in 5-minute steps",
+    "valeur hors pas de 5 min, conservée": "value off the 5-minute step, kept",
+    // criteria tab
+    "Rechercher un critère…": "Search a criterion…", "Rechercher dans les critères": "Search the criteria",
+    "Tous les critères": "All criteria", "Non cochés": "Unticked", "✓ Validé": "✓ Checked",
+    "✗ Problème": "✗ Problem", "⚠ Éliminatoires": "⚠ Disqualifying", "◉ À vérifier sur place": "◉ Check on site",
+    "↺ Réinitialiser": "↺ Reset", "Effacer toutes les coches de cette annonce": "Clear every tick for this listing",
+    "Choisissez une annonce pour cocher": "Pick a listing to tick items",
+    "Choisissez une annonce en haut pour cocher": "Pick a listing above to tick items",
+    "Clic : à vérifier → ✓ validé → ✗ problème → à vérifier": "Click: to check → ✓ checked → ✗ problem → to check",
+    "Aucun critère de cette partie avec ce filtre.": "No criterion in this part matches this filter.",
+    "Cocher pour&nbsp;:": "Tick for:",
+    "Ce qu'aucun budget ne corrige — un défaut ici disqualifie ou se paie en décote": "What no budget fixes — a defect here disqualifies, or is paid for in resale discount",
+    "Ce qui se répare avec de l'argent — un défaut ici est une ligne de chiffrage": "What money repairs — a defect here is a costing line",
+    "Cherche dans le libellé, le détail, le coût, le groupe et la partie. Les compteurs des onglets suivent la recherche.": "Searches the label, the detail, the cost, the group and the part. The tab counters follow the search.",
+    // towns tab
+    "Voir les chiffres": "Show the figures", "Masquer les chiffres": "Hide the figures",
+    "Évolution du prix des maisons": "House price trend",
+    "médiane DVF des ventes closes, €/m²": "DVF median of closed sales, €/m²",
+    "Afficher · glisser pour réordonner :": "Show · drag to reorder:",
+    "Masquer toutes les communes": "Hide every town",
+    "Toutes les communes affichées": "Every town shown",
+    "Toutes les communes masquées": "Every town hidden",
+    "Revenir à votre ordre personnel (annule le tri en cours)": "Back to your own order (clears the current sort)",
+    "Glisser pour réordonner": "Drag to reorder",
+    // sun section
+    "Soleil &amp; ombres": "Sun &amp; shadows", "Soleil et ombres à cette adresse": "Sun and shadows at this address",
+    "☀ Afficher les ombres en 3D": "☀ Show the shadows in 3D",
+    "charge la vue Suncast (~quelques Mo)": "loads the Suncast view (~a few MB)",
+    "21 déc": "21 Dec", "21 juin": "21 Jun", "Aujourd'hui": "Today",
+    "Solstice d'hiver — le pire cas : soleil le plus bas, ombres les plus longues": "Winter solstice — the worst case: lowest sun, longest shadows",
+    "Solstice d'été — soleil le plus haut": "Summer solstice — highest sun",
+    "Date du jour": "Today's date",
+    "Hauteurs des bâtiments approximatives": "Building heights are approximate",
+    "végétation non modélisée": "vegetation is not modelled",
+    "c'est le point qui fait foi": "the pin is what counts",
+    "cyan": "cyan",
+    "Ouvrir dans Suncast 3D &#8599;": "Open in Suncast 3D &#8599;",
+    // empty states + toasts
+    "Aucune annonce pour l'instant.": "No listings yet.",
+    "Aucune annonce archivée.": "No archived listings.",
+    "Aucun résultat avec ces filtres.": "Nothing matches these filters.",
+    "Aucune annonce enregistrée.": "No listing saved.",
+    "Aucune visite enregistrée.": "No viewing recorded.",
+    "Aucun poste. Ajoutez les travaux à prévoir.": "No items. Add the works to budget for.",
+    "Aucune photo dans le dossier": "No photo in the folder",
+    "✓ Enregistré": "✓ Saved", "✓ Ordre enregistré": "✓ Order saved",
+    "✕ Ordre non enregistré": "✕ Order not saved", "✕ Colonnes non enregistrées": "✕ Columns not saved",
+    "✕ Annonce retirée": "✕ Listing removed", "↩ Mon ordre rétabli": "↩ Your order restored",
+    "↺ Coches effacées": "↺ Ticks cleared", "enregistré &#10003;": "saved &#10003;",
+    "✕ Échec du réimport — serveur arrêté ?": "✕ Re-import failed — server stopped?",
+    "⚠ offre sous le prix minimum": "⚠ offer below the minimum price",
+    "archivée": "archived", "désarchivé": "unarchived",
+    "à l'instant": "just now",
+    "2ᵉ critère de tri": "2nd sort criterion", "ᵉ critère de tri": "rd sort criterion",
+    // column labels
+    "Titre": "Title", "Commune": "Town", "Type": "Type", "Mitoyen.": "Attach.",
+    "Prix min": "Min price", "Offre": "Offer", "Travaux": "Works", "Drapeaux": "Flags",
+    "Zone PLU": "PLU zone", "Trajet A": "Commute A", "Trajet B": "Commute B",
+    "Visites": "Viewings", "Tags": "Tags", "Colonnes": "Columns",
+    // listing statuses
+    "⚲ Recherche": "⚲ Researching", "€ Offre": "€ Offer",
+    // property types
+    "Appartement": "Flat", "Maison": "House",
+    // counts and relative time (placeholders keep plural rules per language)
+    "{n} annonce": "{n} listing", "{n} annonces": "{n} listings",
+    "{n} annonce archivée": "{n} archived listing", "{n} annonces archivées": "{n} archived listings",
+    "il y a {n} {unit}": "{n} {unit} ago",
+    "an": "yr", "ans": "yrs", "mois": "mo", "j": "d", "h": "h", "min": "min",
+    // leads grid: statuses, cell placeholders, row actions
+    "\u25F7 \u00C0 v\u00E9rifier": "\u25F7 To check",
+    "\u260E Contact\u00E9": "\u260E Contacted",
+    "\u25C9 Visite pr\u00E9vue": "\u25C9 Viewing booked",
+    "\u2713 V\u00E9rifi\u00E9": "\u2713 Checked",
+    "\u2717 \u00C9cart\u00E9": "\u2717 Dropped",
+    "\u2192 Promu en dossier": "\u2192 Promoted to a dossier",
+    "\u2611 Tout cocher": "\u2611 Tick all",
+    "Ville": "Town", "Agence": "Agency", "Date de visite": "Viewing date",
+    "Supprimer ce brouillon": "Delete this lead",
+    "Ouvrir {host}": "Open {host}", "Aucun lien": "No link",
+    "Ajouter un commentaire": "Add a comment",
+    "— lecture seule (aucune annonce) —": "— read only (no listing) —",
+    "{n} critères — lecture seule": "{n} criteria — read only",
+    "{ok} validé{s1} · {ko} problème{s2} · {todo} à voir  ({total})":
+      "{ok} checked{s1} · {ko} problem{s2} · {todo} to view  ({total})",
+    "☐ Tout masquer": "☐ Hide all", "☑ Tout afficher": "☑ Show all",
+    "Afficher toutes les communes ({n} masquée(s))": "Show every town ({n} hidden)",
+    "Commune": "Town",
+    "{shown} / {total} ligne": "{shown} / {total} row", "{shown} / {total} lignes": "{shown} / {total} rows",
+    "dont 1 nouvelle hors filtre": "incl. 1 new one outside the filter",
+    "Apparence : {from} → {to}": "Appearance: {from} → {to}",
+    "Auto": "Auto", "Clair": "Light", "Sombre": "Dark",
+    "Outils": "Tools", "Simulateurs": "Simulators", "Recherche d'annonces": "Listing portals",
+    "Références publiques": "Public records",
+    "Soleil et ombres en 3D à une adresse": "Sun and shadows in 3D at an address",
+    "Mensualité, coût total, amortissement": "Monthly payment, total cost, amortisation",
+    "Méta-moteur — à ouvrir en premier": "Meta-search — open this one first",
+    "Le plus fourni en agences": "The best agency coverage",
+    "Le plus gros volume": "The largest volume",
+    "Entre particuliers, sans honoraires": "Private sales, no agency fee",
+    "Recherche sur carte": "Map-first search",
+    "Prix de vente réels par parcelle": "Actual sale prices, parcel by parcel",
+    "PLU, zonage, servitudes": "PLU, zoning, servitudes",
+    "Argile, carrières, CatNat, radon": "Clay, quarries, CatNat, radon",
+    "Parcelles, contenance, limites": "Parcels, area, boundaries",
+    "Le DPE officiel (ADEME)": "The official EPC (ADEME)",
+    "Identifiant unique du bâtiment": "Unique building id",
+    "Liens externes utiles pendant la recherche.":
+      "External links that help during the search.",
+    "{signed} sur le prix demandé ({pct} %)": "{signed} on the asking price ({pct} %)",
+    "Offre déposée le {date}": "Offer sent on {date}",
+    "aujourd'hui": "today", "il y a 1 jour": "1 day ago", "il y a {n} jours": "{n} days ago",
+    "Date de l'offre non renseignée": "Offer date not recorded",
+    "sous le plancher vendeur estimé ({min})": "below the estimated seller floor ({min})",
+    "au niveau ou au-dessus du plancher vendeur estimé ({min})": "at or above the estimated seller floor ({min})",
+    "⚠ {over} au-dessus du plafond de 750 000 € — pas de travaux la première année":
+      "⚠ {over} over the 750 000 € ceiling — no renovation in the first year"
+  };
+
+  // Sentences that wrap markup (<em>, <code>) can't be swept as text nodes
+  // without losing the children, so they carry a key and swap as a whole.
+  var EN_HTML = {
+    draftsIntro: "Ads you have spotted but not yet worked up. Everything is typed straight into the " +
+      "table&nbsp;; each cell saves when you leave it. When a lead deserves a real dossier, " +
+      "set it to <em>promu</em> and write its note in <code>private/listings/</code>."
+  };
+
+  var lang = (function pickLang() {
+    // French is the default, full stop: the content is French, so an
+    // English-set browser must NOT flip the app on its own. Only the URL
+    // (shareable) or a choice the user actually made can move it off FR —
+    // navigator.language is deliberately not consulted.
+    try {
+      var q = new URLSearchParams(location.search).get("lang");
+      if (q === "fr" || q === "en") return q;
+      var saved = localStorage.getItem(LANG_PREF);
+      if (saved === "fr" || saved === "en") return saved;
+    } catch (e) {}
+    return "fr";
+  })();
+
+  // t("Fermer") -> "Close"; t("{n} annonces", {n: 3}) fills placeholders so word
+  // order stays the translator's choice rather than JS concatenation order.
+  function t(s, vars) {
+    var out = (lang === "en" && EN[s]) ? EN[s] : s;
+    if (vars) {
+      out = out.replace(/\{(\w+)\}/g, function (m, k) {
+        return vars[k] === undefined || vars[k] === null ? m : vars[k];
+      });
+    }
+    return out;
   }
-  var savedTheme = null;
-  try { savedTheme = localStorage.getItem("hh-theme"); } catch (e) {}
-  applyTheme(savedTheme || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
-  document.getElementById("theme-btn").addEventListener("click", function () {
-    applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+
+  // Static markup needs no data-i18n attributes: at boot (before anything
+  // dynamic has rendered) every text node and translatable attribute whose
+  // exact French text is a dictionary key is registered. Only known strings are
+  // captured, so listing data can never be caught by mistake — and because it
+  // rewrites text NODES rather than textContent, a label sitting next to a
+  // value <span> keeps its sibling.
+  var i18nSlots = [];
+  function snapshotI18n() {
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    var n;
+    while ((n = walker.nextNode())) {
+      var key = n.nodeValue.trim();
+      if (key && EN[key]) i18nSlots.push({ node: n, raw: n.nodeValue, key: key });
+    }
+    ["placeholder", "title", "aria-label"].forEach(function (attr) {
+      Array.prototype.forEach.call(document.querySelectorAll("[" + attr + "]"), function (e) {
+        var v = (e.getAttribute(attr) || "").trim();
+        if (v && EN[v]) i18nSlots.push({ el: e, attr: attr, key: v });
+      });
+    });
+  }
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    i18nSlots.forEach(function (s) {
+      var val = lang === "en" ? (EN[s.key] || s.key) : s.key;
+      if (s.attr) s.el.setAttribute(s.attr, val);
+      else s.node.nodeValue = s.raw.replace(s.key, val);   // always from the original, so whitespace survives
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-html]"), function (e) {
+      var key = e.getAttribute("data-i18n-html");
+      if (!e.dataset.i18nFr) e.dataset.i18nFr = e.innerHTML;          // keep the original once
+      e.innerHTML = (lang === "en" && EN_HTML[key]) ? EN_HTML[key] : e.dataset.i18nFr;
+    });
+    if (typeof renderThemeButton === "function") renderThemeButton();
+    var note = document.getElementById("lang-note");
+    if (note) note.hidden = lang !== "en";
+    renderLangMenu();
+  }
+
+
+  // ---- language switcher (flag + menu) ---------------------------------
+  // Inline SVG rather than 🇫🇷/🇬🇧: Windows ships no flag emoji and renders
+  // them as the bare letters "FR"/"GB".
+  var FLAG_SVG = {
+    fr: '<svg viewBox="0 0 60 40" width="20" height="14" aria-hidden="true">' +
+        '<rect width="60" height="40" fill="#fff"/><rect width="20" height="40" fill="#002395"/>' +
+        '<rect x="40" width="20" height="40" fill="#ED2939"/></svg>',
+    en: '<svg viewBox="0 0 60 40" width="20" height="14" aria-hidden="true">' +
+        '<rect width="60" height="40" fill="#012169"/>' +
+        '<path d="M0 0l60 40M60 0L0 40" stroke="#fff" stroke-width="8"/>' +
+        '<path d="M0 0l60 40M60 0L0 40" stroke="#C8102E" stroke-width="4"/>' +
+        '<path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="13"/>' +
+        '<path d="M30 0v40M0 20h60" stroke="#C8102E" stroke-width="8"/></svg>'
+  };
+  var LANG_NAME = { fr: "Français", en: "English" };
+
+  function renderLangMenu() {
+    var btn = document.getElementById("lang-btn");
+    var menu = document.getElementById("lang-menu");
+    if (!btn || !menu) return;
+    btn.innerHTML = FLAG_SVG[lang];
+    btn.title = LANG_NAME[lang];
+    menu.innerHTML = "";
+    ["fr", "en"].forEach(function (code) {
+      var li = document.createElement("li");
+      li.setAttribute("role", "none");
+      var b = document.createElement("button");
+      b.setAttribute("role", "menuitem");
+      b.className = "flag-item";
+      b.setAttribute("data-lang", code);
+      if (code === lang) b.setAttribute("aria-current", "true");
+      b.innerHTML = FLAG_SVG[code] + "<span>" + LANG_NAME[code] + "</span>";
+      b.addEventListener("click", function () { setLang(code); closeLangMenu(); });
+      li.appendChild(b);
+      menu.appendChild(li);
+    });
+  }
+
+  function openLangMenu() {
+    var menu = document.getElementById("lang-menu");
+    menu.hidden = false;
+    document.getElementById("lang-btn").setAttribute("aria-expanded", "true");
+  }
+  function closeLangMenu() {
+    var menu = document.getElementById("lang-menu");
+    if (!menu || menu.hidden) return;
+    menu.hidden = true;
+    document.getElementById("lang-btn").setAttribute("aria-expanded", "false");
+  }
+
+  function setLang(next) {
+    if (next === lang) return;
+    lang = next;
+    try { localStorage.setItem(LANG_PREF, lang); } catch (e) {}   // only an explicit pick is saved
+    applyLang();
+    relabelDynamic();
+  }
+
+  // Everything script-rendered has to be redrawn: applyLang() only touches the
+  // nodes that existed at boot.
+  function relabelDynamic() {
+    try {
+      if (typeof renderColumnsMenu === "function") renderColumnsMenu();
+      if (typeof applyFilters === "function") applyFilters();
+      if (typeof renderDrafts === "function") renderDrafts();
+      if (typeof renderFilterChips === "function") renderFilterChips();
+      if (typeof renderCriteria === "function") renderCriteria();
+      if (typeof renderTowns === "function") renderTowns();
+      if (state && state.currentId && typeof openDrawer === "function") openDrawer(state.currentId);
+    } catch (e) {}
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    snapshotI18n();
+    applyLang();
+    var btn = document.getElementById("lang-btn");
+    btn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      var menu = document.getElementById("lang-menu");
+      if (menu.hidden) openLangMenu(); else closeLangMenu();
+    });
+    document.addEventListener("pointerdown", function (ev) {
+      if (!ev.target.closest || !ev.target.closest("#lang")) closeLangMenu();
+    });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") closeLangMenu();
+    });
+  });
+
+  // ---- theme: Auto → Clair → Sombre → Auto ------------------------------
+  // Same three states and the same three icons as Credisim. The old toggle
+  // showed ◐ in every state, which said nothing; here the glyph IS the state —
+  // half-disc follows the device, sun is forced light, crescent is forced dark.
+  var THEME_KEY = "hh-theme";
+  var THEME_NEXT = { system: "light", light: "dark", dark: "system" };
+  var THEME_LABEL = { system: "Auto", light: "Clair", dark: "Sombre" };
+  var THEME_ICON = {
+    system: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+      '<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/>' +
+      '<path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>',
+    light: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+      '<circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/>' +
+      '<path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2' +
+      'M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    dark: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">' +
+      '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>'
+  };
+
+  var themePref = (function () {
+    try {
+      var v = localStorage.getItem(THEME_KEY);
+      if (v === "light" || v === "dark" || v === "system") return v;   // "light"/"dark" = a pre-Auto install
+    } catch (e) {}
+    return "system";
+  })();
+  var darkQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+  function applyTheme() {
+    // Credisim can just delete data-theme and let CSS decide; this dashboard
+    // has no prefers-color-scheme block — all 18 rules key off data-theme — so
+    // "system" is resolved here and the attribute is always set.
+    var resolved = themePref === "system"
+      ? (darkQuery && darkQuery.matches ? "dark" : "light")
+      : themePref;
+    document.documentElement.setAttribute("data-theme", resolved);
+    renderThemeButton();
     // the chart's hues are steps chosen for each surface, not an automatic
     // flip — repaint it so dark mode gets its own validated set
     if (typeof phData !== "undefined" && phData) renderPriceHistory();
+  }
+
+  function renderThemeButton() {
+    var b = document.getElementById("theme-btn");
+    if (!b) return;
+    b.innerHTML = THEME_ICON[themePref];
+    // one template per language: French puts a space before the colon, English
+    // does not, and concatenating here would export French typography to EN
+    var lbl = t("Apparence : {from} → {to}", {
+      from: t(THEME_LABEL[themePref]),
+      to: t(THEME_LABEL[THEME_NEXT[themePref]])
+    });
+    b.title = lbl;
+    b.setAttribute("aria-label", lbl);
+  }
+
+  function setTheme(next) {
+    themePref = next;
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+    applyTheme();
+  }
+
+  applyTheme();
+  document.getElementById("theme-btn").addEventListener("click", function () {
+    setTheme(THEME_NEXT[themePref]);
   });
+  // Auto means auto: keep following the device while that is the preference.
+  if (darkQuery) {
+    var onSchemeChange = function () { if (themePref === "system") applyTheme(); };
+    if (darkQuery.addEventListener) darkQuery.addEventListener("change", onSchemeChange);
+    else if (darkQuery.addListener) darkQuery.addListener(onSchemeChange);
+  }
 
   // ---- remembered view state --------------------------------------------
   // Filters and sorts survive a reload: re-picking them on every visit was the
@@ -1584,7 +2160,7 @@
     var sel = $("#f-commune");
     var current = sel.value;
     var communes = Array.from(new Set(state.listings.map(function (l) { return l.commune; }).filter(Boolean))).sort();
-    sel.innerHTML = '<option value="">Toutes communes</option>' +
+    sel.innerHTML = '<option value="">' + t("Toutes communes") + '</option>' +
       communes.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join("");
     sel.value = current;
   }
@@ -1800,9 +2376,9 @@
     var units = [["an", "ans", 31536000], ["mois", "mois", 2592000], ["j", "j", 86400], ["h", "h", 3600], ["min", "min", 60]];
     for (var i = 0; i < units.length; i++) {
       var amt = Math.floor(diffSec / units[i][2]);
-      if (amt >= 1) return "il y a " + amt + " " + (amt > 1 ? units[i][1] : units[i][0]);
+      if (amt >= 1) return t("il y a {n} {unit}", { n: amt, unit: t(amt > 1 ? units[i][1] : units[i][0]) });
     }
-    return "à l'instant";
+    return t("à l'instant");
   }
   // Key dates are stored as plain "YYYY-MM-DD"; render them as fr-FR days.
   function fmtDay(iso) {
@@ -1831,7 +2407,7 @@
     STATUS_ORDER.forEach(function (s) {
       var opt = document.createElement("option");
       opt.value = s;
-      opt.textContent = STATUS_LABELS[s];
+      opt.textContent = t(STATUS_LABELS[s]);
       sel.appendChild(opt);
     });
     sel.value = l.status || "researching";
@@ -1878,11 +2454,11 @@
     { key: "code", label: "Code", cell: function (td, l) { td.textContent = l.code || "—"; } },
     { key: "title", label: "Titre", cls: "col-title", cell: function (td, l) { var t = l.title || l.id; td.appendChild(el("div", "clamp", t)); td.title = t; } },
     { key: "commune", label: "Commune", cls: "col-commune", cell: function (td, l) { td.innerHTML = l.commune ? '<span class="ico">⌂</span> ' + escapeHtml(l.commune) : "—"; } },
-    { key: "type", label: "Type", cell: function (td, l) { td.textContent = TYPE_LABELS[l.type] || l.type || "—"; } },
+    { key: "type", label: "Type", cell: function (td, l) { td.textContent = t(TYPE_LABELS[l.type] || l.type || "—"); } },
     { key: "mitoyennete", label: "Mitoyen.", cls: "col-nowrap", cell: function (td, l) {
       var m = l.mitoyennete;
       if (!m || m === "n/a") { td.textContent = "—"; return; }
-      var lab = m === "mitoyenne" ? "Mitoyenne" : (m === "individuelle" ? "Individuelle" : m);
+      var lab = t(m === "mitoyenne" ? "Mitoyenne" : (m === "individuelle" ? "Individuelle" : m));
       var bg = m === "mitoyenne" ? "#fde68a" : "#bbf7d0";
       td.innerHTML = '<span class="pill" style="background:' + bg + ';color:#333">' + escapeHtml(lab) + '</span>';
     } },
@@ -1976,7 +2552,7 @@
       th.setAttribute("data-key", key);
       if (col.num) th.className = "num";
       if (col.cls) th.classList.add(col.cls);
-      th.textContent = col.label;
+      th.textContent = t(col.label);
       if (key === state.sortKey) {
         th.appendChild(document.createTextNode(" " + (state.sortDir === "asc" ? "▲" : "▼")));
       } else if (key === state.sortKey2) {
@@ -2015,7 +2591,7 @@
       if (col.key === "title") { cb.checked = true; cb.disabled = true; lab.className = "locked"; }
       cb.addEventListener("change", function () { toggleColumn(col.key, cb.checked); });
       lab.appendChild(cb);
-      lab.appendChild(document.createTextNode(" " + col.label));
+      lab.appendChild(document.createTextNode(" " + t(col.label)));
       menu.appendChild(lab);
     });
   }
@@ -2063,8 +2639,9 @@
       return (l.status === "archived") === state.showArchived;
     });
     var n = pool.length;
-    $("#listing-count").textContent = n + " annonce" + (n === 1 ? "" : "s")
-      + (state.showArchived ? " archivée" + (n === 1 ? "" : "s") : "");
+    $("#listing-count").textContent = state.showArchived
+      ? t(n === 1 ? "{n} annonce archivée" : "{n} annonces archivées", { n: n })
+      : t(n === 1 ? "{n} annonce" : "{n} annonces", { n: n });
     var grid = $("#grid"), body = $("#grid-body"), emptyState = $("#empty-state");
 
     if (state.showArchived && n === 0) {
@@ -2107,7 +2684,7 @@
         var td = document.createElement("td");
         if (col.num) td.classList.add("num");
         if (col.cls) td.classList.add(col.cls);
-        td.setAttribute("data-label", col.label);  // shown as the field label in mobile card view
+        td.setAttribute("data-label", t(col.label));  // shown as the field label in mobile card view
         col.cell(td, l);
         tr.appendChild(td);
       });
@@ -2333,6 +2910,7 @@
         .then(function (rec) {
           updateLocal(rec);
           fillNumericFields(rec);
+          renderOfferBanner(rec);   // price_offer/price feed the banner: keep it in step
         });
     }
     input.addEventListener("blur", save);
@@ -2690,7 +3268,10 @@
   $("#d-offer-date").addEventListener("change", function () {
     if (!state.currentId) return;
     var v = $("#d-offer-date").value || null;
-    patchListing(state.currentId, { offer_date: v }).then(updateLocal);
+    patchListing(state.currentId, { offer_date: v }).then(function (rec) {
+      updateLocal(rec);
+      renderOfferBanner(rec);   // the banner prints the date and the days-since
+    });
   });
 
   // ---- travaux (renovation line-items) ----
@@ -2703,7 +3284,7 @@
     state.works.forEach(function (item, i) {
       var row = el("div", "works-row");
       var lab = document.createElement("input");
-      lab.type = "text"; lab.className = "w-label"; lab.placeholder = "Poste (ex. Isolation des murs)";
+      lab.type = "text"; lab.className = "w-label"; lab.placeholder = t("Poste (ex. Isolation des murs)");
       lab.value = item.label || "";
       lab.addEventListener("input", function () { state.works[i].label = lab.value; });
       lab.addEventListener("blur", saveWorks);
@@ -2879,6 +3460,53 @@
       "&range=260&pitch=-35";
   }
 
+  // An offer is the single most important fact about a listing once it is out,
+  // and it was only visible as two editable inputs far down the drawer. Surface
+  // it at the top: amount, when, and how far under the ask.
+  function renderOfferBanner(l) {
+    var box = $("#d-offer-banner");
+    var amount = l.price_offer;
+    if (!amount || l.status !== "offer") { box.hidden = true; box.innerHTML = ""; return; }
+    box.innerHTML = "";
+    var top = el("div", "ob-top");
+    top.appendChild(el("span", "ob-amount", fmtMoney(amount)));
+    if (l.price) {
+      var d = amount - l.price;
+      top.appendChild(el("span", "ob-delta",
+        t("{signed} sur le prix demandé ({pct} %)", {
+          signed: (d > 0 ? "+" : "") + fmtMoney(d),
+          pct: (d / l.price * 100).toFixed(1).replace(".", ",")
+        })));
+    }
+    box.appendChild(top);
+
+    var bits = [];
+    if (l.offer_date) {
+      var days = Math.floor((Date.now() - new Date(l.offer_date + "T12:00:00").getTime()) / 86400000);
+      bits.push(t("Offre déposée le {date}", { date: fmtDay(l.offer_date) }) +
+        (days >= 0 ? " · " + t(days === 0 ? "aujourd'hui" : days === 1 ? "il y a 1 jour" : "il y a {n} jours", { n: days }) : ""));
+    } else {
+      bits.push(t("Date de l'offre non renseignée"));
+    }
+    if (l.price_min) {
+      bits.push(amount < l.price_min
+        ? t("sous le plancher vendeur estimé ({min})", { min: fmtMoney(l.price_min) })
+        : t("au niveau ou au-dessus du plancher vendeur estimé ({min})", { min: fmtMoney(l.price_min) }));
+    }
+    var meta = el("div", "ob-meta", bits.join(" · "));
+    box.appendChild(meta);
+
+    // the buyer's own rule, restated where the number is
+    if (amount > 750000) {
+      var w = el("div", "ob-meta");
+      w.appendChild(el("span", "ob-warn",
+        t("⚠ {over} au-dessus du plafond de 750 000 € — pas de travaux la première année",
+          { over: fmtMoney(amount - 750000) })));
+      box.appendChild(w);
+    }
+    box.hidden = false;
+  }
+
   function setupSun(l) {
     var section = $("#d-sun-section"), holder = $("#d-sun-holder"), bar = $("#d-sun-dates");
     // Always tear the iframe down when the drawer changes listing: leaving a
@@ -2917,7 +3545,7 @@
     };
 
     dates.forEach(function (d) {
-      var b = el("button", "sun-date" + (d.key === chosen.key ? " active" : ""), d.label);
+      var b = el("button", "sun-date" + (d.key === chosen.key ? " active" : ""), t(d.label));
       b.type = "button";
       b.title = d.title;
       b.addEventListener("click", function () {
@@ -2944,7 +3572,7 @@
     state.currentId = id;
     state.commentDirty = false;
     $("#d-title").textContent = l.title || l.id;
-    $("#d-subtitle").textContent = [l.code, TYPE_LABELS[l.type] || l.type, l.commune].filter(Boolean).join(" · ");
+    $("#d-subtitle").textContent = [l.code, t(TYPE_LABELS[l.type] || l.type), l.commune].filter(Boolean).join(" · ");
     loadGallery(id);
     loadDocs(id);
     state.works = (l.works || []).map(function (w) { return { label: w.label, cost: w.cost }; });
@@ -2964,6 +3592,7 @@
     $("#d-comment-flash").classList.remove("show");
     state.map = mapInfo(l);
     renderFacts(l.facts);
+    renderOfferBanner(l);
     setupMap();
     setupSun(l);
     $("#d-md").innerHTML = renderMarkdown(l.md_body);
@@ -3200,6 +3829,7 @@
     $("#view-towns").hidden = name !== "towns";
     $("#view-criteria").hidden = name !== "criteria";
     $("#view-drafts").hidden = name !== "drafts";
+    $("#view-tools").hidden = name !== "tools";
     if (name === "towns" && !townsLoaded) { townsLoaded = true; loadTowns(); }
     if (name === "criteria" && !critLoaded) { critLoaded = true; loadCriteria(); }
     if (name === "drafts" && !draftsLoaded) { draftsLoaded = true; loadDrafts(); }
@@ -3898,7 +4528,7 @@
     var wrap = el("div", "dcell-when");
     var date = el("input", "dcell dcell-date");
     date.type = "date";
-    date.title = "Date de visite";
+    date.title = t("Date de visite");
     // One list for the whole time, not one per half, and only the hours a
     // viewing is ever booked in: 9 h → 21 h by 5 minutes. Half a day of dead
     // entries made the list longer to walk for nothing. A time outside the
@@ -3999,7 +4629,7 @@
     tdStatus.setAttribute("data-label", "Statut");
     var sel = el("select", "dcell");
     Object.keys(DRAFT_STATUS_LABELS).forEach(function (k) {
-      var o = el("option", null, DRAFT_STATUS_LABELS[k]);
+      var o = el("option", null, t(DRAFT_STATUS_LABELS[k]));
       o.value = k;
       sel.appendChild(o);
     });
@@ -4044,7 +4674,7 @@
     var syncLink = function () {
       var u = rec.url || "";
       a.href = u || "#";
-      a.title = u ? "Ouvrir " + draftHost(u) : "Aucun lien";
+      a.title = u ? t("Ouvrir {host}", { host: draftHost(u) }) : t("Aucun lien");
       a.setAttribute("aria-disabled", u ? "false" : "true");
     };
     // Clicking ↗ has to do both: open the ad AND open the row (its comment).
@@ -4057,7 +4687,7 @@
     a.addEventListener("mousedown", function (ev) { ev.stopPropagation(); });
     a.addEventListener("focusin", function (ev) { ev.stopPropagation(); });
     a.addEventListener("click", function () { selectDraft(rec.id); });
-    var urlInput = draftCell(rec, "url", { placeholder: "https://…", after: syncLink });
+    var urlInput = draftCell(rec, "url", { placeholder: t("https://…"), after: syncLink });
     syncLink();
     wrap.appendChild(urlInput);
     wrap.appendChild(a);
@@ -4065,13 +4695,13 @@
     tr.appendChild(tdUrl);
 
     var cells = [
-      ["c-num c-price", "Prix", draftCell(rec, "price", { num: true, placeholder: "€" })],
-      ["c-city", "Ville", draftCell(rec, "city", { placeholder: "Ville", list: "draft-cities" })],
-      ["c-num c-area", "Surface", draftCell(rec, "surface", { num: true, placeholder: "m²", title: "Surface habitable" })],
-      ["c-num c-area", "Terrain", draftCell(rec, "land_surface", { num: true, placeholder: "m²", title: "Surface du terrain" })],
+      ["c-num c-price", "Prix", draftCell(rec, "price", { num: true, placeholder: t("€") })],
+      ["c-city", "Ville", draftCell(rec, "city", { placeholder: t("Ville"), list: "draft-cities" })],
+      ["c-num c-area", "Surface", draftCell(rec, "surface", { num: true, placeholder: t("m²"), title: "Surface habitable" })],
+      ["c-num c-area", "Terrain", draftCell(rec, "land_surface", { num: true, placeholder: t("m²"), title: "Surface du terrain" })],
       ["c-num c-m2", "€/m²", draftPriceM2(rec)],
-      ["c-contact", "Téléphone", draftCell(rec, "contact", { placeholder: "06…" })],
-      ["c-agency", "Agence", draftCell(rec, "agency", { placeholder: "Agence", list: "draft-agencies" })],
+      ["c-contact", "Téléphone", draftCell(rec, "contact", { placeholder: t("06…") })],
+      ["c-agency", "Agence", draftCell(rec, "agency", { placeholder: t("Agence"), list: "draft-agencies" })],
       ["c-visit", "Visite", draftVisitCell(rec)]
     ];
     cells.forEach(function (c) {
@@ -4087,7 +4717,7 @@
     note.dataset.role = "note";
     tdAct.appendChild(note);
     var del = el("button", "row-del", "\u00D7");
-    del.title = "Supprimer ce brouillon";
+    del.title = t("Supprimer ce brouillon");
     del.addEventListener("click", function () {
       var what = rec.url || rec.city || rec.code;
       if (!confirm("Supprimer le brouillon " + rec.code + " (" + what + ") ?")) return;
@@ -4110,13 +4740,13 @@
     var td = el("td");
     td.colSpan = $("#drafts-table thead tr").children.length;   // stays right if a column is added
     var ta = el("textarea", "dnote");
-    ta.placeholder = "Commentaire — pourquoi cette annonce, ce qu'il faut vérifier, ce qu'a dit l'agence…";
+    ta.placeholder = t("Commentaire — pourquoi cette annonce, ce qu'il faut vérifier, ce qu'a dit l'agence…");
     ta.value = rec.note || "";
     ta.rows = 2;
     var sync = function () {
       var has = !!(rec.note || "").trim();
       btn.classList.toggle("on", has);
-      btn.title = has ? "Commentaire — cliquer pour l'éditer" : "Ajouter un commentaire";
+      btn.title = t(has ? "Commentaire — cliquer pour l'éditer" : "Ajouter un commentaire");
     };
     ta.addEventListener("blur", function () {
       if (ta.value.trim() === (rec.note || "")) return;
@@ -4159,7 +4789,7 @@
   // rendu — rien de coché dans un groupe = ce groupe ne filtre pas.
   function chipGroup(box, label, labels, selected, onToggle, master) {
     var wrap = el("div", "filter-group");
-    wrap.appendChild(el("span", "filter-group-label", label));
+    wrap.appendChild(el("span", "filter-group-label", t(label)));
     if (master) wrap.appendChild(master);
     Object.keys(labels).forEach(function (k) {
       var on = selected.indexOf(k) >= 0;
@@ -4167,7 +4797,7 @@
       chip.type = "button";
       chip.setAttribute("aria-pressed", on ? "true" : "false");
       chip.appendChild(el("span", "chip-box", on ? "✓" : ""));
-      chip.appendChild(el("span", null, labels[k]));
+      chip.appendChild(el("span", null, t(labels[k])));
       chip.addEventListener("click", function () { onToggle(k); });
       wrap.appendChild(chip);
     });
@@ -4189,9 +4819,9 @@
     // — statuts, avec son interrupteur global —
     var keys = Object.keys(DRAFT_STATUS_LABELS);
     var allOn = draftStatusFilter.length === keys.length;
-    var master = el("button", "town-chip all-toggle", allOn ? "☒ Tout décocher" : "☑ Tout cocher");
+    var master = el("button", "town-chip all-toggle", t(allOn ? "☒ Tout décocher" : "☑ Tout cocher"));
     master.type = "button";
-    master.title = allOn ? "Décocher tous les statuts" : "Cocher tous les statuts";
+    master.title = t(allOn ? "Décocher tous les statuts" : "Cocher tous les statuts");
     master.addEventListener("click", function () {
       draftStatusFilter = allOn ? [] : keys.slice();
       afterFilterChange();
@@ -4212,7 +4842,7 @@
     // Ni l'un ni l'autre ne filtre : le dire, pour qu'une rangée décochée ne se
     // lise jamais comme « tout est masqué ».
     if (!draftStatusFilter.length && !draftPrioFilter.length) {
-      box.appendChild(el("span", "drafts-filter-hint", "aucun filtre — tout s'affiche"));
+      box.appendChild(el("span", "drafts-filter-hint", t("aucun filtre — tout s'affiche")));
     }
   }
 
@@ -4252,10 +4882,11 @@
     drafts.forEach(function (d) { counts[d.status] = (counts[d.status] || 0) + 1; });
     var parts = Object.keys(DRAFT_STATUS_LABELS)
       .filter(function (k) { return counts[k]; })
-      .map(function (k) { return counts[k] + " " + DRAFT_STATUS_LABELS[k].slice(2).toLowerCase(); });
+      .map(function (k) { return counts[k] + " " + t(DRAFT_STATUS_LABELS[k]).slice(2).toLowerCase(); });
     $("#drafts-progress").textContent = drafts.length
-      ? shown + " / " + drafts.length + " ligne" + (drafts.length > 1 ? "s" : "") +
-        (outside ? " · dont 1 nouvelle hors filtre" : "") +
+      ? t(drafts.length > 1 ? "{shown} / {total} lignes" : "{shown} / {total} ligne",
+          { shown: shown, total: drafts.length }) +
+        (outside ? " · " + t("dont 1 nouvelle hors filtre") : "") +
         (parts.length ? " · " + parts.join(" · ") : "")
       : "";
     // An empty grid has two very different causes, and saying which one saves
@@ -4536,9 +5167,10 @@
     });
 
     $("#crit-progress").textContent = hasListing
-      ? done + " validé" + (done > 1 ? "s" : "") + " · " + ko + " problème" + (ko > 1 ? "s" : "")
-        + " · " + (total - done - ko) + " à voir  (" + total + ")"
-      : total + " critères — lecture seule";
+      ? t("{ok} validé{s1} · {ko} problème{s2} · {todo} à voir  ({total})", {
+          ok: done, s1: done > 1 ? "s" : "", ko: ko, s2: ko > 1 ? "s" : "",
+          todo: total - done - ko, total: total })
+      : t("{n} critères — lecture seule", { n: total });
     $("#crit-reset").style.display = hasListing ? "" : "none";
   }
 
@@ -4711,10 +5343,10 @@
     var shownCount = state.townsAll.filter(function (t) { return !state.townHidden.has(t.id); }).length;
     var allOn = shownCount === state.townsAll.length;
     var allBtn = el("button", "town-order-btn all-toggle",
-      (allOn ? "☐ Tout masquer" : "☑ Tout afficher") + "  " + shownCount + "/" + state.townsAll.length);
+      t(allOn ? "☐ Tout masquer" : "☑ Tout afficher") + "  " + shownCount + "/" + state.townsAll.length);
     allBtn.title = allOn
-      ? "Masquer toutes les communes"
-      : "Afficher toutes les communes (" + (state.townsAll.length - shownCount) + " masquée(s))";
+      ? t("Masquer toutes les communes")
+      : t("Afficher toutes les communes ({n} masquée(s))", { n: state.townsAll.length - shownCount });
     allBtn.addEventListener("click", function () {
       if (allOn) state.townsAll.forEach(function (t) { state.townHidden.add(t.id); });
       else state.townHidden.clear();

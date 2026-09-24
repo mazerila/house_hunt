@@ -41,6 +41,10 @@ THUMBS_DIR = os.path.join(REPO_ROOT, "private", "thumbs")
 TOWNS_DIR = os.path.join(REPO_ROOT, "towns")
 DB_PATH = os.path.join(PRIVATE_DIR, "dashboard_db.json")
 HTML_PATH = os.path.join(SCRIPT_DIR, "dashboard.html")
+# Small third-party favicons for the Outils tab, fetched once and stored
+# locally so the dashboard stays self-contained and makes no outbound
+# request just to draw a list of links.
+ASSETS_DIR = os.path.join(SCRIPT_DIR, "assets")
 
 # "archived" is a real status, but it doubles as a visibility switch: the grid
 # hides archived listings unless the user flips to the archive view. Archiving
@@ -186,6 +190,9 @@ def works_total(works):
 IMAGE_EXTS = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
               ".webp": "image/webp", ".gif": "image/gif",
               ".heic": "image/heic", ".heif": "image/heif"}
+# SVG only for the bundled assets folder, never for listing photos: those
+# come from portals, and an SVG is a script-carrying document.
+ASSET_EXTS = dict(IMAGE_EXTS, **{".svg": "image/svg+xml"})
 VIDEO_EXTS = {".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm",
               ".m4v": "video/x-m4v", ".ogv": "video/ogg"}
 # HEIC rarely renders in browsers → transcode to JPEG on the fly (macOS `sips`).
@@ -865,8 +872,42 @@ PRICE_RATE_RE = re.compile(r"[\d\s ,.]*€\s*/\s*\w+[²2]?", re.IGNORECASE)
 MIN_PLAUSIBLE_PRICE = 10_000
 
 
+# A Status line reading "offre déposée à 760 000 € (prix demandé 835 000 €)"
+# matches /prix/ and hands back the OFFER as the asking price. The ask has its
+# own declaration bullet (report template: "Prix demandé: **N €**"), so look for
+# that first and only fall back to the loose scan when a note doesn't have one.
+# Matching the LINE START is what separates the bullet from a passing mention:
+# a dossier that discusses offers in its ask bullet (H10's auction) must still
+# be read, so a blanket "skip any line mentioning an offer" is too blunt.
+ASK_LINE_RE = re.compile(r"^[\s\-*>#\u25CF\u2022🔴🟠🟡✅⚠️]*\**\s*prix\s+demand", re.IGNORECASE)
+OFFER_LINE_RE = re.compile(r"\boffres?\b|\boffer\b", re.IGNORECASE)
+
+
+def _price_in(line):
+    line = PRICE_RATE_RE.sub(" ", line)
+    m = re.search(r"€\s?([\d\s\u202f,.]+?)\s*k\b", line, re.IGNORECASE)
+    if m:
+        val = parse_fr_number(m.group(1))
+        if val:
+            return val * 1000
+    for pat in (r"€\s?([\d\s\u202f,.]+)", r"([\d\s\u202f]+)\s?€"):
+        m = re.search(pat, line)
+        if m:
+            val = parse_fr_number(m.group(1))
+            if val and val >= MIN_PLAUSIBLE_PRICE:
+                return val
+    return None
+
+
 def extract_price(body):
+    for line in body.splitlines():          # the declaration bullet wins outright
+        if ASK_LINE_RE.search(line):
+            val = _price_in(line)
+            if val:
+                return val
     for line in body.splitlines():
+        if OFFER_LINE_RE.search(line):
+            continue
         if re.search(r"prix|asking|price", line, re.IGNORECASE):
             line = PRICE_RATE_RE.sub(" ", line)
             m = re.search(r"€\s?([\d\s ,.]+?)\s*k\b", line, re.IGNORECASE)
@@ -1347,6 +1388,16 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path in ("/", "/index.html"):
             self._send_file(HTML_PATH, "text/html; charset=utf-8")
+            return
+        m = re.match(r"^/assets/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)$", path)
+        if m:
+            target = os.path.realpath(os.path.join(ASSETS_DIR, m.group(1), m.group(2)))
+            ext = os.path.splitext(target)[1].lower()
+            if (os.path.commonpath([os.path.realpath(ASSETS_DIR), target]) == os.path.realpath(ASSETS_DIR)
+                    and ext in ASSET_EXTS and os.path.isfile(target)):
+                self._send_media(target, ASSET_EXTS[ext])
+            else:
+                self.send_error(404)
             return
         if path == "/api/listings":
             db = load_db()
